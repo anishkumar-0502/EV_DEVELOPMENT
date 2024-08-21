@@ -33,7 +33,7 @@ class _StopChargerState extends State<StopCharger> {
   void fetchUserDetails() async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:8052/profile/FetchUserProfile'),
+        Uri.parse('http://122.166.210.142:9098/profile/FetchUserProfile'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -80,7 +80,7 @@ class _StopChargerState extends State<StopCharger> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:8052/charging/UpdateAutoStopSettings'),
+        Uri.parse('http://122.166.210.142:9098/charging/UpdateAutoStopSettings'),
         headers: {
           'Content-Type': 'application/json',
         },

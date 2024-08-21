@@ -113,7 +113,7 @@ void initState() {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:8052/searchCharger'), // Replace with your actual backend URL
+        Uri.parse('http://122.166.210.142:9098/searchCharger'), // Replace with your actual backend URL
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -164,7 +164,7 @@ void initState() {
   Future<void> updateConnectorUser(String searchChargerID, int connectorId, int connectorType) async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:8052/updateConnectorUser'), // Replace with your actual backend URL
+        Uri.parse('http://122.166.210.142:9098/updateConnectorUser'), // Replace with your actual backend URL
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -236,7 +236,7 @@ void initState() {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:8052/getRecentSessionDetails'),
+        Uri.parse('http://122.166.210.142:9098/getRecentSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id':widget.userId,
@@ -272,7 +272,7 @@ Future<void> fetchAllChargers() async {
 
   try {
     final response = await http.post(
-      Uri.parse('http://122.166.210.142:8052/getAllChargersWithStatusAndPrice'), // Replace with your actual backend URL
+      Uri.parse('http://122.166.210.142:9098/getAllChargersWithStatusAndPrice'), // Replace with your actual backend URL
       headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id':widget.userId,

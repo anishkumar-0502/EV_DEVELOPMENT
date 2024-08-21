@@ -219,7 +219,7 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
   Future<void> endChargingSession(String chargerID, int? connectorId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:8052/charging/endChargingSession'),
+        Uri.parse('http://122.166.210.142:9098/charging/endChargingSession'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'charger_id': chargerID, 'connector_id': connectorId}),
       );
@@ -241,7 +241,7 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
   Future<void> updateSessionPriceToUser(int? connectorId) async {
     try {
       handleAlertLoadingStart(context);
-      var url = Uri.parse('http://122.166.210.142:8052/charging/getUpdatedCharingDetails');
+      var url = Uri.parse('http://122.166.210.142:9098/charging/getUpdatedCharingDetails');
       var body = {
         'chargerID': chargerID,
         'user': username,
@@ -441,7 +441,7 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
   Future<void> fetchLastStatus(String chargerID, int? connectorId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:8052/charging/FetchLaststatus'),
+        Uri.parse('http://122.166.210.142:9098/charging/FetchLaststatus'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'id': chargerID, 'connector_id': connectorId, 'connector_type': widget.connector_type}),
       );
@@ -719,7 +719,7 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
 
   void initializeWebSocket() {
     channel = WebSocketChannel.connect(
-      Uri.parse('ws://122.166.210.142:7050'),
+      Uri.parse('ws://122.166.210.142:8566'),
     );
 
     channel.stream.listen(
@@ -804,7 +804,7 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:8052/charging/start'),
+        Uri.parse('http://122.166.210.142:9098/charging/start'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -838,7 +838,7 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:8052/charging/stop'),
+        Uri.parse('http://122.166.210.142:9098/charging/stop'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

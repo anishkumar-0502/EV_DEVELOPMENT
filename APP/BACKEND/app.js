@@ -35,7 +35,7 @@ app.use('/profile', profile);
 const httpServer = http.createServer(app);
 
 // Define HTTP server port
-const HTTP_PORT = process.env.HTTP_PORT || 8052;    
+const HTTP_PORT = process.env.HTTP_PORT || 9098;    
 
 // Start the HTTP server
 httpServer.listen(HTTP_PORT, () => {
@@ -55,7 +55,7 @@ const ClientWebSocketServer = http.createServer();
 initializeWebSocket(webSocketServer, ClientWebSocketServer);
 
 // Define WebSocket server port
-const WS_PORT = process.env.WS_PORT || 8050;
+const WS_PORT = process.env.WS_PORT || 8567;
 // const WS_PORT = process.env.WS_PORT || 6060;
 
 // Start the WebSocket server
@@ -65,7 +65,7 @@ webSocketServer.listen(WS_PORT, () => {
 });
 
 // Define client WebSocket server port
-const WS_PORT_CLIENT = process.env.WS_PORT_CLIENT || 7050;
+const WS_PORT_CLIENT = process.env.WS_PORT_CLIENT || 8566;
 
 // Start the client WebSocket server
 ClientWebSocketServer.listen(WS_PORT_CLIENT, () => {

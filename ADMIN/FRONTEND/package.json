@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "version": "0.1.0",
-  "proxy": "http://122.166.210.142:6778",
+  "proxy": "http://122.166.210.142:8568",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.4",
@@ -23,7 +23,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "cross-env PORT=6800 react-scripts start",
+    "start": "cross-env PORT=8768 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
