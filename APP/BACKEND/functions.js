@@ -1018,7 +1018,9 @@ async function autostop_price(firstMeterValues, lastMeterValues, autostopSetting
 const insertSocketGunConfig = async (uniqueIdentifier, chargePointModel) => {
     const connectors = chargePointModel.split('- ')[1];
     const connectorTypes = {};
-    let currentConnectorIndex = 1; // Use a single index to correctly track connector numbers
+    let currentConnectorIndex = 1;
+    let socketCount = 0;
+    let gunCount = 0;
 
     // Parse the connector types correctly
     for (let i = 0; i < connectors.length; i += 2) {
@@ -1026,22 +1028,25 @@ const insertSocketGunConfig = async (uniqueIdentifier, chargePointModel) => {
 
         if (type === 'S') {
             connectorTypes[`connector_${currentConnectorIndex}_type`] = 1; // 1 for Socket
-
+            socketCount++; // Increment socket count
         } else if (type === 'G') {
             connectorTypes[`connector_${currentConnectorIndex}_type`] = 2; // 2 for Gun
-
+            gunCount++; // Increment gun connector count
         }
 
-        currentConnectorIndex++; // Increment the connector index after each iteration
+        currentConnectorIndex++;
     }
 
     console.log("Final ConnectorTypes:", connectorTypes);
+    console.log(`Socket Count: ${socketCount}, Gun Count: ${gunCount}`);
 
     const socketGunConfig = {
         charger_id: uniqueIdentifier,
         ...connectorTypes,
         created_date: new Date(),
-        modified_date: null
+        modified_date: null,
+        socket_count: socketCount,
+        gun_connector: gunCount
     };
 
     const db = await connectToDatabase();
@@ -1053,7 +1058,9 @@ const insertSocketGunConfig = async (uniqueIdentifier, chargePointModel) => {
             {
                 $set: {
                     ...connectorTypes,
-                    modified_date: new Date()
+                    modified_date: new Date(),
+                    socket_count: socketCount,
+                    gun_connector: gunCount
                 }
             }
         );
@@ -1076,24 +1083,24 @@ const insertSocketGunConfig = async (uniqueIdentifier, chargePointModel) => {
         projection[`tag_id_for_connector_${i}`] = 1;
         projection[`transaction_id_for_connector_${i}`] = 1;
         projection[`transaction_id_for_connector_${i}_in_use`] = 1;
-
     }
 
-    
     const existingChargerDetails = await db.collection('charger_details').findOne(
         { charger_id: uniqueIdentifier },
         { projection }
     );
 
-
     if (!existingChargerDetails) {
         // If no existing charger details, insert new details
         for (let i = 1; i <= totalConnectors; i++) {
-            chargerDetails[`tag_id_for_connector_${i}`] = null; 
+            chargerDetails[`tag_id_for_connector_${i}`] = null;
             chargerDetails[`tag_id_for_connector_${i}_in_use`] = null;
             chargerDetails[`transaction_id_for_connector_${i}`] = null;
             chargerDetails[`current_or_active_user_for_connector_${i}`] = null;
         }
+
+        chargerDetails['socket_count'] = socketCount;
+        chargerDetails['gun_connector'] = gunCount;
 
         const result = await db.collection('charger_details').insertOne(chargerDetails);
         if (result.insertedId) {
@@ -1122,6 +1129,9 @@ const insertSocketGunConfig = async (uniqueIdentifier, chargePointModel) => {
             }
         }
 
+        updateFields['socket_count'] = socketCount;
+        updateFields['gun_connector'] = gunCount;
+
         if (Object.keys(updateFields).length > 0) {
             const result = await db.collection('charger_details').updateOne(
                 { charger_id: uniqueIdentifier },
@@ -1137,7 +1147,6 @@ const insertSocketGunConfig = async (uniqueIdentifier, chargePointModel) => {
         }
     }
 };
-
 
 
 
