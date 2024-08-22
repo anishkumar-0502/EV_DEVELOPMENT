@@ -927,7 +927,7 @@ async function UpdateCommissionToWallet(sessionPrice, uniqueIdentifier) {
     // Update reseller wallet
     if (chargerDetails.assigned_reseller_id) {
         const reseller_id = chargerDetails.assigned_reseller_id;
-        resellerCommissionUpdate = await updateWallet(ResellerDetailsCollection, reseller_id, resellerCommission, 'reseller');
+        resellerCommissionUpdate = await updateWallet(ResellerDetailsCollection, reseller_id, l, 'reseller');
     }
 
     // Update client wallet

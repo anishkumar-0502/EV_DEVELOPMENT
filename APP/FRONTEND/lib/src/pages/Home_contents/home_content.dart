@@ -100,6 +100,26 @@ void initState() {
     }
   }
 
+// void _updateMarkers() async {
+//   if (_currentPosition != null) {
+//     final BitmapDescriptor customIcon = await BitmapDescriptor.fromAssetImage(
+//       const ImageConfiguration(size: Size(48, 48)), // You can adjust the size as needed
+//       'assets/icons/pin.png', // Path to your custom marker icon
+//     );
+
+//     setState(() {
+//       _markers.add(
+//         Marker(
+//           markerId: const MarkerId('current_location'),
+//           position: _currentPosition!,
+//           icon: customIcon, // Use the custom icon
+//           infoWindow: const InfoWindow(title: 'Your Location'),
+//         ),
+//       );
+//     });
+//   }
+// }
+
   Future<void> handleSearchRequest(String searchChargerID) async {
     if (isSearching) return; // Prevent redundant calls
     if (searchChargerID.isEmpty) {

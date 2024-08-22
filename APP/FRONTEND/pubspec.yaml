@@ -50,6 +50,7 @@ dependencies:
   geolocator_android: ^4.6.1
   flutter_polyline_points: ^2.1.0
   flutter_background: ^1.2.0
+  permission_handler: ^10.2.0  # Use the latest version
 
 
 
@@ -85,7 +86,9 @@ flutter:
   assets:
     - assets/Image/
     - assets/Map/map.json
-
+    - assets/icons/location.png
+    - assets/icons/location.png
+    
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 
