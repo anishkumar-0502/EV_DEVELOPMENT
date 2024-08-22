@@ -927,13 +927,13 @@ async function UpdateCommissionToWallet(sessionPrice, uniqueIdentifier) {
     // Update reseller wallet
     if (chargerDetails.assigned_reseller_id) {
         const reseller_id = chargerDetails.assigned_reseller_id;
-        resellerCommissionUpdate = await updateWallet(ResellerDetailsCollection, reseller_id, l, 'reseller');
+        resellerCommissionUpdate = await updateWallet(ResellerDetailsCollection, reseller_id, parseFloat(resellerCommission), 'reseller');
     }
 
     // Update client wallet
     if (chargerDetails.assigned_client_id) {
         const client_id = chargerDetails.assigned_client_id;
-        clientCommissionUpdate = await updateWallet(ClientDetailsCollection, client_id, clientCommission, 'client');
+        clientCommissionUpdate = await updateWallet(ClientDetailsCollection, client_id, parseFloat(clientCommission), 'client');
     }
 
     // Update association wallet with total commission (reseller + client)
@@ -941,8 +941,9 @@ async function UpdateCommissionToWallet(sessionPrice, uniqueIdentifier) {
         const association_id = chargerDetails.assigned_association_id;
         const totalCommission = resellerCommission + clientCommission;
         const AssociationPrice = sessionPrice - totalCommission;
-        clientPriceUpdate = await updateWallet(AssociationDetailsCollection, association_id, AssociationPrice, 'association');
+        clientPriceUpdate = await updateWallet(AssociationDetailsCollection, association_id, parseFloat(AssociationPrice), 'association');
     }
+
 
     if(resellerCommissionUpdate && clientCommissionUpdate && clientPriceUpdate){
         console.log(`All commissions updated successfully !`);
