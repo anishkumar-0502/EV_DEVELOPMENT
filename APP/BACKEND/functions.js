@@ -844,7 +844,6 @@ async function autostop_unit(firstMeterValues,lastMeterValues,autostopSettings,u
     const result = lastEnergy - startEnergy;
     let calculatedUnit = parseFloat(result / 1000).toFixed(3);
 
-    console.dir(autostopSettings);
     // console.log(`${autostopSettings.unit_value},${calculatedUnit}`);
 
     if (autostopSettings.unit_value && autostopSettings.isUnitChecked === true) {
