@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
@@ -10,73 +10,77 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
     const location = useLocation();
     const dataItem = location.state?.newUser || JSON.parse(localStorage.getItem('editDeviceData'));
     localStorage.setItem('editDeviceData', JSON.stringify(dataItem));
-    
+
     const navigate = useNavigate();
-    
-    // Back view manage device
+
     const backManageDevice = () => {
         navigate('/superadmin/ViewManageDevice');
     };
-    
-    // Edit back manage device
+
     const editBackManageDevice = () => {
         navigate('/superadmin/ManageDevice');
     };
 
-    // Edit manage device
-    const [charger_id, setChargerID] = useState(dataItem?.charger_id || '');
-    const [charger_model, setModel] = useState(dataItem?.model || '');
-    const [charger_type, setType] = useState(dataItem?.type || '');
-    const [vendor, setVendor] = useState(dataItem?.vendor || '');
-    const [max_current, setMaxCurrent] = useState(dataItem?.max_current || '');
-    const [max_power, setMaxPower] = useState(dataItem?.max_power || '');
-    const [errorMessage, setErrorMessage] = useState('');
-
-    // Initial values
-    const initialValues = {
-        charger_id: dataItem?.charger_id || '',
-        tag_id: dataItem?.tag_id || '',
-        charger_model: dataItem?.charger_model || '',
-        type: dataItem?.type || '',
-        vendor: dataItem?.vendor || '',
-        max_current: dataItem?.max_current || '',
-        max_power: dataItem?.max_power || '',
-    };
-
-    // Select model 
     const handleModel = (e) => {
         setModel(e.target.value);
     };
     
-    // Selected charger type
     const handleChargerType = (e) => {
         setType(e.target.value);
     };
+    
 
+    // Form state
+    const [charger_id, setChargerID] = useState(dataItem?.charger_id || '');
+    const [charger_model, setModel] = useState(dataItem?.charger_model || '');
+    const [charger_type, setType] = useState(dataItem?.charger_type || '');
+    const [vendor, setVendor] = useState(dataItem?.vendor || '');
+    const [max_current, setMaxCurrent] = useState(dataItem?.max_current || '');
+    const [max_power, setMaxPower] = useState(dataItem?.max_power || '');
+
+    // Error messages
+    const [errorMessage, setErrorMessage] = useState('');
     const [errorMessageCurrent, setErrorMessageCurrent] = useState('');
     const [errorMessagePower, setErrorMessagePower] = useState('');
 
-    // Set timeout
+    // Initial values setup
+    const [initialValues, setInitialValues] = useState({
+        charger_id: dataItem?.charger_id || '',
+        charger_model: dataItem?.charger_model || '',
+        charger_type: dataItem?.charger_type || '',
+        vendor: dataItem?.vendor || '',
+        max_current: dataItem?.max_current || '',
+        max_power: dataItem?.max_power || '',
+    });
+
+    // Update initialValues when dataItem changes
     useEffect(() => {
-        if (errorMessageCurrent) {
-            const timeout = setTimeout(() => setErrorMessageCurrent(''), 5000); // Clear error message after 5 seconds
-            return () => clearTimeout(timeout);
-        }
-        if (errorMessagePower) {
-            const timeout = setTimeout(() => setErrorMessagePower(''), 5000); // Clear error message after 5 seconds
-            return () => clearTimeout(timeout);
-        }
-        if (errorMessage) {
-            const timeout = setTimeout(() => setErrorMessage(''), 5000); // Clear error message after 5 seconds
-            return () => clearTimeout(timeout);
-        }
-    }, [errorMessageCurrent, errorMessagePower, errorMessage]); 
-    
+        setInitialValues({
+            charger_id: dataItem?.charger_id || '',
+            charger_model: dataItem?.charger_model || '',
+            charger_type: dataItem?.charger_type || '',
+            vendor: dataItem?.vendor || '',
+            max_current: dataItem?.max_current || '',
+            max_power: dataItem?.max_power || '',
+        });
+    }, [dataItem]);
+
+    // Clear error messages
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setErrorMessage('');
+            setErrorMessageCurrent('');
+            setErrorMessagePower('');
+        }, 5000); // Clear error messages after 5 seconds
+        return () => clearTimeout(timeout);
+    }, [errorMessage, errorMessageCurrent, errorMessagePower]);
+
     // Update manage device
     const editManageDevice = async (e) => {
         e.preventDefault();
+
         // Validate Charger ID
-        const chargerIDRegex = /^[a-zA-Z0-9]{1,14}$/;;
+        const chargerIDRegex = /^[a-zA-Z0-9]{1,14}$/;
         if (!charger_id) {
             setErrorMessage("Charger ID can't be empty.");
             return;
@@ -98,15 +102,24 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
         }
 
         try {
-            const maxCurrents = parseInt(max_current);
-            const maxPowers = parseInt(max_power);
+            const maxCurrents = parseInt(max_current, 10);
+            const maxPowers = parseInt(max_power, 10);
             const response = await fetch('/superadmin/UpdateCharger', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ charger_id, charger_model, charger_type, vendor, max_current:maxCurrents, max_power:maxPowers, modified_by: userInfo.data.email_id  }),
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    charger_id,
+                    charger_model,
+                    charger_type,
+                    vendor,
+                    max_current: maxCurrents,
+                    max_power: maxPowers,
+                    modified_by: userInfo.data.email_id,
+                }),
             });
+
             if (response.ok) {
                 Swal.fire({
                     title: "Charger updated successfully",
@@ -121,16 +134,15 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                     icon: "error"
                 });
             }
-        }catch (error) {
+        } catch (error) {
             Swal.fire({
-                title: "Error:", error,
-                text: "An error occurred while updated the charger",
+                title: "Error",
+                text: "An error occurred while updating the charger",
                 icon: "error"
             });
         }
     };
-    // Add Chargers end
-    
+
     // Check if form values have changed
     const isFormChanged = () => {
         return (
@@ -139,9 +151,10 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
             charger_type !== initialValues.charger_type ||
             vendor !== initialValues.vendor ||
             max_current !== initialValues.max_current ||
-            max_power !== initialValues.max_power 
+            max_power !== initialValues.max_power
         );
     };
+
 
     return (
         <div className='container-scroller'>
@@ -240,7 +253,7 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                                                 if (value < 1) {
                                                                                     value = '';
                                                                                 } else if (value > 32) {
-                                                                                    setErrorMessageCurrent('Max Current limit is 1 to 32');
+                                                                                    setErrorMessageCurrent('Max Current must be between 1 and 32');
 
                                                                                     value = '32';
                                                                                 }
@@ -268,16 +281,16 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                                             // Ensure the value is within the specified range
                                                                             if (value < 1) {
                                                                                 value = '';
-                                                                            } else if (value > 200) {
-                                                                                setErrorMessagePower('Max Power limit is 1 to 200');
-                                                                                value = '200';
+                                                                            } else if (value > 22000) {
+                                                                                setErrorMessagePower('Max Power must be between 1 and 22,000');
+                                                                                value = '22000';
                                                                             }
                                                                             
                                                                             // Update the state with the sanitized and restricted value
                                                                             setMaxPower(value);
                                                                         }} 
                                                                          required/> 
-                                                                                                                                                  {errorMessagePower && <div className="text-danger">{errorMessagePower}</div>}
+                                                                        {errorMessagePower && <div className="text-danger">{errorMessagePower}</div>}
 
                                                                     </div>
                                                                 </div>
@@ -285,7 +298,7 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                         </div>
                                                         {errorMessage && <div className="text-danger">{errorMessage}</div>}
                                                         <div style={{textAlign:'center'}}>
-                                                            <button type="submit" className="btn btn-primary mr-2" disabled={!isFormChanged()}>Update</button>
+                                                        <button type="submit" className="btn btn-primary" disabled={!isFormChanged()}>Update</button>
                                                         </div>
                                                     </form>
                                                 </div>

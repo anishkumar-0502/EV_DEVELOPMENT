@@ -110,131 +110,131 @@ const ViewUnalloc = ({ userInfo, handleLogout }) => {
                                                     <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Charger ID: <span style={{fontWeight:'normal'}}>{newDevice.charger_id ? newDevice.charger_id : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Charger ID: <span style={{fontWeight:'normal'}}>{newDevice.charger_id ? newDevice.charger_id : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Charger Model: <span style={{fontWeight:'normal'}}>{newDevice.charger_model ? newDevice.charger_model +'KW': '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Charger Model: <span style={{fontWeight:'normal'}}>{newDevice.charger_model ? newDevice.charger_model +'KW': '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Charger Type: <span style={{fontWeight:'normal'}}>{newDevice.charger_type ? newDevice.charger_type : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="row col-12 col-xl-12">
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Vendor: <span style={{fontWeight:'normal'}}>{newDevice.vendor ?  newDevice.vendor : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Gun Connector: <span style={{ fontWeight: 'normal' }}>{newDevice.gun_connector === 1 ? 'Single phase' : newDevice.gun_connector === 2 ? 'CSS Type 2' : newDevice.gun_connector === 3 ? '3 phase socket' : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Max Current: <span style={{fontWeight:'normal'}}>{newDevice.max_current ?  newDevice.max_current : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Charger Type: <span style={{fontWeight:'normal'}}>{newDevice.charger_type ? newDevice.charger_type : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Max Power: <span style={{fontWeight:'normal'}}>{newDevice.max_power ? newDevice.max_power : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Vendor: <span style={{fontWeight:'normal'}}>{newDevice.vendor ?  newDevice.vendor : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Socket Count: <span style={{fontWeight:'normal'}}>{newDevice.socket_count === 1 ? '1 Socket ' : newDevice.socket_count === 2 ? '2 Sockets' : newDevice.socket_count === 3 ? '3 Sockets' : newDevice.socket_count === 4 ? '4 Sockets' : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Gun Connector: <span style={{ fontWeight: 'normal' }}>{newDevice.gun_connector === 1 ? 'Single phase' : newDevice.gun_connector === 2 ? 'CSS Type 2' : newDevice.gun_connector === 3 ? '3 phase socket' : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Model: <span style={{fontWeight:'normal'}}>{newDevice.model ?  newDevice.model : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="row col-12 col-xl-12">
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Type: <span style={{fontWeight:'normal'}}>{newDevice.type ?  newDevice.type : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Reseller Commission: <span style={{fontWeight:'normal'}}>{newDevice.reseller_commission ? newDevice.reseller_commission : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Client Commission: <span style={{fontWeight:'normal'}}>{newDevice.client_commission ? newDevice.client_commission : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Max Current: <span style={{fontWeight:'normal'}}>{newDevice.max_current ?  newDevice.max_current : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Short Description: <span style={{fontWeight:'normal'}}>{newDevice.short_description ? newDevice.short_description : '-'}</span></div>   
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Max Power: <span style={{fontWeight:'normal'}}>{newDevice.max_power ? newDevice.max_power : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Charger Accessibility: <span style={{ fontWeight: 'normal' }}>{newDevice.charger_accessibility === 1 ? 'Public' : newDevice.charger_accessibility === 2 ? 'Private' : '-'}</span></div> 
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Socket Count: <span style={{fontWeight:'normal'}}>{newDevice.socket_count === 1 ? '1 Socket ' : newDevice.socket_count === 2 ? '2 Sockets' : newDevice.socket_count === 3 ? '3 Sockets' : newDevice.socket_count === 4 ? '4 Sockets' : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Wifi Password: <span style={{fontWeight:'normal'}}>{newDevice.wifi_password ? newDevice.wifi_password : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="row col-12 col-xl-12">
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Created By: <span style={{fontWeight:'normal'}}>{newDevice.created_by ? newDevice.created_by : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Created Date: <span style={{fontWeight:'normal'}}>{newDevice.created_date ? formatTimestamp(newDevice.created_date) : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Modified By: <span style={{fontWeight:'normal'}}>{newDevice.modified_by ? newDevice.modified_by : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Model: <span style={{fontWeight:'normal'}}>{newDevice.model ?  newDevice.model : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Modified Date: <span style={{fontWeight:'normal'}}>{newDevice.modified_date ? formatTimestamp(newDevice.modified_date) : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Type: <span style={{fontWeight:'normal'}}>{newDevice.type ?  newDevice.type : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Assigned Association Date: <span style={{fontWeight:'normal'}}>{newDevice.assigned_association_date ? formatTimestamp(newDevice.assigned_association_date) : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Reseller Commission: <span style={{fontWeight:'normal'}}>{newDevice.reseller_commission ? newDevice.reseller_commission : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Assigned Client Date: <span style={{fontWeight:'normal'}}>{newDevice.assigned_client_date ? formatTimestamp(newDevice.assigned_client_date) : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Client Commission: <span style={{fontWeight:'normal'}}>{newDevice.client_commission ? newDevice.client_commission : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Assigned Reseller Date: <span style={{fontWeight:'normal'}}>{newDevice.assigned_reseller_date ? formatTimestamp(newDevice.assigned_reseller_date) : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Short Description: <span style={{fontWeight:'normal'}}>{newDevice.short_description ? newDevice.short_description : '-'}</span></div>   
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Status: <span style={{fontWeight:'normal'}}>{newDevice.status === true ? <span className="text-success">Active</span> :  <span className="text-danger">DeActive</span>}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Charger Accessibility: <span style={{ fontWeight: 'normal' }}>{newDevice.charger_accessibility === 1 ? 'Public' : newDevice.charger_accessibility === 2 ? 'Private' : '-'}</span></div> 
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Wifi Password: <span style={{fontWeight:'normal'}}>{newDevice.wifi_password ? newDevice.wifi_password : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="row col-12 col-xl-12">
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Created By: <span style={{fontWeight:'normal'}}>{newDevice.created_by ? newDevice.created_by : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Created Date: <span style={{fontWeight:'normal'}}>{newDevice.created_date ? formatTimestamp(newDevice.created_date) : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Modified By: <span style={{fontWeight:'normal'}}>{newDevice.modified_by ? newDevice.modified_by : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="row col-12 col-xl-12">
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Modified Date: <span style={{fontWeight:'normal'}}>{newDevice.modified_date ? formatTimestamp(newDevice.modified_date) : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Assigned Association Date: <span style={{fontWeight:'normal'}}>{newDevice.assigned_association_date ? formatTimestamp(newDevice.assigned_association_date) : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Assigned Client Date: <span style={{fontWeight:'normal'}}>{newDevice.assigned_client_date ? formatTimestamp(newDevice.assigned_client_date) : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="row col-12 col-xl-12">
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Assigned Reseller Date: <span style={{fontWeight:'normal'}}>{newDevice.assigned_reseller_date ? formatTimestamp(newDevice.assigned_reseller_date) : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Status: <span style={{fontWeight:'normal'}}>{newDevice.status === true ? <span className="text-success">Active</span> :  <span className="text-danger">DeActive</span>}</span></div>
                                                             </div>
                                                         </div>                                                               
                                                     </div>

@@ -31,6 +31,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
         setTheadsticky('sticky');
         setTheadfixed('fixed');
         setTheadBackgroundColor('white');
+        setErrorMessage('');
     };
     const modalAddStyle = {
         display: showAddForm ? 'block' : 'none',
@@ -121,6 +122,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                     setTheadfixed('fixed');
                     setTheadBackgroundColor('white');
                     fetchUsers();
+                    setErrorMessage('');
                 } else {
                     const responseData = await response.json();
                     Swal.fire({

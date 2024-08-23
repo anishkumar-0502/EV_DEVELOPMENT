@@ -54,7 +54,7 @@ const Editass = ({ userInfo, handleLogout }) => {
             const formattedAssData = {
                 association_address: association_address,
                 association_email_id: dataItems.association_email_id,
-                association_wallet: dataItems.association_wallet,
+                association_wallet,
                 association_id: dataItems.association_id,
                 association_name: association_name,
                 association_phone_no: parseInt(association_phone_no),

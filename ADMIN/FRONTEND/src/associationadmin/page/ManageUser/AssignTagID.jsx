@@ -18,14 +18,14 @@ const AssignTagID = ({ userInfo, handleLogout }) => {
     const fetchUserRoleCalled = useRef(false); // Ref to track if fetchProfile has been called
 
     const [newUser, setNewUser] = useState({
-        user_id: '', _id: '',
+        user_id: '', tag_id: '', _id: '',
     });
 
     useEffect(() => {
         const { dataItem } = location.state || {};
         if (dataItem) {
             setNewUser({
-                user_id: dataItem.user_id || '', _id: dataItem._id || '',
+                user_id: dataItem.user_id || '',  tag_id: dataItem.tag_id || '', _id: dataItem._id || '',
             });
         // Save to localStorage
         localStorage.setItem('userData', JSON.stringify(dataItem));
@@ -139,7 +139,7 @@ const AssignTagID = ({ userInfo, handleLogout }) => {
 
     // Back manageuser page
     const backManageUserPage = () => {
-        navigate('/associationadmin/ManageUsers');
+        navigate('/associationadmin/Assignuser');
     };
     return (
         <div className='container-scroller'>
@@ -221,7 +221,7 @@ const AssignTagID = ({ userInfo, handleLogout }) => {
                                                                 <td>{dataItem.tag_id_expiry_date ?  formatTimestamp(dataItem.tag_id_expiry_date) : '-'}</td>
                                                                 <td>{dataItem.status===true ? <span className="text-success">Active</span> : <span className="text-danger">DeActive</span>}</td>
                                                                 <td>
-                                                                    <button type="button" className="btn btn-warning" onClick={() => handleAssignTagID(dataItem)} style={{marginBottom:'10px'}}>Assign</button><br/>
+                                                                    <button type="button" className="btn btn-warning" onClick={() => handleAssignTagID(dataItem)} style={{marginBottom:'10px'}} disabled={newUser.tag_id === dataItem.tag_id}>Assign</button><br/>
                                                                 </td>                                                    
                                                             </tr>
                                                         ))

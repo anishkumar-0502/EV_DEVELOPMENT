@@ -652,7 +652,7 @@ async function AddUserToAssociation(req, res) {
 // FetchUsersWithSpecificRolesToUnAssgin
 async function FetchUsersWithSpecificRolesToUnAssgin(req, res) {
     try {
-        const { association_id } = req.body;
+        const { association_id } = req.body; 
 
         if (!association_id) {
             return res.status(400).json({ message: 'Association ID is required' });
@@ -660,13 +660,13 @@ async function FetchUsersWithSpecificRolesToUnAssgin(req, res) {
 
         const db = await database.connectToDatabase();
         const usersCollection = db.collection("users");
-        
+
         // Aggregation pipeline
         const users = await usersCollection.aggregate([
             {
                 $match: {
-                    role_id: { $nin: [1, 2, 3, 4] },
-                    assigned_association: association_id
+                    role_id: { $nin: [1, 2, 3, 4] }, // Exclude users with role IDs 1, 2, 3, and 4
+                    assigned_association: association_id // Match users with the provided association ID
                 }
             },
             {
@@ -684,9 +684,35 @@ async function FetchUsersWithSpecificRolesToUnAssgin(req, res) {
                 $addFields: {
                     role_name: "$roleDetails.role_name" // Add role_name field from roleDetails
                 }
+            },
+            {
+                $lookup: {
+                    from: "tag_id", // Collection to join with for tag_id
+                    let: { userTagId: "$tag_id" }, // Use let to reference the user tag_id
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: ["$id", "$$userTagId"] // Match if tag_id from tag_id collection equals userTagId
+                                }
+                            }
+                        }
+                    ],
+                    as: "tagDetails"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$tagDetails",
+                    preserveNullAndEmptyArrays: true // Preserve records where tagDetails is null or empty
+                }
+            },
+            {
+                $addFields: {
+                    tag_id: { $ifNull: ["$tagDetails.tag_id", null] } // Add tag_id field, keep null if no match
+                }
             }
         ]).toArray();
-
 
         if (!users || users.length === 0) {
             return res.status(200).json({ message: 'No users found' });
@@ -699,6 +725,8 @@ async function FetchUsersWithSpecificRolesToUnAssgin(req, res) {
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 }
+
+
 
 // RemoveUserFromAssociation
 async function RemoveUserFromAssociation(req, res) {
@@ -714,7 +742,7 @@ async function RemoveUserFromAssociation(req, res) {
         const usersCollection = db.collection("users");
 
         // Find the user to ensure they exist
-        const user = await usersCollection.findOne({ user_id: user_id , association_id:association_id});
+        const user = await usersCollection.findOne({ user_id: user_id , assigned_association:association_id});
 
         if (!user) {
             return res.status(404).json({ message: 'User does not exits' });

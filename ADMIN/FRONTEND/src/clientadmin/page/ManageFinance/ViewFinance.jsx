@@ -127,68 +127,68 @@ const ViewFinance = ({ userInfo, handleLogout }) => {
                                                     <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">EB Charges: <span style={{fontWeight:'normal'}}>{newfinance.eb_charges ? newfinance.eb_charges : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>EB Charges: <span style={{fontWeight:'normal'}}>{newfinance.eb_charges ? newfinance.eb_charges : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">App Charges: <span style={{fontWeight:'normal'}}>{newfinance.app_charges ?  newfinance.app_charges +' %' : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>App Charges: <span style={{fontWeight:'normal'}}>{newfinance.app_charges ?  newfinance.app_charges +' %' : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Other Charges: <span style={{ fontWeight: 'normal' }}>{newfinance.other_charges ?  newfinance.other_charges +' %' : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="row col-12 col-xl-12">
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Parking Charges: <span style={{fontWeight:'normal'}}>{newfinance.parking_charges ?  newfinance.parking_charges +' %' : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Rent Charges: <span style={{fontWeight:'normal'}}>{newfinance.rent_charges ? newfinance.rent_charges +' %' : '-'}</span></div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group row">
-                                                                <div className="col-sm-12">Open A EB Charges: <span style={{fontWeight:'normal'}}>{newfinance.open_a_eb_charges ? newfinance.open_a_eb_charges +' %' : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Other Charges: <span style={{ fontWeight: 'normal' }}>{newfinance.other_charges ?  newfinance.other_charges +' %' : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Open Other Charges: <span style={{fontWeight:'normal'}}>{newfinance.open_other_charges ?  newfinance.open_other_charges +' %' : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Parking Charges: <span style={{fontWeight:'normal'}}>{newfinance.parking_charges ?  newfinance.parking_charges +' %' : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Created By: <span style={{fontWeight:'normal'}}>{newfinance.created_by ? newfinance.created_by: '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Rent Charges: <span style={{fontWeight:'normal'}}>{newfinance.rent_charges ? newfinance.rent_charges +' %' : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Created Date: <span style={{fontWeight:'normal'}}>{newfinance.created_date ? formatTimestamp(newfinance.created_date) : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Open A EB Charges: <span style={{fontWeight:'normal'}}>{newfinance.open_a_eb_charges ? newfinance.open_a_eb_charges +' %' : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Modified By: <span style={{fontWeight:'normal'}}>{newfinance.modified_by ? newfinance.modified_by : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Open Other Charges: <span style={{fontWeight:'normal'}}>{newfinance.open_other_charges ?  newfinance.open_other_charges +' %' : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Modified Date: <span style={{fontWeight:'normal'}}>{newfinance.modified_date ? formatTimestamp(newfinance.modified_date) : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Created By: <span style={{fontWeight:'normal'}}>{newfinance.created_by ? newfinance.created_by: '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12">Status: <span style={{fontWeight:'normal'}}>{newfinance.status === true ? <span className="text-success">Active</span> :  <span className="text-danger">DeActive</span>}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Created Date: <span style={{fontWeight:'normal'}}>{newfinance.created_date ? formatTimestamp(newfinance.created_date) : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="row col-12 col-xl-12">
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Modified By: <span style={{fontWeight:'normal'}}>{newfinance.modified_by ? newfinance.modified_by : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Modified Date: <span style={{fontWeight:'normal'}}>{newfinance.modified_date ? formatTimestamp(newfinance.modified_date) : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Status: <span style={{fontWeight:'normal'}}>{newfinance.status === true ? <span className="text-success">Active</span> :  <span className="text-danger">DeActive</span>}</span></div>
                                                             </div>
                                                         </div>  
                                                     </div>

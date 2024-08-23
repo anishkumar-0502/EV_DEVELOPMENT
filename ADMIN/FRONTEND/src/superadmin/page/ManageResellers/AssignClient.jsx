@@ -79,7 +79,7 @@ const AssignClient = ({ userInfo, handleLogout }) => {
                             <div className="col-md-12 grid-margin">
                                 <div className="row">
                                     <div className="col-12 col-xl-8 mb-4 mb-xl-0">
-                                        <h3 className="font-weight-bold">Assign Client's</h3>
+                                        <h3 className="font-weight-bold">Assigned Client's</h3>
                                     </div>
                                     <div className="col-12 col-xl-4">
                                         <div className="justify-content-end d-flex">

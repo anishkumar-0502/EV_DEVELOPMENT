@@ -119,6 +119,10 @@ const EditManageUsers = ({ userInfo, handleLogout }) => {
         });
     }, [dataItem]);
     
+    const goBack = () => {
+        navigate(-1);
+    };
+
     return (
         <div className='container-scroller'>
             {/* Header */}
@@ -136,7 +140,7 @@ const EditManageUsers = ({ userInfo, handleLogout }) => {
                                     </div>
                                     <div className="col-12 col-xl-4">
                                         <div className="justify-content-end d-flex">
-                                            <button type="button" className="btn btn-success" onClick={backManageUser}>
+                                            <button type="button" className="btn btn-success" onClick={goBack}>
                                                 Back
                                             </button>
                                         </div>

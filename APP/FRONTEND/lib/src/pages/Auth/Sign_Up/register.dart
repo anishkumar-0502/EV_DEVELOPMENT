@@ -86,7 +86,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _showAlertBanner(data['message']);}
       
     } catch (e) {
-      _showAlertBanner('An error occurred: $e');
+      _showAlertBanner('Internal server error ');
     }
   }
 

@@ -58,14 +58,14 @@ const EditUserList = ({ userInfo, handleLogout }) => {
     // Update manage user
     const editManageUser = async (e) => {
         e.preventDefault();
-    
+
         // Validate phone number
         const phoneRegex = /^\d{10}$/;
         if (!phone_no || !phoneRegex.test(phone_no)) {
             setErrorMessage('Phone number must be a 10-digit number.');
             return;
         }
-    
+
         // Validate password
         if (passwords) {
             const passwordRegex = /^\d{4}$/;
@@ -74,20 +74,27 @@ const EditUserList = ({ userInfo, handleLogout }) => {
                 return;
             }
         }
-    
+
+        const requestBody = {
+            user_id: dataItem?.user_id,
+            username: username,
+            phone_no: parseInt(phone_no),
+            password: passwords ? parseInt(passwords) : null,
+            status: selectStatus === 'true',
+            modified_by: userInfo.data.email_id,
+        };
+
+        if (dataItem.role_id === 5) {
+            requestBody.wallet_bal = parseInt(wallet_bal);
+        }
+
         try {
             const response = await fetch('/superadmin/UpdateUser', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: dataItem?.user_id,
-                    username: username,
-                    phone_no: parseInt(phone_no),
-                    password: parseInt(passwords),
-                    status: selectStatus === 'true',
-                    wallet_bal: parseInt(wallet_bal),
-                    modified_by: userInfo.data.email_id}),
+                body: JSON.stringify(requestBody),
             });
-    
+
             if (response.ok) {
                 Swal.fire({
                     title: 'User updated successfully',
@@ -110,6 +117,61 @@ const EditUserList = ({ userInfo, handleLogout }) => {
             });
         }
     };
+
+    // const editManageUser = async (e) => {
+    //     e.preventDefault();
+    
+    //     // Validate phone number
+    //     const phoneRegex = /^\d{10}$/;
+    //     if (!phone_no || !phoneRegex.test(phone_no)) {
+    //         setErrorMessage('Phone number must be a 10-digit number.');
+    //         return;
+    //     }
+    
+    //     // Validate password
+    //     if (passwords) {
+    //         const passwordRegex = /^\d{4}$/;
+    //         if (!passwordRegex.test(passwords)) {
+    //             setErrorMessage('Password must be a 4-digit number.');
+    //             return;
+    //         }
+    //     }
+    
+    //     try {
+    //         const response = await fetch('/superadmin/UpdateUser', {
+    //             method: 'POST',
+    //             headers: { 'Content-Type': 'application/json' },
+    //             body: JSON.stringify({ user_id: dataItem?.user_id,
+    //                 username: username,
+    //                 phone_no: parseInt(phone_no),
+    //                 password: parseInt(passwords),
+    //                 status: selectStatus === 'true',
+    //                 wallet_bal: parseInt(wallet_bal),
+    //                 modified_by: userInfo.data.email_id}),
+    //         });
+    
+    //         if (response.ok) {
+    //             Swal.fire({
+    //                 title: 'User updated successfully',
+    //                 icon: 'success',
+    //             });
+    //             editBackManageDevice();
+    //         } else {
+    //             const responseData = await response.json();
+    //             Swal.fire({
+    //                 title: 'Error',
+    //                 text: 'Failed to update user, ' + responseData.message,
+    //                 icon: 'error',
+    //             });
+    //         }
+    //     } catch (error) {
+    //         Swal.fire({
+    //             title: 'Error',
+    //             text: 'An error occurred while updating the user',
+    //             icon: 'error',
+    //         });
+    //     }
+    // };
     
     useEffect(() => {
         // Update initial values if dataItem changes
@@ -192,7 +254,7 @@ const EditUserList = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                         <div className="row">
-                                                            <div className="col-md-6">
+                                                            {dataItem.role_id === 5 &&  <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Wallet</label>
                                                                     <div className="col-sm-9">
@@ -203,7 +265,8 @@ const EditUserList = ({ userInfo, handleLogout }) => {
                                                                             setWalletBal(sanitizedValue);}} required  />
                                                                     </div>
                                                                 </div>
-                                                            </div>
+                                                            </div>}
+                                                           
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Status</label>

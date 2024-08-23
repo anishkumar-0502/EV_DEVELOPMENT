@@ -210,9 +210,9 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
     // }
 
     // View user list
-    const handleViewAssignTagID = (dataItem) => {
-        navigate('/associationadmin/AssignTagID', { state: { dataItem } });
-    };
+    // const handleViewAssignTagID = (dataItem) => {
+    //     navigate('/associationadmin/AssignTagID', { state: { dataItem } });
+    // };
     return (
         <div className='container-scroller'>
             {/* Header */}
@@ -334,7 +334,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                         <th>User Name</th>
                                                         <th>Email ID</th>
                                                         <th>Status</th>
-                                                        <th>Assign Tag ID</th>
+                                                        {/* <th>Assign Tag ID</th> */}
                                                         <th>Option</th>
                                                     </tr>
                                                 </thead>
@@ -356,9 +356,9 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                                 <td>{dataItem.username ? dataItem.username : '-'}</td>
                                                                 <td>{dataItem.email_id ? dataItem.email_id : '-'}</td>
                                                                 <td>{dataItem.status===true ? <span className="text-success">Active</span> : <span className="text-danger">DeActive</span>}</td>
-                                                                <td>
+                                                                {/* <td>
                                                                     <button type="button" className="btn btn-warning" onClick={() => handleViewAssignTagID(dataItem)} style={{marginBottom:'10px'}}>Assign</button><br/>
-                                                                </td>  
+                                                                </td>   */}
                                                                 <td>
                                                                     <button type="button" className="btn btn-outline-success btn-icon-text"  onClick={() => handleViewUser(dataItem)} style={{marginBottom:'10px', marginRight:'10px'}}><i className="mdi mdi-eye"></i>View</button> 
                                                                 </td>

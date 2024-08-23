@@ -25,7 +25,7 @@ const EditManageReseller = ({ userInfo, handleLogout }) => {
         reseller_name: dataItem?.reseller_name || '',
         reseller_phone_no: dataItem?.reseller_phone_no || '',
         reseller_email_id: dataItem?.reseller_email_id || '',
-        reseller_wallet: dataItem?.reseller_wallet || '',
+        reseller_wallet: dataItem?.reseller_wallet || '0',
         reseller_address: dataItem?.reseller_address || '',
         status: dataItem?.status ? 'true' : 'false',
     });
@@ -114,6 +114,7 @@ const EditManageReseller = ({ userInfo, handleLogout }) => {
             reseller_phone_no: dataItem?.reseller_phone_no || '',
             reseller_email_id: dataItem?.reseller_email_id || '',
             reseller_address: dataItem?.reseller_address || '',
+            reseller_wallet: dataItem?.reseller_wallet || '',
             status: dataItem?.status ? 'true' : 'false',
         });
     }, [dataItem]);

@@ -73,7 +73,7 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
     };
 
     // Charger list filter
-    const filteredChargers = selectedModel ? chargers.filter(charger => charger.model === selectedModel) : chargers;
+    const filteredChargers = selectedModel ? chargers.filter(charger => charger.charger_model === selectedModel) : chargers;
 
     // Assgin charger update
     const handleSubmit = async (e) => {
@@ -143,11 +143,11 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
                                         <div className="justify-content-end d-flex">
                                             <div className="dropdown">
                                                 <button className="btn btn-outline-warning btn-icon-text dropdown-toggle" type="button" style={{marginRight:'10px'}} id="dropdownMenuIconButton1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i className="ti-file btn-icon-prepend"></i>Select Model
+                                                    <i className="ti-file btn-icon-prepend"></i>Select Charger Model
                                                 </button>
                                                 <div className="dropdown-menu" aria-labelledby="dropdownMenuIconButton1">
-                                                    <h6 className="dropdown-header">Select Model</h6>
-                                                    {Array.from(new Set(chargers.map(item => item.model))).map((uniqueModel, index) => (
+                                                    <h6 className="dropdown-header">Select Charger Model</h6>
+                                                    {Array.from(new Set(chargers.map(item => item.charger_model))).map((uniqueModel, index) => (
                                                         <p key={index} className="dropdown-item" onClick={() => handleModelChange(uniqueModel)}>{uniqueModel} KW</p>
                                                     ))}
                                                 </div>
@@ -172,7 +172,7 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
                                                                 <div className="template-demo">
                                                                     <div className="form-group row">
                                                                         <div className="col-sm-9" style={{ margin: '0 auto' }}>
-                                                                            <select className="form-control" value={reseller_id} onChange={handleResellerChange}>
+                                                                            <select className="form-control" value={reseller_id} onChange={handleResellerChange} required>
                                                                                 <option value="">Select Reseller</option>
                                                                                 {resellers.map((roles, index) => (
                                                                                     <option key={index} value={roles.reseller_id}>{roles.reseller_name}</option>
@@ -191,7 +191,7 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
                                                                         {filteredChargers.map((charger) => (
                                                                             <div className="form-check form-check-success" key={charger.charger_id}>
                                                                                 <label className="form-check-label">
-                                                                                    <input style={{ textAlign: 'center' }} type="checkbox" className="form-check-input" value={charger.charger_id} onChange={handleChargerChange}/>
+                                                                                    <input style={{ textAlign: 'center' }} type="checkbox" className="form-check-input" value={charger.charger_id} onChange={handleChargerChange} required/>
                                                                                     {charger.charger_id}
                                                                                     <i className="input-helper"></i>
                                                                                 </label>

@@ -99,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
         final data = json.decode(response.body);
         _showAlertBanner(data['message']);}
     } catch (e) {
-      _showAlertBanner('An error occurred: $e');
+      _showAlertBanner('Internal server error ');
     }
   }
 

@@ -4,8 +4,10 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
 
 const Assignuser = ({ userInfo, handleLogout }) => {
+  const navigate = useNavigate();
   const [usersToUnassign, setUsersToUnassign] = useState([]);
   const [originalUsersToUnassign, setOriginalUsersToUnassign] = useState([]); // Store original users list
   const [loading, setLoading] = useState(true);
@@ -121,6 +123,10 @@ const Assignuser = ({ userInfo, handleLogout }) => {
     }
   };  
 
+  // View user list
+  const handleViewAssignTagID = (dataItem) => {
+    navigate('/associationadmin/AssignTagID', { state: { dataItem } });
+  };
   return (
     <div className='container-scroller'>
       {/* Header */}
@@ -223,6 +229,8 @@ const Assignuser = ({ userInfo, handleLogout }) => {
                             <th>Email ID</th>
                             <th>Phone</th>
                             <th>Status</th>
+                            <th>Tag ID</th>
+                            <th>Assign Tag ID</th>
                             <th>Option</th>
                           </tr>
                         </thead>                          
@@ -245,6 +253,10 @@ const Assignuser = ({ userInfo, handleLogout }) => {
                                   <td>{dataItem.email_id ? dataItem.email_id : '-'}</td>
                                   <td>{dataItem.phone_no ? dataItem.phone_no : '-'}</td>
                                   <td>{dataItem.status===true ? <span className="text-success">Active</span> : <span className="text-danger">DeActive</span>}</td>
+                                  <td>{dataItem.tag_id ? dataItem.tag_id : '-'}</td>
+                                  <td>
+                                    <button type="button" className="btn btn-warning" onClick={() => handleViewAssignTagID(dataItem)} style={{marginBottom:'10px'}}>Assign</button><br/>
+                                  </td>  
                                   <th>
                                     <button type="submit" className="btn btn-danger mr-2" onClick={() => handleSelectRemove(dataItem.user_id)}>Remove</button>
                                   </th>
@@ -252,7 +264,7 @@ const Assignuser = ({ userInfo, handleLogout }) => {
                               ))
                             ) : (
                               <tr>
-                                <td colSpan="7" style={{ marginTop: '50px', textAlign: 'center' }}>No Assign user's found</td>
+                                <td colSpan="8" style={{ marginTop: '50px', textAlign: 'center' }}>No Assign user's found</td>
                               </tr>
                             )
                           )}
