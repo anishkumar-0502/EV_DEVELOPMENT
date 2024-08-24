@@ -152,33 +152,47 @@ router.post('/endChargingSession', controllers.endChargingSession);
 router.post('/UpdateAutoStopSettings', async function(req, res) {
     try {
         const user_id = req.body.user_id;
-        const autostop_time = parseInt(req.body.updateUserTimeVal);
-        const autostop_unit = parseInt(req.body.updateUserUnitVal);
-        const autostop_price = parseInt(req.body.updateUserPriceVal);
-        const autostop_time_isChecked = req.body.updateUserTime_isChecked;
-        const autostop_unit_isChecked = req.body.updateUserUnit_isChecked;
-        const autostop_price_isChecked = req.body.updateUserPrice_isChecked;
 
-        if (!user_id || isNaN(autostop_time) || isNaN(autostop_unit) || isNaN(autostop_price)) {
-            const errorMessage = 'Update User - Values undefined or invalid';
+        // Validate user_id
+        if (!user_id) {
+            const errorMessage = 'User ID is required';
             return res.status(401).json({ message: errorMessage });
+        }
+
+        const updateFields = {};
+
+        // Dynamically add fields to updateFields if they are provided
+        if (req.body.updateUserTimeVal !== undefined) {
+            updateFields.autostop_time = parseInt(req.body.updateUserTimeVal);
+        }
+        if (req.body.updateUserUnitVal !== undefined) {
+            updateFields.autostop_unit = parseInt(req.body.updateUserUnitVal);
+        }
+        if (req.body.updateUserPriceVal !== undefined) {
+            updateFields.autostop_price = parseInt(req.body.updateUserPriceVal);
+        }
+        if (req.body.updateUserTime_isChecked !== undefined) {
+            updateFields.autostop_time_is_checked = req.body.updateUserTime_isChecked;
+        }
+        if (req.body.updateUserUnit_isChecked !== undefined) {
+            updateFields.autostop_unit_is_checked = req.body.updateUserUnit_isChecked;
+        }
+        if (req.body.updateUserPrice_isChecked !== undefined) {
+            updateFields.autostop_price_is_checked = req.body.updateUserPrice_isChecked;
+        }
+
+        // If no valid fields are provided, return an error
+        if (Object.keys(updateFields).length === 0) {
+            return res.status(400).json({ message: 'No valid fields provided for update' });
         }
 
         const db = await database.connectToDatabase();
         const usersCollection = db.collection('users');
+
         // Update the user details
         const result = await usersCollection.updateOne(
             { user_id: user_id }, 
-            { 
-                $set: { 
-                    autostop_time: autostop_time, 
-                    autostop_unit: autostop_unit, 
-                    autostop_price: autostop_price, 
-                    autostop_time_is_checked: autostop_time_isChecked, 
-                    autostop_unit_is_checked: autostop_unit_isChecked, 
-                    autostop_price_is_checked: autostop_price_isChecked
-                }
-            }
+            { $set: updateFields }
         );
         
         if (result.modifiedCount === 1) {
@@ -186,13 +200,14 @@ router.post('/UpdateAutoStopSettings', async function(req, res) {
             res.status(200).json({ message: `User ${user_id} details updated successfully` });
         } else {
             console.log(`User ${user_id} not found`);
-            res.status(404).json({ message: `User ${user_id} not found` });
+            res.status(404).json({ message: `User ${user_id} not found or no changes made` });
         }
     } catch (error) {
         console.error(error);
         res.status(500).send({ message: 'Internal Server Error' });
     }
 });
+
 
 
 // Export the router

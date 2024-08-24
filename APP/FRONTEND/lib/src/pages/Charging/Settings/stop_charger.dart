@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -54,9 +55,9 @@ class _StopChargerState extends State<StopCharger> {
           UserUnitVal = data['data']['autostop_unit']?.toString() ?? '';
           UserPriceVal = data['data']['autostop_price']?.toString() ?? '';
 
-          _controllers[0].text = UserTimeVal ?? '';
-          _controllers[1].text = UserUnitVal ?? '';
-          _controllers[2].text = UserPriceVal ?? '';
+          _controllers[0].text = UserTimeVal ?? "0";
+          _controllers[1].text = UserUnitVal ?? "0";
+          _controllers[2].text = UserPriceVal ?? "0";
         });
       } else {
         _showAlertBanner('Error fetching user details');
@@ -68,10 +69,15 @@ class _StopChargerState extends State<StopCharger> {
   }
 
   void handleUpdate() async {
+    // Assign default value of "0" if the field is empty
+    UserTimeVal = UserTimeVal?.isEmpty ?? true ? '0' : UserTimeVal;
+    UserUnitVal = UserUnitVal?.isEmpty ?? true ? '0' : UserUnitVal;
+    UserPriceVal = UserPriceVal?.isEmpty ?? true ? '0' : UserPriceVal;
+
     Map<String, dynamic> updatedData = {
-      'updateUserTimeVal': UserTimeVal,
-      'updateUserUnitVal': UserUnitVal,
-      'updateUserPriceVal': UserPriceVal,
+      'updateUserTimeVal': UserTimeVal ?? "0",
+      'updateUserUnitVal': UserUnitVal ?? "0",
+      'updateUserPriceVal': UserPriceVal ?? "0",
       'updateUserTime_isChecked': lightTime,
       'updateUserUnit_isChecked': lightUnit,
       'updateUserPrice_isChecked': lightPrice,
@@ -93,7 +99,7 @@ class _StopChargerState extends State<StopCharger> {
         _showAlertBanner('AutoStop settings updated successfully.', backgroundColor: Colors.green);
         Navigator.pop(context);
       } else {
-        _showAlertBanner('Error updating settings, please check the credentials.');
+        _showAlertBanner('No Changes! ,Error updating settings, please check the credentials.');
       }
     } catch (error) {
       print('Error:\n$error');
@@ -155,9 +161,9 @@ class _StopChargerState extends State<StopCharger> {
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
                   children: [
-                    SizedBox(height: 10),
-                    Center(
-                      child: const Text(
+                    const SizedBox(height: 10),
+                    const Center(
+                      child: Text(
                         'Auto Stop Based on:',
                         style: TextStyle(
                           fontSize: 23,
@@ -166,7 +172,7 @@ class _StopChargerState extends State<StopCharger> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     settingContainer(
                       lightTime,
                       'Time',
@@ -183,7 +189,7 @@ class _StopChargerState extends State<StopCharger> {
                         });
                       },
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     settingContainer(
                       lightUnit,
                       'Unit',
@@ -200,7 +206,7 @@ class _StopChargerState extends State<StopCharger> {
                         });
                       },
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     settingContainer(
                       lightPrice,
                       'Price',
@@ -217,12 +223,12 @@ class _StopChargerState extends State<StopCharger> {
                         });
                       },
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     CustomGradientButton(
                       buttonText: 'Save Changes',
                       onPressed: handleUpdate,
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -233,64 +239,80 @@ class _StopChargerState extends State<StopCharger> {
     );
   }
 
-  Container settingContainer(bool lightValue, String label, TextEditingController controller, String? value, ValueChanged<String> onChanged, ValueChanged<bool> onSwitchChanged) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Switch(
-              value: lightValue,
-              onChanged: onSwitchChanged,
-              activeTrackColor: Colors.green,
-              activeColor: Colors.white,
-              inactiveTrackColor: const Color.fromARGB(255, 39, 39, 39),
-              inactiveThumbColor: Colors.white,
+ Container settingContainer(bool lightValue, String label, TextEditingController controller, String? value, ValueChanged<String> onChanged, ValueChanged<bool> onSwitchChanged) {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFF1E1E1E),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Switch(
+            value: lightValue,
+            onChanged: onSwitchChanged,
+            activeTrackColor: Colors.green,
+            activeColor: Colors.white,
+            inactiveTrackColor: const Color.fromARGB(255, 39, 39, 39),
+            inactiveThumbColor: Colors.white,
+          ),
+          Text(
+            '$label      ',
+            style: const TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
-            Text(
-              '$label      ',
-              style: const TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(
-              width: 60,
-              child: TextField(
-                controller: controller,
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                onChanged: onChanged,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.green),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.green),
-                  ),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.green),
-                  ),
+          ),
+          SizedBox(
+            width: 60,
+            child: TextField(
+              controller: controller,
+              textAlign: TextAlign.center,
+              keyboardType: label == 'Unit' ? TextInputType.numberWithOptions(decimal: true) : TextInputType.number,
+              inputFormatters: <TextInputFormatter>[
+                if (label == 'Time') ...[
+                  FilteringTextInputFormatter.digitsOnly, // Only digits allowed
+                  LengthLimitingTextInputFormatter(5), // Max length for Time
+                ],
+                if (label == 'Unit')
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d{0,4}(\.\d{0,2})?$')), // Decimal with up to 4 digits before and 2 digits after the decimal
+                if (label == 'Price')
+                  FilteringTextInputFormatter.digitsOnly, // Only digits for Price
+              ],
+              onChanged: (val) {
+                onChanged(val);
+                if (label == 'Price' && int.tryParse(val) != null && int.parse(val) > 10000) {
+                  controller.text = '10000';
+                  controller.selection = TextSelection.fromPosition(TextPosition(offset: controller.text.length));
+                }
+              },
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.green),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.green),
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.green),
                 ),
               ),
             ),
-            Text(
-              label == 'Price' ? 'INR' : (label == 'Time' ? "min's" : 'unit'),
-              style: const TextStyle(fontSize: 17, color: Colors.white),
-            ),
-          ],
-        ),
+          ),
+          Text(
+            label == 'Price' ? 'INR' : (label == 'Time' ? "min's" : 'unit'),
+            style: const TextStyle(fontSize: 17, color: Colors.white),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class CustomGradientDivider extends StatelessWidget {

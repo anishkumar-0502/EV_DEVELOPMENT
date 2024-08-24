@@ -26,7 +26,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isPasswordInteracted = false;
   bool _isPasswordVisible = false;
   String? _alertMessage;
-
+  String? SussessMsg;
   @override
   void initState() {
     super.initState();
@@ -60,37 +60,41 @@ class _RegisterPageState extends State<RegisterPage> {
     final usernameRegex = RegExp(r'^[a-zA-Z]+$');
     return usernameRegex.hasMatch(value);
   }
+void _handleRegister() async {
+  final String username = _usernameController.text;
+  final String email = _emailController.text;
+  final String phone = _phoneController.text;
+  final String password = _passwordController.text;
 
-  void _handleRegister() async {
-    final String username = _usernameController.text;
-    final String email = _emailController.text;
-    final String phone = _phoneController.text;
-    final String password = _passwordController.text;
-
-    try {
-      var response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/profile/RegisterNewUser'),
-        headers: {'Content-Type': 'application/json'}, // Ensure content type is set
-        body: jsonEncode({
-          'username': username,
-          'email_id': email,
-          'phone_no': phone,
-          'password': password,
-        }),
+  try {
+    var response = await http.post(
+      Uri.parse('http://122.166.210.142:9098/profile/RegisterNewUser'),
+      headers: {'Content-Type': 'application/json'}, // Ensure content type is set
+      body: jsonEncode({
+        'username': username,
+        'email_id': email,
+        'phone_no': phone,
+        'password': password,
+      }),
+    );
+    if (response.statusCode == 200) {
+      _showAlertBannerSussess("User successfully registered");
+      // Handle successful registration
+      await Future.delayed(const Duration(seconds: 3)); // Wait for 3 seconds
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
       );
-      if (response.statusCode == 200) {
-        // Handle successful registration
-        Navigator.pop(context); // Assuming you want to pop back after registration
-      } else {
-        final data = json.decode(response.body);
-        _showAlertBanner(data['message']);}
-      
-    } catch (e) {
-      _showAlertBanner('Internal server error ');
+    } else {
+      final data = json.decode(response.body);
+      _showAlertBanner(data['message']);
     }
+  } catch (e) {
+    _showAlertBanner('Internal server error');
   }
+}
 
-  void _showAlertBanner(String message) {
+  void _showAlertBanner(String message)  {
     setState(() {
       _alertMessage = message;
     });
@@ -100,6 +104,18 @@ class _RegisterPageState extends State<RegisterPage> {
       });
     });
   }
+
+    void _showAlertBannerSussess(String message) async {
+    setState(() {
+      SussessMsg = message;
+    });
+    Future.delayed(const Duration(seconds: 3), () {
+      setState(() {
+        SussessMsg = null;
+      });
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -114,6 +130,8 @@ class _RegisterPageState extends State<RegisterPage> {
         children: [
           if (_alertMessage != null)
             AlertBanner(message: _alertMessage!),
+          if (SussessMsg != null)
+            SussessBanner(message: SussessMsg!),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -292,7 +310,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         }
                         return null;
                       },
-                    ),
+                      inputFormatters: <TextInputFormatter>[
+                        FilteringTextInputFormatter.digitsOnly, // Ensures only digits are allowed
+                      ],
+                  ),
+
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _isButtonEnabled ? _handleRegister : null,

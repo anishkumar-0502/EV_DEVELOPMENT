@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:provider/provider.dart';
@@ -352,28 +353,32 @@ class _EditUserModalState extends State<EditUserModal> {
                         ),
 
                         const SizedBox(height: 20),
-                          IntlPhoneField(
-                            controller: _phoneController,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: const Color.fromARGB(200, 58, 58, 60),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide.none,
-                              ),
-                              hintText: 'Phone Number',
-                              hintStyle: const TextStyle(color: Colors.grey),
+                        IntlPhoneField(
+                          controller: _phoneController,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color.fromARGB(200, 58, 58, 60),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide.none,
                             ),
-                            style: const TextStyle(color: Colors.white),
-                            initialCountryCode: 'IN',
-                            onChanged: (value) {
-                              setState(() {
-                              });
-                            },
-                            onCountryChanged: (country) {
-                              print('Country changed to: ' + country.name);
-                            },
+                            hintText: 'Phone Number',
+                            hintStyle: const TextStyle(color: Colors.grey),
                           ),
+                          style: const TextStyle(color: Colors.white),
+                          initialCountryCode: 'IN',
+                          onChanged: (value) {
+                            setState(() {
+                              // Any additional logic you want to add on change
+                            });
+                          },
+                          onCountryChanged: (country) {
+                            print('Country changed to: ' + country.name);
+                          },
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly, // This ensures only digits are allowed
+                          ],
+                        ),
 
 
                           const SizedBox(height: 20),

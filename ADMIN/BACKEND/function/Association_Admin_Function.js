@@ -624,6 +624,10 @@ async function AddUserToAssociation(req, res) {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        if(existingUser.assigned_association !== null){
+            return res.status(404).json({ message: 'User is already assigned' });
+        }
+
         // Update the user details with the association ID
         const result = await usersCollection.updateOne(
             { email_id: email_id },
@@ -749,17 +753,19 @@ async function RemoveUserFromAssociation(req, res) {
             return res.status(404).json({ message: 'User does not exits' });
         }
 
-        const tagResult = await tagCollection.updateOne(
-            { id: user.tag_id },
-            {
-                $set: {
-                    tag_id_assigned: false
+        if(user.tag_id !== null){
+            const tagResult = await tagCollection.updateOne(
+                { id: user.tag_id },
+                {
+                    $set: {
+                        tag_id_assigned: false
+                    }
                 }
+            );
+    
+            if (tagResult.modifiedCount === 0) {
+                throw new Error('Failed to remove tag id assigned');
             }
-        );
-
-        if (tagResult.modifiedCount === 0) {
-            throw new Error('Failed to remove tag id assigned');
         }
 
         // Update the user's association_id to null
