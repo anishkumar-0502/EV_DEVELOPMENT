@@ -900,7 +900,7 @@ async function FetchTagIdToAssign(req, res) {
         const tagsCollection = db.collection("tag_id");
 
         // Fetch all tag IDs
-        const tags = await tagsCollection.find({association_id: association_id, tag_id_assigned: false}).toArray();
+        const tags = await tagsCollection.find({association_id: association_id, tag_id_assigned: false, status: true}).toArray();
         // Check if tags are found
         if (!tags || tags.length === 0) {
             const message = "No tags found";
