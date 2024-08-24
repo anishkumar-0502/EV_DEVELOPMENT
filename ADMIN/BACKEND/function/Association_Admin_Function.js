@@ -925,12 +925,18 @@ async function CreateTagID(req, res) {
         // Validate required fields
         if (!tag_id || !tag_id_expiry_date) {
             return res.status(400).json({ message: 'Tag ID and Expiry Date are required' });
-        }else if(!association_id){
-            return res.status(400).json({ message: 'Association ID are required' });
+        } else if (!association_id) {
+            return res.status(400).json({ message: 'Association ID is required' });
         }
 
         const db = await database.connectToDatabase();
         const tagsCollection = db.collection("tag_id");
+
+        // Check if the tag_id already exists
+        const existingTag = await tagsCollection.findOne({ tag_id: tag_id });
+        if (existingTag) {
+            return res.status(400).json({ message: 'Tag ID already exists' });
+        }
 
         // Fetch the highest current ID and increment by 1
         const lastTag = await tagsCollection.find().sort({ id: -1 }).limit(1).toArray();
@@ -949,8 +955,7 @@ async function CreateTagID(req, res) {
         return res.status(200).json({ status: 'Success', message: 'Tag ID successfully created', id: newId });
     } catch (error) {
         console.error(`Error creating tag ID: ${error}`);
-        logger.error(`Error creating tag ID: ${error}`);
-        return res.status(500).json({ message: 'Internal Server Error' });
+        logger.error
     }
 }
 

@@ -174,7 +174,6 @@ class _WalletPageState extends State<WalletPage> {
           fetchWallet(); // Fetch wallet balance after successful payment
           fetchTransactionDetails(); // Fetch transaction details after successful payment
         });
-
       } else {
         print('Payment details not saved!');
       }
@@ -375,7 +374,8 @@ class _WalletPageState extends State<WalletPage> {
                       ),
                       keyboardType: TextInputType.number,
                       inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.digitsOnly
+                        FilteringTextInputFormatter.digitsOnly,
+                        LimitRangeTextInputFormatter(min: 0, max: 10000), // Restricting the value between 0 and 10000
                       ],
                     ),
                   ),
@@ -736,5 +736,26 @@ class HelpModal extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+class LimitRangeTextInputFormatter extends TextInputFormatter {
+  final int min;
+  final int max;
+
+  LimitRangeTextInputFormatter({required this.min, required this.max});
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    final int value = int.parse(newValue.text);
+    if (value < min || value > max) {
+      return oldValue;
+    }
+
+    return newValue;
   }
 }
