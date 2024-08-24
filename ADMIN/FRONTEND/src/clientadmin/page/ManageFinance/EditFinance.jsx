@@ -32,7 +32,8 @@ const EditFinance = ({ userInfo, handleLogout }) => {
 
         // Eb Charges validation
         const ebChargesRegex = /^\d+$/;
-        if (!ebChargesRegex.test(eb_charges.trim())) {
+        console.log(eb_charges);
+        if (!ebChargesRegex.test(eb_charges)) {
             setErrorMessage('Eb charges must be a number.');
             return;
         }
@@ -62,7 +63,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                     showConfirmButton: false,
                     timer: 1500
                 });
-                navigate('/clientadmin/ViewFinance');
+                navigate('/clientadmin/ManageFinance');
             } else {
                 const responseData = await response.json();
                 Swal.fire({
@@ -139,7 +140,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                                             className="form-control"
                                                                             name="eb_charges"
                                                                             value={eb_charges}
-                                                                            onChange={(e) => setEbCharges(e.target.value)}
+                                                                            onChange={(e) => setEbCharges(e.target.value.trim())}
                                                                             required
                                                                         />
                                                                     </div>
