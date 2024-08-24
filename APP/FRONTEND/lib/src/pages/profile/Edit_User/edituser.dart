@@ -118,7 +118,7 @@ class _EditUserModalState extends State<EditUserModal> {
         Navigator.pop(context, 'refresh');
       } else {
         final responseData = jsonDecode(response.body);
-        final errorMessage = responseData['error_message'] ?? "Failed to update; ensure your credentials are correct.";
+        final errorMessage = responseData['error_message'] ?? "Failed to update! No changes are made, kindly check the credentials";
         _showAlertBanner(errorMessage);
       }
     } catch (e) {
