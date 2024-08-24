@@ -63,7 +63,7 @@ class _StopChargerState extends State<StopCharger> {
       }
     } catch (error) {
       print('Error fetching user details: $error');
-      _showAlertBanner('Internal server error ');
+      _showAlertBanner('Error fetching user details');
     }
   }
 
