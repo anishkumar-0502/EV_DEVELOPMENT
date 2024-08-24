@@ -13,11 +13,7 @@ async function searchCharger(req, res) {
 
         const chargerDetails = await evDetailsCollection.findOne({ charger_id: ChargerID,  status: true });
 
-        if(chargerDetails.assigned_association_id === null){
-            const errorMessage = 'Device ID not found !';
-            return res.status(404).json({ message: errorMessage });
-        }
-
+  
         if (!chargerDetails || chargerDetails.charger_accessibility === !null) {
             const errorMessage = 'Device ID not found !';
             return res.status(404).json({ message: errorMessage });
@@ -320,8 +316,27 @@ async function getAllChargersWithStatusAndPrice(req, res) {
             // Fetch the unit price using the finance ID
             let unitPrice = null;
             if (financeId) {
+                // Fetch the finance record using the finance ID
                 const financeRecord = await financeDetailsCollection.findOne({ finance_id: financeId });
-                unitPrice = financeRecord ? financeRecord.eb_charges : null;
+        
+                if (financeRecord) {
+                    // Calculate the total percentage from finance details
+                    const totalPercentage = [
+                        financeRecord.app_charges,
+                        financeRecord.other_charges,
+                        financeRecord.parking_charges,
+                        financeRecord.rent_charges,
+                        financeRecord.open_a_eb_charges,
+                        financeRecord.open_other_charges
+                    ].reduce((sum, charge) => sum + parseFloat(charge || 0), 0);
+        
+                    // Calculate the unit price based on the finance record
+                    const pricePerUnit = parseFloat(financeRecord.eb_charges || 0);
+                    const totalPrice = pricePerUnit + (pricePerUnit * totalPercentage / 100);
+        
+                    // Format the total price to 2 decimal places
+                    unitPrice = totalPrice.toFixed(2);
+                }
             }
 
             return {
