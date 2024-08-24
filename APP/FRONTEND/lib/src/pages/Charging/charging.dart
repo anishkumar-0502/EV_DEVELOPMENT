@@ -340,7 +340,7 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
       //   ),
       // );
       AlertBanner(
-        message:'Failed to update charging details: $error' ,
+        message:'Failed to update charging details' ,
         backgroundColor: Colors.red,
       );
 

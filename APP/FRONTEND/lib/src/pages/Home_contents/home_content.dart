@@ -173,7 +173,7 @@ void initState() {
         showErrorDialog(context, errorData['message']);
       }
     } catch (error) {
-      showErrorDialog(context, error.toString());
+      showErrorDialog(context, 'Internal server error ');
     } finally {
       setState(() {
         isSearching = false; // Reset the flag
@@ -213,7 +213,7 @@ void initState() {
         showErrorDialog(context, errorData['message']);
       }
     } catch (error) {
-      showErrorDialog(context, error.toString());
+      showErrorDialog(context, 'Internal server error ');
     }
   }
 
@@ -278,7 +278,7 @@ void initState() {
         });
       }
     } catch (error) {
-      showErrorDialog(context, error.toString());
+      showErrorDialog(context, 'Internal server error ');
       setState(() {
         isLoading = false; // Set loading to false
       });
@@ -317,7 +317,7 @@ Future<void> fetchAllChargers() async {
       });
     }
   } catch (error) {
-    showErrorDialog(context, error.toString());
+      showErrorDialog(context, 'Internal server error ');
     setState(() {
       isLoading = false; // Set loading to false
     });

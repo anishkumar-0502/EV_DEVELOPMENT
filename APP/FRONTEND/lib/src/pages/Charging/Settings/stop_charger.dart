@@ -97,7 +97,7 @@ class _StopChargerState extends State<StopCharger> {
       }
     } catch (error) {
       print('Error:\n$error');
-      _showAlertBanner('Error updating settings');
+      _showAlertBanner('Internal server error ');
     }
   }
 
