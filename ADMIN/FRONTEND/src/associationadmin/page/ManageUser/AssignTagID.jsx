@@ -38,9 +38,13 @@ const AssignTagID = ({ userInfo, handleLogout }) => {
         }
     }, [location]);
     // Fetch Tagid
+
     const fetchTagID = async () => {
         try {
-            const res = await axios.get('/associationadmin/FetchAllTagIDs');
+            const res = await axios.post('/associationadmin/FetchTagIdToAssign', {
+                association_id: userInfo.data.association_id,
+                user_id: userInfo.data.user_id
+            });
             setData(res.data.data);
             setLoading(false);
         } catch (err) {

@@ -14,6 +14,7 @@ const Assignuser = ({ userInfo, handleLogout }) => {
   const [error, setError] = useState(null);
   const [email_id, setAssEmail] = useState();
   const [phone_no, setAssPhone] = useState();
+  const [errorMessage, setErrorMessage] = useState('');
 
   // fetch user to unassign data
   const fetchUsersToUnassign = useCallback(async () => {
@@ -76,6 +77,20 @@ const Assignuser = ({ userInfo, handleLogout }) => {
 
   const handleAssuserSubmits = async (e) => {
     e.preventDefault();
+
+    // phone number validation
+    const passwordRegex = /^\d{10}$/;
+    if (!phone_no || !passwordRegex.test(phone_no)) {
+      setErrorMessage('Phone number must be a 10-digit number.');
+      
+      // Set timeout to clear the error message after 1 minute (5000 milliseconds)
+      setTimeout(() => {
+        setErrorMessage('');
+      }, 5000);
+
+      return;
+    }
+
     try {
       const response = await axios.post('/associationadmin/AssUserToAssociation', {
         association_id: userInfo.data.association_id,
@@ -169,6 +184,7 @@ const Assignuser = ({ userInfo, handleLogout }) => {
                                     <div className="form-group">
                                       <label htmlFor="exampleInputEmail1">Email ID</label>
                                       <input type="email" className="form-control" placeholder="Enter Email ID" value={email_id} 
+                                      
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           // Remove spaces and invalid characters
@@ -192,6 +208,7 @@ const Assignuser = ({ userInfo, handleLogout }) => {
                                   <div className="col-sm-2" style={{paddingTop:'30px'}}>
                                     <button type="submit" className="btn btn-primary btn-block">Assign</button>
                                   </div>
+                                  {errorMessage && <p className="text-danger">{errorMessage}</p>}
                                 </div>
                               </div>
                             </div>
@@ -255,7 +272,14 @@ const Assignuser = ({ userInfo, handleLogout }) => {
                                   <td>{dataItem.status===true ? <span className="text-success">Active</span> : <span className="text-danger">DeActive</span>}</td>
                                   <td>{dataItem.tag_id ? dataItem.tag_id : '-'}</td>
                                   <td>
-                                    <button type="button" className="btn btn-warning" onClick={() => handleViewAssignTagID(dataItem)} style={{marginBottom:'10px'}}>Assign</button><br/>
+                                  <button
+                                      type="button"
+                                      className="btn btn-warning"
+                                      onClick={() => handleViewAssignTagID(dataItem)}
+                                      style={{ marginBottom: '10px' }}
+                                  >
+                                      {dataItem.tag_id === null ? 'Assign' : 'Re-assign'}
+                                  </button>
                                   </td>  
                                   <th>
                                     <button type="submit" className="btn btn-danger mr-2" onClick={() => handleSelectRemove(dataItem.user_id)}>Remove</button>

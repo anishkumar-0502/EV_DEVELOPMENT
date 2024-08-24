@@ -16,10 +16,12 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
     const [initialTagID, setInitialTagID] = useState('');
     const [initialTagIDExpiryDateD, setInitialTagIDExpiryDate]= useState('');
 
-    // Fetch Tagid
+    // Fetch Tagid // updated by vivek on 24 aug
     const fetchTagID = async () => {
         try {
-            const res = await axios.get('/associationadmin/FetchAllTagIDs');
+            const res = await axios.post('/associationadmin/FetchAllTagIDs', {
+                association_id: userInfo.data.association_id
+            });
             setData(res.data.data);
             setLoading(false);
         } catch (err) {
@@ -28,6 +30,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
             setLoading(false);
         }
     };
+    
 
     useEffect(() => {
         if (!fetchUserRoleCalled.current) {
@@ -110,7 +113,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ tag_id:add_tag_id, tag_id_expiry_date:add_tag_id_expiry_date, created_by: userInfo.data.email_id }),
+                body: JSON.stringify({ tag_id:add_tag_id, tag_id_expiry_date:add_tag_id_expiry_date, created_by: userInfo.data.email_id, association_id: userInfo.data.association_id }),
             });
             if (response.ok) {
                 Swal.fire({

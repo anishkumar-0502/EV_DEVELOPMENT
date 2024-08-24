@@ -740,6 +740,7 @@ async function RemoveUserFromAssociation(req, res) {
 
         const db = await database.connectToDatabase();
         const usersCollection = db.collection("users");
+        const tagCollection = db.collection("tag_id");
 
         // Find the user to ensure they exist
         const user = await usersCollection.findOne({ user_id: user_id , assigned_association:association_id});
@@ -748,12 +749,26 @@ async function RemoveUserFromAssociation(req, res) {
             return res.status(404).json({ message: 'User does not exits' });
         }
 
+        const tagResult = await tagCollection.updateOne(
+            { id: user.tag_id },
+            {
+                $set: {
+                    tag_id_assigned: false
+                }
+            }
+        );
+
+        if (tagResult.modifiedCount === 0) {
+            throw new Error('Failed to remove tag id assigned');
+        }
+
         // Update the user's association_id to null
         const result = await usersCollection.updateOne(
             { user_id: user_id },
             {
                 $set: {
                     assigned_association: null,
+                    tag_id: null,
                     modified_date: new Date(),
                     modified_by: modified_by
                 }
@@ -779,7 +794,6 @@ async function RemoveUserFromAssociation(req, res) {
 async function AssignTagIdToUser(req, res, next) {
     try {
         const { user_id, tag_id, modified_by } = req.body;
-        console.log(req.body)
 
         // Validate required fields
         if (!user_id || !tag_id || !modified_by) {
@@ -802,6 +816,20 @@ async function AssignTagIdToUser(req, res, next) {
             return res.status(404).json({ message: 'Tag ID does not exist or is not active' });
         }
 
+        if(existingUser.tag_id){
+            const Tag_id_result_to_false = await tagIdCollection.updateOne(
+                { id: existingUser.tag_id },
+                {
+                    $set: {
+                        tag_id_assigned: false
+                    }
+                }
+            );
+            if ( Tag_id_result_to_false.modifiedCount === 1) {
+                console.log('assigned tag id set to false');
+            }
+        }
+
         // Assign the tag ID to the user
         const result = await usersCollection.updateOne(
             { user_id: user_id },
@@ -814,7 +842,16 @@ async function AssignTagIdToUser(req, res, next) {
             }
         );
 
-        if (result.modifiedCount === 1) {
+        const Tag_id_result = await tagIdCollection.updateOne(
+            { tag_id: tag_id },
+            {
+                $set: {
+                    tag_id_assigned: true
+                }
+            }
+        );
+
+        if (result.modifiedCount === 1 && Tag_id_result.modifiedCount === 1) {
             next();
         } else {
             return res.status(500).json({ message: 'Failed to assign tag ID to user' });
@@ -827,16 +864,43 @@ async function AssignTagIdToUser(req, res, next) {
     }
 }
 
-
 //MANAGE TAG ID 
 // FetchAllTagIDs
 async function FetchAllTagIDs(req, res) {
     try {
+        const { association_id } = req.body;
+
         const db = await database.connectToDatabase();
         const tagsCollection = db.collection("tag_id");
 
         // Fetch all tag IDs
-        const tags = await tagsCollection.find({}).toArray();
+        const tags = await tagsCollection.find({association_id: association_id}).toArray();
+        // Check if tags are found
+        if (!tags || tags.length === 0) {
+            const message = "No tags found";
+            const status = 404;
+            return {message, status};
+        }
+
+        // Return the tags data
+        return tags;
+    } catch (error) {
+        console.error(`Error fetching tag IDs: ${error}`);
+        logger.error(`Error fetching tag IDs: ${error}`);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+}
+
+//FetchTagIdToAssign
+async function FetchTagIdToAssign(req, res) {
+    try {
+        const { association_id, user_id } = req.body;
+
+        const db = await database.connectToDatabase();
+        const tagsCollection = db.collection("tag_id");
+
+        // Fetch all tag IDs
+        const tags = await tagsCollection.find({association_id: association_id, tag_id_assigned: false}).toArray();
         // Check if tags are found
         if (!tags || tags.length === 0) {
             const message = "No tags found";
@@ -856,12 +920,13 @@ async function FetchAllTagIDs(req, res) {
 // CreateTagID
 async function CreateTagID(req, res) {
     try {
-        const { tag_id, tag_id_expiry_date } = req.body;
-        console.log(req.body)
+        const { tag_id, tag_id_expiry_date, association_id } = req.body;
 
         // Validate required fields
         if (!tag_id || !tag_id_expiry_date) {
             return res.status(400).json({ message: 'Tag ID and Expiry Date are required' });
+        }else if(!association_id){
+            return res.status(400).json({ message: 'Association ID are required' });
         }
 
         const db = await database.connectToDatabase();
@@ -874,8 +939,10 @@ async function CreateTagID(req, res) {
         // Insert the new tag_id
         await tagsCollection.insertOne({
             id: newId,
+            association_id: parseInt(association_id),
             tag_id: tag_id,
             tag_id_expiry_date: new Date(tag_id_expiry_date),
+            tag_id_assigned: false,
             status: true
         });
 
@@ -1005,4 +1072,5 @@ module.exports = {
     DeactivateTagID,
     //ASSGIN TAG ID TO USER
     AssignTagIdToUser,
+    FetchTagIdToAssign,
 }
