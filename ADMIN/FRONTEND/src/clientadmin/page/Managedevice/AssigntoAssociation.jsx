@@ -100,11 +100,20 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
 
     // set commission
     const handleCommissionChange = (e) => {
-        const value = e.target.value;
-        // Remove any non-digit characters
-        const cleanedValue = value.replace(/[^0-9]/g, '');
-        setCommission(cleanedValue);
+        let value = e.target.value;
+    
+        // Remove any non-digit or non-decimal characters
+        value = value.replace(/[^0-9.]/g, '');
+    
+        // Ensure only one decimal point is allowed
+        const parts = value.split('.');
+        if (parts.length > 2) {
+            value = parts[0] + '.' + parts[1]; // Combine the first two parts if more than one decimal point is present
+        }
+    
+        setCommission(value);
     };
+    
 
     // Handle unit price selection
     const handleFinanceChange = (e) => {
@@ -270,14 +279,20 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Commission</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control"
-                                                                            value={commission}
-                                                                            onChange={handleCommissionChange}
-                                                                        />
+                                                                    <label className="col-sm-3 col-form-label">Commission </label>
+                                                                    <div className="col-sm-4">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control"
+                                                                                maxLength={6}
+                                                                                value={commission}
+                                                                                onChange={handleCommissionChange}
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -336,7 +351,7 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Select Unit Price</label>
-                                                                    <div className="col-sm-9">
+                                                                    <div className="col-sm-4">
                                                                         <select
                                                                             className="form-control"
                                                                             value={selectedFinanceId}

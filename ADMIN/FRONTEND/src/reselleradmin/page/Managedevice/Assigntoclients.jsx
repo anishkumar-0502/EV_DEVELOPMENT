@@ -77,12 +77,20 @@ const Assigntoclients = ({ userInfo, handleLogout }) => {
 
     // handle commission
     const handleCommissionChange = (e) => {
-        const value = e.target.value;
-        // Remove any non-digit characters
-        const cleanedValue = value.replace(/[^0-9]/g, '');
-        setCommission(cleanedValue);
+        let value = e.target.value;
+    
+        // Remove any non-digit or non-decimal characters
+        value = value.replace(/[^0-9.]/g, '');
+    
+        // Ensure only one decimal point is allowed
+        const parts = value.split('.');
+        if (parts.length > 2) {
+            value = parts[0] + '.' + parts[1]; // Combine the first two parts if more than one decimal point is present
+        }
+    
+        setCommission(value);
     };
-
+    
     // submit data
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -236,6 +244,27 @@ const Assigntoclients = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
+                                                                    <label className="col-sm-3 col-form-label">Commission</label>
+                                                                    <div className="col-sm-4">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control"
+                                                                                maxLength={6}
+                                                                                value={commission}
+                                                                                onChange={handleCommissionChange}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="row">
+                                                            <div className="col-md-6">
+                                                                <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Select Chargers</label>
                                                                     <div className="col-sm-9">
                                                                         {chargersLoading ? (
@@ -281,22 +310,6 @@ const Assigntoclients = ({ userInfo, handleLogout }) => {
                                                                                 </div>
                                                                             </div>
                                                                         )}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="row">
-                                                            <div className="col-md-6">
-                                                                <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Commission</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control"
-                                                                            value={commission}
-                                                                            
-                                                                            onChange={handleCommissionChange}
-                                                                        />
                                                                     </div>
                                                                 </div>
                                                             </div>
