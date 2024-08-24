@@ -372,12 +372,19 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                                 <h4 className="card-title">Edit Tag D</h4>
                                                             </div>
                                                             <div className="table-responsive pt-3">
-                                                                <div className="input-group">
-                                                                    <div className="input-group-prepend">
-                                                                        <span className="input-group-text" style={{color:'black', width:'125px'}}>Tag ID</span>
-                                                                    </div>
-                                                                    <input type="text" className="form-control" placeholder="Tag ID" value={tag_id} maxLength={12} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^a-zA-Z0-9]/g, ''); setEditTagID(sanitizedValue);}} required/>
+                                                            <div className="input-group">
+                                                                <div className="input-group-prepend">
+                                                                    <span className="input-group-text" style={{ color: 'black', width: '125px' }}>Tag ID</span>
                                                                 </div>
+                                                                <input
+                                                                    type="text"
+                                                                    className="form-control"
+                                                                    placeholder="Tag ID"
+                                                                    value={tag_id}
+                                                                    maxLength={12}
+                                                                    readOnly
+                                                                />
+                                                            </div>
                                                             </div>
                                                             <div className="table-responsive pt-3">
                                                                 <div className="input-group">
