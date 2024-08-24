@@ -130,6 +130,7 @@ void initState() {
     setState(() {
       isSearching = true; // Set the flag to true
     });
+      print('handleSearchRequest');
 
     try {
       final response = await http.post(
@@ -227,7 +228,7 @@ void initState() {
       setState(() {
         searchChargerID = scannedCode;
       });
-      handleSearchRequest(scannedCode);
+      // handleSearchRequest(scannedCode);
     }
   }
 

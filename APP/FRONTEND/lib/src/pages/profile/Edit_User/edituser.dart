@@ -122,7 +122,7 @@ class _EditUserModalState extends State<EditUserModal> {
         _showAlertBanner(errorMessage);
       }
     } catch (e) {
-      _showAlertBanner('An error occurred: $e');
+      _showAlertBanner( 'Internal server error ');
     }
   }
 
