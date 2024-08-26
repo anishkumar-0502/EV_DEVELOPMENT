@@ -951,13 +951,14 @@ async function FetchCommissionAmtClient(req, res) {
 
 //MANAGE FINANCE
 // FetchFinanceDetails
-async function FetchFinanceDetails() {
+async function FetchFinanceDetails(req) {
     try {
+        const{client_id} = req.body;
         const db = await database.connectToDatabase();
         const Collection = db.collection("finance_details");
 
         // Fetch all finance details documents
-        const financeDetailsList = await Collection.find().toArray();
+        const financeDetailsList = await Collection.find({client_id: client_id}).toArray();
 
         // Prepare the list of finance data with total prices
         const financeDataList = financeDetailsList.map((financeDetails) => {
