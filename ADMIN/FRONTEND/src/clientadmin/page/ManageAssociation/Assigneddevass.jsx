@@ -3,6 +3,7 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { useLocation, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 const Assigneddevass = ({ userInfo, handleLogout }) => {
     const navigate = useNavigate();
@@ -14,30 +15,30 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
 
     const fetchChargerDetailsCalled = useRef(false);
 
+    const fetchChargerDetails = async () => {
+        try {
+            const response = await fetch('/clientadmin/FetchChargerDetailsWithSession', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ association_id }),
+            });
+            if (response.ok) {
+                const responseData = await response.json();
+                setOriginalData(responseData.data);
+                setFilteredData(responseData.data); // Initialize filtered data with all data
+            } else {
+                console.error('Failed to fetch assigned chargers');
+            }
+        } catch (error) {
+            console.error('An error occurred while fetching assigned chargers');
+            console.error('Error:', error);
+        }
+    };
+
     // fetch charger details
     useEffect(() => {
-        const fetchChargerDetails = async () => {
-            try {
-                const response = await fetch('/clientadmin/FetchChargerDetailsWithSession', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ association_id }),
-                });
-                if (response.ok) {
-                    const responseData = await response.json();
-                    setOriginalData(responseData.data);
-                    setFilteredData(responseData.data); // Initialize filtered data with all data
-                } else {
-                    console.error('Failed to fetch assigned chargers');
-                }
-            } catch (error) {
-                console.error('An error occurred while fetching assigned chargers');
-                console.error('Error:', error);
-            }
-        };
-
         if (!fetchChargerDetailsCalled.current && association_id) {
             fetchChargerDetails();
             fetchChargerDetailsCalled.current = true; // Mark fetchChargerDetails as called
@@ -83,6 +84,86 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
         navigate('/clientadmin/assignfinance', { state: { charger_id, finance_id} }); // Navigate to assignfinance page with charger_id
     };
 
+    // Edit user role start 
+    const [initialClientCommission, setInitialClientCommission] = useState('');
+    const [showEditForm, setShowEditForm] = useState(false);
+    const [dataItem, setEditDataItem] = useState(null);
+    
+    const handleEditUser = (item) => {
+        setEditDataItem(item);
+        setEditRellComm(item.client_commission); // Set role name for editing
+        setInitialClientCommission(item.client_commission); // Set initial value for comparison
+        setShowEditForm(true); // Open the form
+    };
+ 
+    const closeEditModal = () => {
+        setShowEditForm(false); // Close the form
+        setTheadsticky('sticky');
+        setTheadfixed('fixed');
+        setTheadBackgroundColor('white');
+    };
+ 
+    const modalEditStyle = {
+        display: showEditForm ? 'block' : 'none',
+    }
+     
+    const [theadBackgroundColor, setTheadBackgroundColor] = useState('white');
+    const [theadsticky, setTheadsticky] = useState('sticky');
+    const [theadfixed, setTheadfixed] = useState('fixed');
+ 
+    // Edit button thead bgcolor
+    const handleEditCommission = (item) => {
+        handleEditUser(item);
+        setTheadsticky(theadsticky === 'sticky' ? '' : 'sticky');
+        setTheadfixed(theadfixed === 'fixed' ? 'transparent' : 'fixed');
+        setTheadBackgroundColor(theadBackgroundColor === 'white' ? 'transparent' : 'white');
+    };
+ 
+    // Edit user role
+    const [client_commission, setEditRellComm] = useState('');
+     
+    const editUserRole = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await fetch('/clientadmin/UpdateClientCommission', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ chargerID: dataItem.charger_id,  client_commission, modified_by: userInfo.data.email_id }),
+            });
+            if (response.ok) {
+                Swal.fire({
+                    title: "Update Client commission successfully",
+                    icon: "success"
+                });
+                setEditRellComm(''); 
+                setShowEditForm(false);
+                closeEditModal();
+                setTheadsticky('sticky');
+                setTheadfixed('fixed');
+                setTheadBackgroundColor('white');
+                fetchChargerDetails();
+            } else {
+                const responseData = await response.json();
+                Swal.fire({
+                    title: "Error",
+                    text: "Failed to update client commission, " + responseData.message,
+                    icon: "error"
+                });
+            }
+        } catch (error) {
+            Swal.fire({
+                title: "Error:",
+                text: "An error occurred while updating client commission",
+                icon: "error"
+            });
+        }
+    };
+ 
+    // Determine if the Update button should be enabled
+    const isUpdateButtonEnabled = client_commission !== initialClientCommission;
+
     return (
         <div className='container-scroller'>
             {/* Header */}
@@ -113,6 +194,46 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
                                 </div>
                             </div>
                         </div>
+                        {/* Edit role start */}
+                        <div className="modalStyle" style={modalEditStyle}>
+                            <div className="modalContentStyle" style={{ maxHeight: '680px', overflowY: 'auto' }}>
+                                <span onClick={closeEditModal} style={{ float: 'right', cursor: 'pointer', fontSize:'30px' }}>&times;</span>
+                                <form className="pt-3" onSubmit={editUserRole}>
+                                    <div className="card-body">
+                                        <div style={{textAlign:'center'}}>
+                                            <h4 className="card-title">Edit Client Commission</h4>
+                                        </div>
+                                        <div className="table-responsive pt-3">
+                                            <div className="input-group">
+                                                <div className="input-group-prepend">
+                                                    <span className="input-group-text" style={{color:'black', width:'185px'}}>Client Commission</span>
+                                                </div>
+                                                <input type="text" className="form-control" placeholder="Client Commission" value={client_commission} maxLength={6}
+                                                    onChange={(e) => {
+                                                        let value = e.target.value; // Define `value` here
+
+                                                        // Remove any non-digit or non-decimal characters
+                                                        value = value.replace(/[^0-9.]/g, '');
+
+                                                        // Ensure only one decimal point is allowed
+                                                        const parts = value.split('.');
+                                                        if (parts.length > 2) {
+                                                        value = parts[0] + '.' + parts[1]; // Combine the first two parts if more than one decimal point is present
+                                                        }
+
+                                                        setEditRellComm(value); // Update state with sanitized value
+                                                    }}
+                                                required/>
+                                            </div>
+                                        </div>
+                                        <div style={{textAlign:'center'}}>
+                                            <button type="submit" className="btn btn-primary mr-2" style={{marginTop:'10px'}} disabled={!isUpdateButtonEnabled}>Update</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        {/* Edit role end */}
                         <div className="row">
                             <div className="col-lg-12 grid-margin stretch-card">
                                 <div className="card">
@@ -142,12 +263,13 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
                                         </div>
                                         <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                                             <table className="table table-striped">
-                                                <thead style={{ textAlign: 'center', position: 'sticky', tableLayout: 'fixed', top: 0, backgroundColor: 'white', zIndex: 1 }}>
-                                                    <tr> 
+                                                <thead style={{ textAlign: 'center', position: theadsticky, tableLayout: theadfixed, top: 0, zIndex: 1, backgroundColor: theadBackgroundColor}}>
+                                                    <tr>  
                                                         <th>Sl.No</th>
                                                         <th>Charger Id</th>
                                                         <th>Unit Cost</th>
-                                                        <th>Client Commission</th>
+                                                        <th>Client Commission %</th>
+                                                        <th>Commission %</th>
                                                         <th>Assign Finance</th>
                                                         <th>Session History</th>
                                                     </tr>
@@ -160,6 +282,9 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
                                                                 <td>{item.charger_id ? item.charger_id : '-'}</td>
                                                                 <td>{item.total_price ? '₹'+item.total_price : '-'}</td>
                                                                 <td>{item.client_commission ? `${item.client_commission}%` : '-'}</td>
+                                                                <th>
+                                                                    <button type="button" className="btn btn-outline-primary btn-icon-text"  onClick={() => handleEditCommission(item)} style={{marginBottom:'10px', marginRight:'10px'}}><i className="mdi mdi-pencil btn-icon-prepend"></i>Edit</button><br/>
+                                                                </th>
                                                                 <td>
                                                                     <button
                                                                         type="button"
@@ -194,7 +319,7 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
                                                         ))
                                                     ) : (
                                                         <tr>
-                                                            <td colSpan="6" className="text-center">No associations found.</td>
+                                                            <td colSpan="7" className="text-center">No associations found.</td>
                                                         </tr>
                                                     )}
                                                 </tbody>

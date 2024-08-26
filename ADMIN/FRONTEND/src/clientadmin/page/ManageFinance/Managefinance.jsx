@@ -34,6 +34,14 @@ const Managefinance = ({ userInfo, handleLogout }) => {
     const handleSearch = (e) => {
         setSearchQuery(e.target.value);
     };
+    // Filtered finance details based on search query
+    const filteredFinanceDetails = financeDetails.filter((finance) => {
+        const searchFields = ['totalprice', 'eb_charges', 'app_charges', 'open_a_eb_charges', 'parking_charges', 'rent_charges'];
+        return searchFields.some((field) =>
+            finance[field]?.toString().toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    });
+
 
     // view finance page
     const handleView = (finance) => {
@@ -44,42 +52,6 @@ const Managefinance = ({ userInfo, handleLogout }) => {
     const navigateToCreateUser = () => {
         navigate('/clientadmin/CreateFinance');
     };
-
-    // Active and deactive users
-    // const handleDeactivate = async (finance) => {
-    //     try {
-    //         const response = await axios.post('/clientadmin/DeactivateOrActivateFinanceDetails', {
-    //             finance_id: finance.finance_id,
-    //             modified_by: userInfo.data.client_name,
-    //             status: !finance.status // Toggle status
-    //         });
-
-    //         if (response.data.status === "Success") {
-    //             setFinanceDetails(prevFinances =>
-    //                 prevFinances.map(fin =>
-    //                     fin.finance_id === finance.finance_id ? { ...fin, status: !finance.status } : fin
-    //                 )
-    //             );
-    //             Swal.fire({
-    //                 title: finance.status ? "Deactivated!" : "Activated!",
-    //                 icon: "success"
-    //             });
-    //         } else {
-    //             Swal.fire({
-    //                 title: "Error",
-    //                 text: "Failed to update finance status.",
-    //                 icon: "error"
-    //             });
-    //         }
-    //     } catch (error) {
-    //         console.error('Error in updating finance status:', error);
-    //         Swal.fire({
-    //             title: "Error",
-    //             text: "An error occurred while updating finance status.",
-    //             icon: "error"
-    //         });
-    //     }
-    // };
 
     return (
         <div className='container-scroller'>
@@ -135,13 +107,12 @@ const Managefinance = ({ userInfo, handleLogout }) => {
                                                         <th>Parking Charges</th>
                                                         <th>Rent Charges</th>
                                                         <th>Status</th>
-                                                        {/* <th>Active/DeActive</th> */}
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody style={{ textAlign: 'center' }}>
-                                                    {financeDetails.length > 0 ? (
-                                                        financeDetails.map((finance, index) => (
+                                                    {filteredFinanceDetails.length > 0 ? (
+                                                        filteredFinanceDetails.map((finance, index) => (
                                                             <tr key={index}>
                                                                 <td>{index + 1}</td>
                                                                 <td>{finance.totalprice ? finance.totalprice : '-'}</td>
@@ -153,19 +124,6 @@ const Managefinance = ({ userInfo, handleLogout }) => {
                                                                 <td style={{ color: finance.status ? 'green' : 'red' }}>
                                                                     {finance.status ? 'Active' : 'DeActive'}
                                                                 </td>
-                                                                {/* <td>
-                                                                    <div className='form-group' style={{paddingTop:'13px'}}> 
-                                                                        {finance.status===true ?
-                                                                            <div className="form-check form-check-danger">
-                                                                                <label className="form-check-label"><input type="radio" className="form-check-input" name="optionsRadios1" id="optionsRadios2" value={false} onClick={() => handleDeactivate(finance)}/>DeActive<i className="input-helper"></i></label>
-                                                                            </div>
-                                                                        :
-                                                                            <div className="form-check form-check-success">
-                                                                                <label className="form-check-label"><input type="radio" className="form-check-input" name="optionsRadios1" id="optionsRadios1" value={true} onClick={() => handleDeactivate(finance)}/>Active<i className="input-helper"></i></label>
-                                                                            </div>
-                                                                        }
-                                                                    </div>
-                                                                </td> */}
                                                                 <td>
                                                                     <button type="button" className="btn btn-outline-success btn-icon-text" onClick={() => handleView(finance)} style={{ marginRight: '5px' }}><i className="mdi mdi-eye btn-icon-prepend"></i> View</button>
                                                                 </td>

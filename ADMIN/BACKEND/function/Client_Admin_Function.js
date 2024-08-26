@@ -1004,6 +1004,60 @@ async function FetchFinanceDetails() {
     }
 }
 
+//FetchFinanceDetailsForSelection
+async function FetchFinanceDetailsForSelection() {
+    try {
+        const db = await database.connectToDatabase();
+        const Collection = db.collection("finance_details");
+
+        // Fetch all finance details documents
+        const financeDetailsList = await Collection.find({status: true}).toArray();
+
+        // Prepare the list of finance data with total prices
+        const financeDataList = financeDetailsList.map((financeDetails) => {
+            // Calculate the total percentage of the various charges
+            const totalPercentage = [
+                financeDetails.app_charges,
+                financeDetails.other_charges,
+                financeDetails.parking_charges,
+                financeDetails.rent_charges,
+                financeDetails.open_a_eb_charges,
+                financeDetails.open_other_charges
+            ].reduce((sum, charge) => sum + parseFloat(charge || 0), 0);
+
+            // Calculate the final price
+            const pricePerUnit = parseFloat(financeDetails.eb_charges || 0);
+            const price = 1 * pricePerUnit;
+            const totalPrice = price + (price * totalPercentage / 100);
+
+            // Construct the data object
+            return {
+                finance_id: financeDetails.finance_id,
+                client_id: financeDetails.client_id,
+                eb_charges: financeDetails.eb_charges,
+                app_charges: financeDetails.app_charges,
+                other_charges: financeDetails.other_charges,
+                parking_charges: financeDetails.parking_charges,
+                rent_charges: financeDetails.rent_charges,
+                open_a_eb_charges: financeDetails.open_a_eb_charges,
+                open_other_charges: financeDetails.open_other_charges,
+                created_by: financeDetails.created_by,
+                created_date: financeDetails.created_date,
+                modified_by: financeDetails.modified_by,
+                modified_date: financeDetails.modified_date,
+                totalprice: totalPrice,
+                status: financeDetails.status,
+            };
+        });
+
+        // Return the list of finance data
+        return financeDataList;
+    } catch (error) {
+        logger.error(`Error fetching finance details: ${error}`);
+        throw new Error('Error fetching finance details');
+    }
+}
+
 //CreateFinanceDetails
 async function CreateFinanceDetails(req, res, next) {
     try {
@@ -1077,12 +1131,13 @@ async function UpdateFinanceDetails(req, res, next) {
             rent_charges,
             open_a_eb_charges,
             open_other_charges,
-            modified_by
+            modified_by,
+            status
         } = req.body;
 
         // Validate required fields
-        if (!finance_id  || !client_id || !eb_charges || !app_charges || !other_charges || !parking_charges || !rent_charges || !open_a_eb_charges || !open_other_charges || !modified_by) {
-            return res.status(400).json({ message: 'All fields are required' });
+        if (!finance_id  || !client_id || !eb_charges || !app_charges || !other_charges || !parking_charges || !rent_charges || !open_a_eb_charges || !open_other_charges || !modified_by || (typeof status !== 'boolean')) {
+            return res.status(400).json({ message: 'All fields are required, please enter all the fields' });
         }
 
         const db = await database.connectToDatabase();
@@ -1108,7 +1163,8 @@ async function UpdateFinanceDetails(req, res, next) {
                     open_a_eb_charges,
                     open_other_charges,
                     modified_date: new Date(),
-                    modified_by
+                    modified_by,
+                    status: status
                 }
             }
         );
@@ -1299,6 +1355,38 @@ async function AssginChargerToAssociation(req, res) {
     }
 }
 
+async function updateCommission(req){
+    try{
+        const{chargerID,client_commission,modified_by} = req.body;
+        const db = await database.connectToDatabase();
+        const ChargerCollection = db.collection("charger_details");
+
+        if(!chargerID || client_commission === undefined || !modified_by){
+            throw new Error(`Commission update fields are not available`);
+        }
+        const where = { charger_id: chargerID };
+        const update = {
+            $set: {
+                client_commission: client_commission,
+                modified_by: modified_by,
+                modified_date: new Date()
+            }
+        };
+
+        const result = await ChargerCollection.updateOne(where, update);
+
+        if (result.modifiedCount === 0) {
+            throw new Error(`Record not found to update client commission`);
+        }
+
+        return true;
+
+    }catch(error){
+        logger.error(`Error in update commission: ${error}`);
+        throw new Error(error.message)
+    }
+}
+
 
 module.exports = { 
     //MANAGE USER
@@ -1326,6 +1414,7 @@ module.exports = {
     FetchCommissionAmtClient,
     //MANAGE FINANCE
     FetchFinanceDetails,
+    FetchFinanceDetailsForSelection,
     CreateFinanceDetails,
     UpdateFinanceDetails,
     DeactivateOrActivateFinanceDetails,
@@ -1335,4 +1424,5 @@ module.exports = {
     FetchUnAllocatedChargerToAssgin,
     //ASSGIN FINANCE TO CHARGER
     AssginChargerToAssociation,
+    updateCommission
 };

@@ -13,7 +13,11 @@ async function searchCharger(req, res) {
 
         const chargerDetails = await evDetailsCollection.findOne({ charger_id: ChargerID,  status: true });
 
-  
+        // if(chargerDetails.assigned_association_id === null){
+        //     const errorMessage = 'Device ID not found !';
+        //     return res.status(404).json({ message: errorMessage });
+        // }
+
         if (!chargerDetails || chargerDetails.charger_accessibility === !null) {
             const errorMessage = 'Device ID not found !';
             return res.status(404).json({ message: errorMessage });

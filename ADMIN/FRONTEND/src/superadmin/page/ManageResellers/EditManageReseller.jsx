@@ -22,9 +22,7 @@ const EditManageReseller = ({ userInfo, handleLogout }) => {
     const [reseller_wallet, setResellerWallet] = useState(dataItem?.reseller_wallet || '0');
      // Store initial values
      const [initialValues, setInitialValues] = useState({
-        reseller_name: dataItem?.reseller_name || '',
         reseller_phone_no: dataItem?.reseller_phone_no || '',
-        reseller_email_id: dataItem?.reseller_email_id || '',
         reseller_wallet: dataItem?.reseller_wallet || '0',
         reseller_address: dataItem?.reseller_address || '',
         status: dataItem?.status ? 'true' : 'false',
@@ -32,9 +30,7 @@ const EditManageReseller = ({ userInfo, handleLogout }) => {
 
     // Check if any field has been modified
     const isModified = (
-        reseller_name !== initialValues.reseller_name ||
         reseller_phone_no !== initialValues.reseller_phone_no ||
-        reseller_email_id !== initialValues.reseller_email_id ||
         reseller_wallet !== initialValues.reseller_wallet ||
         reseller_address !== initialValues.reseller_address ||
         selectStatus !== initialValues.status
@@ -110,11 +106,9 @@ const EditManageReseller = ({ userInfo, handleLogout }) => {
     useEffect(() => {
         // Update initial values if dataItem changes
         setInitialValues({
-            reseller_name: dataItem?.reseller_name || '',
             reseller_phone_no: dataItem?.reseller_phone_no || '',
-            reseller_email_id: dataItem?.reseller_email_id || '',
             reseller_address: dataItem?.reseller_address || '',
-            reseller_wallet: dataItem?.reseller_wallet || '',
+            reseller_wallet: dataItem?.reseller_wallet || '0',
             status: dataItem?.status ? 'true' : 'false',
         });
     }, [dataItem]);

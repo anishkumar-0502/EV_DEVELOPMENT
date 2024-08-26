@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import axios from 'axios';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
@@ -17,7 +17,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
     const [initialTagIDExpiryDateD, setInitialTagIDExpiryDate]= useState('');
 
     // Fetch Tagid // updated by vivek on 24 aug
-    const fetchTagID = async () => {
+    const fetchTagID = useCallback(async () => {
         try {
             const res = await axios.post('/associationadmin/FetchAllTagIDs', {
                 association_id: userInfo.data.association_id
@@ -29,7 +29,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
             setError('Error fetching data. Please try again.');
             setLoading(false);
         }
-    };
+    }, [userInfo.data.association_id]);
     
 
     useEffect(() => {
@@ -37,7 +37,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
             fetchTagID();
             fetchUserRoleCalled.current = true;
         }
-    }, []);
+    }, [fetchTagID]);
 
 
     // Search data 
@@ -341,7 +341,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                             <div className="table-responsive pt-3">
                                                                 <div className="input-group">
                                                                     <div className="input-group-prepend">
-                                                                        <span className="input-group-text" style={{color:'black', width:'125px'}}>Tag ID</span>
+                                                                        <span className="input-group-text" style={{color:'black', width:'180px'}}>Tag ID</span>
                                                                     </div>
                                                                     <input type="text" className="form-control" placeholder="Tag ID" value={add_tag_id} maxLength={12} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^a-zA-Z0-9]/g, ''); setTagID(sanitizedValue);}} required/>
                                                                 </div>
@@ -351,7 +351,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                                     <div className="input-group-prepend">
                                                                         <span className="input-group-text" style={{color:'black', width:'180px'}}>Tag ID Expiry Date</span>
                                                                     </div>
-                                                                    <input type="datetime-local" id="tagidexpirydate" name="tagidexpirydate" value={add_tag_id_expiry_date} onChange={(e) => setTagIDExpiryDate(e.target.value)}/>
+                                                                    <input type="datetime-local" id="tagidexpirydate" className="form-control" name="tagidexpirydate" value={add_tag_id_expiry_date} onChange={(e) => setTagIDExpiryDate(e.target.value)}/>
                                                                 </div>
                                                             </div>
                                                             <div style={{textAlign:'center'}}>
@@ -369,21 +369,14 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                     <form className="pt-3" onSubmit={editTagID}>
                                                         <div className="card-body">
                                                             <div style={{textAlign:'center'}}>
-                                                                <h4 className="card-title">Edit Tag D</h4>
+                                                                <h4 className="card-title">Edit Tag ID</h4>
                                                             </div>
                                                             <div className="table-responsive pt-3">
                                                             <div className="input-group">
                                                                 <div className="input-group-prepend">
-                                                                    <span className="input-group-text" style={{ color: 'black', width: '125px' }}>Tag ID</span>
+                                                                    <span className="input-group-text" style={{ color: 'black', width: '180px' }}>Tag ID</span>
                                                                 </div>
-                                                                <input
-                                                                    type="text"
-                                                                    className="form-control"
-                                                                    placeholder="Tag ID"
-                                                                    value={tag_id}
-                                                                    maxLength={12}
-                                                                    readOnly
-                                                                />
+                                                                <input type="text" className="form-control" placeholder="Tag ID" style={{ width:'200px'}} value={tag_id} maxLength={12} readOnly />
                                                             </div>
                                                             </div>
                                                             <div className="table-responsive pt-3">
@@ -391,7 +384,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                                     <div className="input-group-prepend">
                                                                         <span className="input-group-text" style={{color:'black', width:'180px'}}>Tag ID Expiry Date</span>
                                                                     </div>
-                                                                    <input type="datetime-local" id="tagidexpirydate" name="tagidexpirydate"         
+                                                                    <input type="datetime-local" id="tagidexpirydate" className="form-control" name="tagidexpirydate"         
                                                                     value={formatDateForInput(tag_id_expiry_date)}
                                                                     onChange={(e) => setEditTagIDExpiryDate(e.target.value)}/>
                                                                 </div>

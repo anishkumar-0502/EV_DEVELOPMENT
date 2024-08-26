@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
@@ -39,12 +39,14 @@ const AssignTagID = ({ userInfo, handleLogout }) => {
     }, [location]);
     // Fetch Tagid
 
-    const fetchTagID = async () => {
+    // Fetch TagID
+    const fetchTagID = useCallback(async () => {
         try {
             const res = await axios.post('/associationadmin/FetchTagIdToAssign', {
                 association_id: userInfo.data.association_id,
                 user_id: userInfo.data.user_id
             });
+
             setData(res.data.data);
             setLoading(false);
         } catch (err) {
@@ -52,14 +54,36 @@ const AssignTagID = ({ userInfo, handleLogout }) => {
             setError('Error fetching data. Please try again.');
             setLoading(false);
         }
-    };
+    }, [userInfo.data.association_id, userInfo.data.user_id]);
 
     useEffect(() => {
         if (!fetchUserRoleCalled.current) {
             fetchTagID();
             fetchUserRoleCalled.current = true;
         }
-    }, []);
+    }, [fetchTagID]);
+
+    // const fetchTagID = async () => {
+    //     try {
+    //         const res = await axios.post('/associationadmin/FetchTagIdToAssign', {
+    //             association_id: userInfo.data.association_id,
+    //             user_id: userInfo.data.user_id
+    //         });
+    //         setData(res.data.data);
+    //         setLoading(false);
+    //     } catch (err) {
+    //         console.error('Error fetching data:', err);
+    //         setError('Error fetching data. Please try again.');
+    //         setLoading(false);
+    //     }
+    // };
+
+    // useEffect(() => {
+    //     if (!fetchUserRoleCalled.current) {
+    //         fetchTagID();
+    //         fetchUserRoleCalled.current = true;
+    //     }
+    // }, []);
 
     // Search data 
     const handleSearchInputChange = (e) => {

@@ -15,6 +15,23 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
 
     const [errorMessage, setErrorMessage] = useState('');
    
+    const handleInputChange = (e, field) => {
+        let value = e.target.value;
+
+        // Allow only numbers and a single decimal point
+        value = value.replace(/[^0-9.]/g, '');
+        const parts = value.split('.');
+        if (parts.length > 2) {
+            value = parts[0] + '.' + parts[1];
+        }
+
+        // Limit the length to 6 characters
+        if (value.length > 6) {
+            value = value.slice(0, 6);
+        }
+
+        setNewFinance({ ...newFinance, [field]: value });
+    };
     // create finance
     const createFinance = async (e) => {
         e.preventDefault();
@@ -91,102 +108,142 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                     <h4 className="card-title">Create Finance</h4>
                                                     <form className="form-sample" onSubmit={createFinance}>
                                                         <div className="row">
-                                                            
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">EB Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control" placeholder="EB Chargers"
-                                                                            value={newFinance.eb_charges}
-                                                                            onChange={(e) => setNewFinance({ ...newFinance, eb_charges: e.target.value })}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">₹</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control" placeholder="EB Chargers"
+                                                                                maxLength={6}
+                                                                                value={newFinance.eb_charges}
+                                                                                onChange={(e) => handleInputChange(e, 'eb_charges')}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">App Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control" placeholder="App Charges"
-                                                                            value={newFinance.app_charges}
-                                                                            onChange={(e) => setNewFinance({ ...newFinance, app_charges: e.target.value })}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control" placeholder="App Charges"
+                                                                                maxLength={6}
+                                                                                value={newFinance.app_charges}
+                                                                                onChange={(e) => handleInputChange(e, 'app_charges')}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Other Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control" placeholder="Other Charges"
-                                                                            value={newFinance.other_charges}
-                                                                            onChange={(e) => setNewFinance({ ...newFinance, other_charges: e.target.value })}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control" placeholder="Other Charges"
+                                                                                maxLength={6}
+                                                                                value={newFinance.other_charges}
+                                                                                onChange={(e) => handleInputChange(e, 'other_charges')}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Parking Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control" placeholder="Parking Charges"
-                                                                            value={newFinance.parking_charges}
-                                                                            onChange={(e) => setNewFinance({ ...newFinance, parking_charges: e.target.value })}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control" placeholder="Parking Charges"
+                                                                                maxLength={6}
+                                                                                value={newFinance.parking_charges}
+                                                                                onChange={(e) => handleInputChange(e, 'parking_charges')} required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Rent Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control" placeholder="Rent Charges"
-                                                                            value={newFinance.rent_charges}
-                                                                            onChange={(e) => setNewFinance({ ...newFinance, rent_charges: e.target.value })}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control" placeholder="Rent Charges"
+                                                                                maxLength={6}
+                                                                                value={newFinance.rent_charges}
+                                                                                onChange={(e) => handleInputChange(e, 'rent_charges')}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Open A EB Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control" placeholder="Open A EB Charges"
-                                                                            value={newFinance.open_a_eb_charges}
-                                                                            onChange={(e) => setNewFinance({ ...newFinance, open_a_eb_charges: e.target.value })}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control" placeholder="Open A EB Charges"
+                                                                                maxLength={6}
+                                                                                value={newFinance.open_a_eb_charges}
+                                                                                onChange={(e) => handleInputChange(e, 'open_a_eb_charges')}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Open Other Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control" placeholder="Open Other Charges"
-                                                                            value={newFinance.open_other_charges}
-                                                                            onChange={(e) => setNewFinance({ ...newFinance, open_other_charges: e.target.value })}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control" placeholder="Open Other Charges"
+                                                                                maxLength={6}
+                                                                                value={newFinance.open_other_charges}
+                                                                                onChange={(e) => handleInputChange(e, 'open_other_charges')}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>

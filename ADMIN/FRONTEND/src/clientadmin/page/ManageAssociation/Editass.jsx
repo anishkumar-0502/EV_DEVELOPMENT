@@ -20,16 +20,14 @@ const Editass = ({ userInfo, handleLogout }) => {
 
     // Store initial values
     const [initialValues, setInitialValues] = useState({
-        association_name: dataItems?.association_name || '',
         association_phone_no: dataItems?.association_phone_no || '',
-        association_wallet: dataItems?.association_wallet || '',
+        association_wallet: dataItems?.association_wallet || '0',
         association_address: dataItems?.association_address || '',
         status: dataItems?.status ? 'true' : 'false'
     });
 
     // Check if any field has been modified
     const isModified = (
-        association_name !== initialValues.association_name ||
         association_phone_no !== initialValues.association_phone_no ||
         association_wallet !== initialValues.association_wallet ||
         association_address !== initialValues.association_address ||
@@ -107,8 +105,8 @@ const Editass = ({ userInfo, handleLogout }) => {
     useEffect(() => {
         // Update initial values if dataItems changes
         setInitialValues({
-            association_name: dataItems?.association_name || '',
             association_phone_no: dataItems?.association_phone_no || '',
+            association_wallet: dataItems?.association_wallet || '0',
             association_address: dataItems?.association_address || '',
             status: dataItems?.status ? 'true' : 'false'
         });

@@ -619,7 +619,7 @@ async function AddUserToAssociation(req, res) {
         const usersCollection = db.collection("users");
 
         // Check if the user exists
-        const existingUser = await usersCollection.findOne({ email_id: email_id  });
+        const existingUser = await usersCollection.findOne({ email_id: email_id, phone_no: parseInt(phone_no) });
         if (!existingUser || existingUser.role_id !== 5) {
             return res.status(404).json({ message: 'User not found' });
         }

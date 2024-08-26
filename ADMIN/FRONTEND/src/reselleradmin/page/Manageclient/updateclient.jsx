@@ -20,16 +20,14 @@ const UpdateClient = ({ userInfo, handleLogout }) => {
 
     // Store initial values
     const [initialValues, setInitialValues] = useState({
-        client_name: dataItems?.client_name || '',
         client_phone_no: dataItems?.client_phone_no || '',
-        client_wallet: dataItems?.client_wallet || '',
+        client_wallet: dataItems?.client_wallet || '0',
         client_address: dataItems?.client_address || '',
         status: dataItems?.status ? 'true' : 'false',
     });
 
     // Check if any field has been modified
     const isModified = (
-        client_name !== initialValues.client_name ||
         client_phone_no !== initialValues.client_phone_no ||
         client_wallet !== initialValues.client_wallet ||
         client_address !== initialValues.client_address ||
@@ -105,8 +103,8 @@ const UpdateClient = ({ userInfo, handleLogout }) => {
     useEffect(() => {
         // Update initial values if dataItems changes
         setInitialValues({
-            client_name: dataItems?.client_name || '',
             client_phone_no: dataItems?.client_phone_no || '',
+            client_wallet: dataItems?.client_wallet || '0',
             client_address: dataItems?.client_address || '',
             status: dataItems?.status ? 'true' : 'false',
         });

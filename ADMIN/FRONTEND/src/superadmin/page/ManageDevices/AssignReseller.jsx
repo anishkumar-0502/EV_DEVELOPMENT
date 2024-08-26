@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
@@ -8,7 +8,7 @@ import Swal from 'sweetalert2';
 
 const AssignReseller = ({ userInfo, handleLogout }) => {
     const navigate = useNavigate();
-    
+
     // Back manage device
     const backManageDevice = () => {
         navigate('/superadmin/ManageDevice');
@@ -33,10 +33,10 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
                 .catch((err) => {
                     console.error('Error fetching data:', err);
                 });
-                FetchSpecificUserRoleForSelectionCalled.current = true;
+            FetchSpecificUserRoleForSelectionCalled.current = true;
         }
     }, []);
-    
+
     // Fetch Unallocated charger
     useEffect(() => {
         if (!FetchUnAllocatedChargerToAssginCalled.current) {
@@ -57,7 +57,7 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
         setSelectedReseller(e.target.value);
     };
 
-    // charger select
+    // Charger select
     const handleChargerChange = (e) => {
         const value = e.target.value;
         setSelectedChargers(prevState =>
@@ -75,9 +75,22 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
     // Charger list filter
     const filteredChargers = selectedModel ? chargers.filter(charger => charger.charger_model === selectedModel) : chargers;
 
-    // Assgin charger update
+    // Assign charger update
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validation: Ensure at least one charger is selected
+        if (charger_ids.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Charger Selected',
+                text: 'Please select at least one charger to assign.',
+                timer: 2000,
+                timerProgressBar: true
+            });
+            return; // Prevent form submission
+        }
+
         const resellerID = parseInt(reseller_id);
         try {
             const response = await axios.post('/superadmin/AssginChargerToReseller', {
@@ -92,45 +105,32 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
                 });
                 backManageDevice();
             } else {
-                const responseData = await response.json();
                 Swal.fire({
                     title: "Error",
-                    text: "Failed to assign charger, " + responseData.message,
+                    text: "Failed to assign charger, please try again later.",
                     icon: "error"
                 });
             }
         } catch (error) {
             // Handle network errors or unexpected server responses
-            if (error.response && error.response.data) {
-                // Error response from server
-                const errorMessage = error.response.data.message || 'An unknown error occurred.';
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error assigning charger',
-                    text: errorMessage,
-                    timer: 2000,
-                    timerProgressBar: true
-                });
-            } else {
-                // Network or unexpected error
-                Swal.fire({
-                    title: "Error",
-                    text: "An error occurred while assign the charger",
-                    icon: "error",
-                    timer: 2000,
-                    timerProgressBar: true
-                });
-            }
+            const errorMessage = error.response?.data?.message || 'An error occurred while assigning the charger.';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error assigning charger',
+                text: errorMessage,
+                timer: 2000,
+                timerProgressBar: true
+            });
         }
     };
-   
+
     return (
         <div className='container-scroller'>
             {/* Header */}
-            <Header userInfo={userInfo} handleLogout={handleLogout}/>
+            <Header userInfo={userInfo} handleLogout={handleLogout} />
             <div className="container-fluid page-body-wrapper">
                 {/* Sidebar */}
-                <Sidebar/>
+                <Sidebar />
                 <div className="main-panel">
                     <div className="content-wrapper">
                         <div className="row">
@@ -142,7 +142,7 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
                                     <div className="col-12 col-xl-4">
                                         <div className="justify-content-end d-flex">
                                             <div className="dropdown">
-                                                <button className="btn btn-outline-warning btn-icon-text dropdown-toggle" type="button" style={{marginRight:'10px'}} id="dropdownMenuIconButton1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <button className="btn btn-outline-warning btn-icon-text dropdown-toggle" type="button" style={{ marginRight: '10px' }} id="dropdownMenuIconButton1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                     <i className="ti-file btn-icon-prepend"></i>Select Charger Model
                                                 </button>
                                                 <div className="dropdown-menu" aria-labelledby="dropdownMenuIconButton1">
@@ -177,7 +177,7 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
                                                                                 {resellers.map((roles, index) => (
                                                                                     <option key={index} value={roles.reseller_id}>{roles.reseller_name}</option>
                                                                                 ))}
-                                                                            </select>     
+                                                                            </select>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -186,12 +186,12 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
                                                         <div className="col-md-6">
                                                             <div className="card-body">
                                                                 <h4 className="card-title">Charger List</h4>
-                                                                <div className="template-demo"  style={{paddingLeft:'50px'}}>
+                                                                <div className="template-demo" style={{ paddingLeft: '50px' }}>
                                                                     <div className="form-group" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                                                                         {filteredChargers.map((charger) => (
                                                                             <div className="form-check form-check-success" key={charger.charger_id}>
                                                                                 <label className="form-check-label">
-                                                                                    <input style={{ textAlign: 'center' }} type="checkbox" className="form-check-input" value={charger.charger_id} onChange={handleChargerChange} required/>
+                                                                                    <input style={{ textAlign: 'center' }} type="checkbox" className="form-check-input" value={charger.charger_id} onChange={handleChargerChange} />
                                                                                     {charger.charger_id}
                                                                                     <i className="input-helper"></i>
                                                                                 </label>
@@ -216,10 +216,10 @@ const AssignReseller = ({ userInfo, handleLogout }) => {
                     </div>
                     {/* Footer */}
                     <Footer />
-                </div>         
-            </div>    
+                </div>
+            </div>
         </div>
     );
-};   
-                 
-export default AssignReseller
+};
+
+export default AssignReseller;

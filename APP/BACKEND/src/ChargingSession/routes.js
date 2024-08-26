@@ -208,7 +208,5 @@ router.post('/UpdateAutoStopSettings', async function(req, res) {
     }
 });
 
-
-
 // Export the router
 module.exports = router;

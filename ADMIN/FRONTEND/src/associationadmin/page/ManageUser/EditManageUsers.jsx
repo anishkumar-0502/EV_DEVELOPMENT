@@ -21,7 +21,6 @@ const EditManageUsers = ({ userInfo, handleLogout }) => {
 
     // Store initial values
     const [initialValues, setInitialValues] = useState({
-        username: dataItem?.username || '',
         password: dataItem?.password || '',
         phone_no: dataItem?.phone_no || '',
         status: dataItem.status ? 'true' : 'false'
@@ -29,7 +28,6 @@ const EditManageUsers = ({ userInfo, handleLogout }) => {
 
     // Check if any field has been modified
     const isModified = (
-        username !== initialValues.username ||
         password !== initialValues.password ||
         phone_no !== initialValues.phone_no ||
         selectStatus !== initialValues.status
@@ -112,7 +110,6 @@ const EditManageUsers = ({ userInfo, handleLogout }) => {
     useEffect(() => {
         // Update initial values if dataItem changes
         setInitialValues({
-            username: dataItem?.username || '',
             password: dataItem?.password || '',
             phone_no: dataItem?.phone_no || '',
             status: dataItem.status ? 'true' : 'false'

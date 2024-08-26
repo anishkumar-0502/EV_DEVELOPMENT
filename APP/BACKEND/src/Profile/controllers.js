@@ -64,7 +64,7 @@ async function UpdateUserProfile(req, res, next) {
 
         let updateFields = {
             username: username,
-            phone_no: phone_no,
+            phone_no: parseInt(phone_no),
             modified_by: username,
             modified_date: new Date(),
         };

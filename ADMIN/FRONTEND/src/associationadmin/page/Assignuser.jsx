@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -15,6 +15,7 @@ const Assignuser = ({ userInfo, handleLogout }) => {
   const [email_id, setAssEmail] = useState();
   const [phone_no, setAssPhone] = useState();
   const [errorMessage, setErrorMessage] = useState('');
+  const fetchUsersToUnassignCalled = useRef(false);
 
   // fetch user to unassign data
   const fetchUsersToUnassign = useCallback(async () => {
@@ -32,7 +33,10 @@ const Assignuser = ({ userInfo, handleLogout }) => {
   }, [userInfo.data.association_id]);
 
   useEffect(() => {
-    fetchUsersToUnassign();
+    if (!fetchUsersToUnassignCalled.current) {
+      fetchUsersToUnassign();
+      fetchUsersToUnassignCalled.current = true;
+    }
   }, [fetchUsersToUnassign]);
 
   // Function to handle selecting and removing a user
@@ -95,11 +99,11 @@ const Assignuser = ({ userInfo, handleLogout }) => {
       const response = await axios.post('/associationadmin/AssUserToAssociation', {
         association_id: userInfo.data.association_id,
         email_id,
-        phone_no,
+        phone_no: parseInt(phone_no),
         modified_by: userInfo.data.email_id
       });
       fetchUsersToUnassign();
-      // Check if the response status is 200 (OK)
+      // Check if the response status is 200 (OK) 
       if (response.status === 200) {
         Swal.fire({
           title: 'Success!',

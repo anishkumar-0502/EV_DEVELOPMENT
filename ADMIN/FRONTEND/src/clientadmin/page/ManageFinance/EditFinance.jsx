@@ -11,6 +11,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
     const location = useLocation();
     const dataItems = location.state?.newfinance || JSON.parse(localStorage.getItem('editDeviceData'));
     localStorage.setItem('editDeviceData', JSON.stringify(dataItems));
+    
     const [eb_charges, setEbCharges] = useState(dataItems?.eb_charges || '');
     const [app_charges, setAppCharges] = useState(dataItems?.app_charges || '');
     const [other_charges, setOtherCharges] = useState(dataItems?.other_charges || '');
@@ -19,29 +20,45 @@ const EditFinance = ({ userInfo, handleLogout }) => {
     const [open_a_eb_charges, setOpenAebCharges] = useState(dataItems?.open_a_eb_charges || '');
     const [open_other_charges, setOpenOtherCharges] = useState(dataItems?.open_other_charges || '');
     const [status, setStatus] = useState(dataItems?.status ? 'true' : 'false');
-    const [errorMessage, setErrorMessage] = useState('');
+    const [isEdited, setIsEdited] = useState(false); // Track if any input is edited
+
+    // Input validation function
+    const validateInput = (value) => {
+        // Allow only numbers and a single decimal point
+        value = value.replace(/[^0-9.]/g, '');
+        const parts = value.split('.');
+        if (parts.length > 2) {
+            value = parts[0] + '.' + parts[1];
+        }
+
+        // Limit the length to 6 characters
+        if (value.length > 6) {
+            value = value.slice(0, 6);
+        }
+
+        return value;
+    };
+
+    // Handle change and validation for all fields
+    const handleInputChange = (setter) => (e) => {
+        let value = validateInput(e.target.value);
+        setter(value);
+        setIsEdited(true); // Mark as edited
+    };
 
     // Select status
     const handleStatusChange = (e) => {
         setStatus(e.target.value);
+        setIsEdited(true); // Mark as edited
     };
 
-    // update finance details
+    // Update finance details
     const updateFinanceDetails = async (e) => {
         e.preventDefault();
-
-        // Eb Charges validation
-        const ebChargesRegex = /^\d+$/;
-        console.log(eb_charges);
-        if (!ebChargesRegex.test(eb_charges)) {
-            setErrorMessage('Eb charges must be a number.');
-            return;
-        }
 
         try {
             const formattedFinanceData = {
                 finance_id: dataItems.finance_id,
-                association_id: dataItems.association_id,
                 client_id: dataItems.client_id,
                 eb_charges: eb_charges,
                 app_charges: app_charges,
@@ -65,11 +82,10 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                 });
                 navigate('/clientadmin/ManageFinance');
             } else {
-                const responseData = await response.json();
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error updating finance details, ' + responseData.message,
-                    text: 'Please try again later.',
+                    title: 'Error updating finance details',
+                    text: response.data.message,
                     timer: 2000,
                     timerProgressBar: true
                 });
@@ -86,7 +102,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
         }
     };
     
-    // back page
+    // Back page
     const goBack = () => {
         navigate(-1);
     };
@@ -134,105 +150,147 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">EB Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control"
-                                                                            name="eb_charges"
-                                                                            value={eb_charges}
-                                                                            onChange={(e) => setEbCharges(e.target.value.trim())}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">₹</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control"
+                                                                                name="eb_charges"
+                                                                                maxLength={6}
+                                                                                value={eb_charges}
+                                                                                onChange={handleInputChange(setEbCharges)}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">App Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control"
-                                                                            name="app_charges"
-                                                                            value={app_charges}
-                                                                            onChange={(e) => setAppCharges(e.target.value)}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control"
+                                                                                name="app_charges"
+                                                                                maxLength={6}
+                                                                                value={app_charges}
+                                                                                onChange={handleInputChange(setAppCharges)}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Other Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control"
-                                                                            name="other_charges"
-                                                                            value={other_charges}
-                                                                            onChange={(e) => setOtherCharges(e.target.value)}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control"
+                                                                                name="other_charges"
+                                                                                maxLength={6}
+                                                                                value={other_charges}
+                                                                                onChange={handleInputChange(setOtherCharges)}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Parking Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control"
-                                                                            name="parking_charges"
-                                                                            value={parking_charges}
-                                                                            onChange={(e) => setParkingCharges(e.target.value)}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control"
+                                                                                name="parking_charges"
+                                                                                maxLength={6}
+                                                                                value={parking_charges}
+                                                                                onChange={handleInputChange(setParkingCharges)}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Rent Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control"
-                                                                            name="rent_charges"
-                                                                            value={rent_charges}
-                                                                            onChange={(e) => setRentCharges(e.target.value)}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control"
+                                                                                name="rent_charges"
+                                                                                maxLength={6}
+                                                                                value={rent_charges}
+                                                                                onChange={handleInputChange(setRentCharges)}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Open A EB Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control"
-                                                                            name="open_a_eb_charges"
-                                                                            value={open_a_eb_charges}
-                                                                            onChange={(e) => setOpenAebCharges(e.target.value)}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control"
+                                                                                name="open_a_eb_charges"
+                                                                                maxLength={6}
+                                                                                value={open_a_eb_charges}
+                                                                                onChange={handleInputChange(setOpenAebCharges)}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Open Other Charges</label>
-                                                                    <div className="col-sm-9">
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control"
-                                                                            name="open_other_charges"
-                                                                            value={open_other_charges}
-                                                                            onChange={(e) => setOpenOtherCharges(e.target.value)}
-                                                                            required
-                                                                        />
+                                                                    <div className="col-sm-5">
+                                                                        <div className="input-group">
+                                                                            <div className="input-group-prepend">
+                                                                                <span className="input-group-text">%</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="form-control"
+                                                                                name="open_other_charges"
+                                                                                maxLength={6}
+                                                                                value={open_other_charges}
+                                                                                onChange={handleInputChange(setOpenOtherCharges)}
+                                                                                required
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -240,12 +298,8 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Status</label>
-                                                                    <div className="col-sm-9">
-                                                                        <select
-                                                                            className="form-control"
-                                                                            value={status}
-                                                                            onChange={handleStatusChange} 
-                                                                            required>
+                                                                    <div className="col-sm-5">
+                                                                        <select className="form-control" value={status} onChange={handleStatusChange} required>
                                                                             <option value="true">Active</option>
                                                                             <option value="false">DeActive</option>
                                                                         </select>
@@ -253,9 +307,8 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        {errorMessage && <div className="text-danger">{errorMessage}</div>}
                                                         <div style={{ textAlign: 'center' }}>
-                                                            <button type="submit" className="btn btn-primary mr-2">Update</button>
+                                                            <button type="submit" className="btn btn-primary mr-2" disabled={!isEdited}>Update</button>
                                                         </div>
                                                     </form>
                                                 </div>

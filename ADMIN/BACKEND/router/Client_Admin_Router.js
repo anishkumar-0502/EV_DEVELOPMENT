@@ -229,7 +229,7 @@ router.post('/AssignFinanceToCharger', functions.AssignFinanceToCharger, (req, r
 // Route to FetchFinanceDetailsForSelection
 router.get('/FetchFinanceDetailsForSelection', async (req, res) => {
     try {
-        const data = await functions.FetchFinanceDetails(req, res);
+        const data = await functions.FetchFinanceDetailsForSelection(req, res);
         res.status(200).json({ status: 'Success', data: data });
 
     } catch (error) {
@@ -272,6 +272,22 @@ router.post('/AssginChargerToAssociation', async (req, res) => {
     } catch (error) {
         console.error('Error in AssginChargerToClient route:', error); 
         res.status(500).json({ message: 'Failed to AssginChargerToClient' });
+    }
+});
+
+//UpdateClientCommission
+router.post('/UpdateClientCommission', async (req, res) => {
+    try{
+        const UpdateClientCommission = await functions.updateCommission(req);
+        if(UpdateClientCommission === true){
+            res.status(200).json({ message: 'Success', data: 'Commission updated successfully' });
+        }else{
+            console.log('Internal Server Error');
+            res.status(500).json({ status: 'Failed', message: "Internal Server Error" });
+        }
+    }catch(error){
+        console.error('Error in UpdateClientCommission route:', error); 
+        res.status(500).json({ message: 'Failed to Update Client Commission' });
     }
 });
 

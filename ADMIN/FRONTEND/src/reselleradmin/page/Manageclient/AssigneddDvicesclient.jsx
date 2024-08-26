@@ -187,10 +187,22 @@ const Assigneddevicesclient = ({ userInfo, handleLogout }) => {
                                                 <div className="input-group-prepend">
                                                     <span className="input-group-text" style={{color:'black', width:'185px'}}>Reseller Commission</span>
                                                 </div>
-                                                <input type="text" className="form-control" placeholder="Reseller Commission" value={reseller_commission} onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    const sanitizedValue = value.replace(/[^0-9]/g, '');
-                                                    setEditRellComm(sanitizedValue);}} required />
+                                                <input type="text" className="form-control" placeholder="Client Commission" value={reseller_commission} maxLength={6}
+                                                    onChange={(e) => {
+                                                        let value = e.target.value; // Define `value` here
+
+                                                        // Remove any non-digit or non-decimal characters
+                                                        value = value.replace(/[^0-9.]/g, '');
+
+                                                        // Ensure only one decimal point is allowed
+                                                        const parts = value.split('.');
+                                                        if (parts.length > 2) {
+                                                        value = parts[0] + '.' + parts[1]; // Combine the first two parts if more than one decimal point is present
+                                                        }
+
+                                                        setEditRellComm(value); // Update state with sanitized value
+                                                    }}
+                                                required/>
                                             </div>
                                         </div>
                                         <div style={{textAlign:'center'}}>
