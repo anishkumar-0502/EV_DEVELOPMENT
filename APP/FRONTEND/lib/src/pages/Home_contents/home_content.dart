@@ -277,6 +277,10 @@ void initState() {
         setState(() {
           isLoading = false; // Set loading to false
         });
+        setState(() {
+        activeFilter = 'All Chargers'; // Set active filter
+        isLoading = false; // Set loading to false
+      });
       }
     } catch (error) {
       showErrorDialog(context, 'Internal server error ');
