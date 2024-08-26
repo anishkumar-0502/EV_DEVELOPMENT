@@ -221,7 +221,7 @@ void initState() {
   void navigateToQRViewExample() async {
     final scannedCode = await Navigator.push<String>(
       context,
-      MaterialPageRoute(builder: (context) => QRViewExample(handleSearchRequestCallback: handleSearchRequest)),
+      MaterialPageRoute(builder: (context) => QRViewExample(handleSearchRequestCallback: handleSearchRequest,username:widget.username,userId: widget.userId,)),
     );
 
     if (scannedCode != null) {
