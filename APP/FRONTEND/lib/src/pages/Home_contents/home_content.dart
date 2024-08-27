@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import '../Charging/charging.dart';
 import '../../utilities/QR/qrscanner.dart';
 import '../../utilities/Alert/alert_banner.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeContent extends StatefulWidget {
   final String username;
@@ -24,21 +25,23 @@ class _HomeContentState extends State<HomeContent> {
   String searchChargerID = '';
   List availableChargers = [];
   List recentSessions = [];
-  String activeFilter = 'All Chargers'; // Set 'Previously Used' as active filter by default
-  bool isLoading = true; // State to manage loading
+  String activeFilter = 'All Chargers';
+  bool isLoading = true;
   GoogleMapController? mapController;
   LatLng? _currentPosition;
-  final LatLng _center = const LatLng(12.9716, 77.5946);
+  LatLng? _selectedPosition; // To store the selected marker's position
+  final LatLng _center = const LatLng(12.909746, 77.606360);
   Set<Marker> _markers = {};
-  bool isSearching = false; // Flag to prevent redundant state updates
-  
-@override
-void initState() {
-  super.initState();
-  activeFilter = 'All Chargers'; // Set 'All Chargers' as active filter by default
-  fetchAllChargers(); // Fetch all chargers data on initial load
-  _getCurrentLocation(); // Fetch current location
-}
+  bool isSearching = false;
+  bool areMapButtonsEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    activeFilter = 'All Chargers';
+    fetchAllChargers();
+    _getCurrentLocation();
+  }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -52,6 +55,19 @@ void initState() {
       );
       _updateMarkers();
     }
+  }
+
+  void _onMarkerTapped(MarkerId markerId, LatLng position) {
+    setState(() {
+      _selectedPosition = position; // Update the selected position
+      areMapButtonsEnabled = true;
+    });
+  }
+
+  void _onMapTapped(LatLng position) {
+    setState(() {
+      areMapButtonsEnabled = false;
+    });
   }
 
   Future<void> _getCurrentLocation() async {
@@ -85,56 +101,80 @@ void initState() {
     );
     _updateMarkers();
   }
+Future<BitmapDescriptor> _getCustomIcon(String assetPath) async {
+  return await BitmapDescriptor.fromAssetImage(
+    const ImageConfiguration(size: Size(20, 20)), // Adjust size as needed
+    assetPath,
+  );
+}
 
-  void _updateMarkers() {
-    if (_currentPosition != null) {
+void _updateMarkers() async {
+  // Load custom icons for current location and chargers
+  // BitmapDescriptor currentLocationIcon = await _getCustomIcon('assets/icons/current_location.png');
+  BitmapDescriptor chargerIcon = await _getCustomIcon('assets/icons/Charger.png');
+
+  if (_currentPosition != null) {
+    setState(() {
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('current_location'),
+          position: _currentPosition!,
+          // icon: currentLocationIcon,  // Use the custom icon for current location
+          infoWindow: const InfoWindow(title: 'Your Location'),
+          onTap: () {
+            _onMarkerTapped(const MarkerId('current_location'), _currentPosition!);
+          },
+        ),
+      );
+    });
+  }
+
+  for (var charger in availableChargers) {
+    final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
+    final lat = charger['lat'] != null ? double.tryParse(charger['lat']) : null;
+    final lng = charger['long'] != null ? double.tryParse(charger['long']) : null;
+
+    if (lat != null && lng != null) {
+      if (_currentPosition != null &&
+          lat == _currentPosition!.latitude &&
+          lng == _currentPosition!.longitude) {
+        continue;
+      }
+
       setState(() {
         _markers.add(
           Marker(
-            markerId: const MarkerId('current_location'),
-            position: _currentPosition!,
-            infoWindow: const InfoWindow(title: 'Your Location'),
+            markerId: MarkerId(chargerId),
+            position: LatLng(lat, lng),
+            icon: chargerIcon,  // Use the custom icon for chargers
+            infoWindow: InfoWindow(
+              title: charger['model'] ?? 'Unknown Model',
+              snippet: chargerId,
+            ),
+            onTap: () {
+              _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
+            },
           ),
         );
       });
     }
   }
-
-// void _updateMarkers() async {
-//   if (_currentPosition != null) {
-//     final BitmapDescriptor customIcon = await BitmapDescriptor.fromAssetImage(
-//       const ImageConfiguration(size: Size(48, 48)), // You can adjust the size as needed
-//       'assets/icons/pin.png', // Path to your custom marker icon
-//     );
-
-//     setState(() {
-//       _markers.add(
-//         Marker(
-//           markerId: const MarkerId('current_location'),
-//           position: _currentPosition!,
-//           icon: customIcon, // Use the custom icon
-//           infoWindow: const InfoWindow(title: 'Your Location'),
-//         ),
-//       );
-//     });
-//   }
-// }
+}
 
   Future<void> handleSearchRequest(String searchChargerID) async {
-    if (isSearching) return; // Prevent redundant calls
+    if (isSearching) return;
     if (searchChargerID.isEmpty) {
       showErrorDialog(context, 'Please enter a charger ID.');
       return;
     }
 
     setState(() {
-      isSearching = true; // Set the flag to true
+      isSearching = true;
     });
-      print('handleSearchRequest');
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/searchCharger'), // Replace with your actual backend URL
+        Uri.parse('http://122.166.210.142:9098/searchCharger'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -144,13 +184,11 @@ void initState() {
       );
 
       if (response.statusCode == 200) {
-        print("AnishKumarAK");
         final data = json.decode(response.body);
         setState(() {
           this.searchChargerID = searchChargerID;
         });
 
-        // Show dialog to select a connector
         await showModalBottomSheet(
           context: context,
           isScrollControlled: true,
@@ -177,7 +215,7 @@ void initState() {
       showErrorDialog(context, 'Internal server error ');
     } finally {
       setState(() {
-        isSearching = false; // Reset the flag
+        isSearching = false;
       });
     }
   }
@@ -185,7 +223,7 @@ void initState() {
   Future<void> updateConnectorUser(String searchChargerID, int connectorId, int connectorType) async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/updateConnectorUser'), // Replace with your actual backend URL
+        Uri.parse('http://122.166.210.142:9098/updateConnectorUser'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -196,7 +234,7 @@ void initState() {
       );
 
       if (response.statusCode == 200) {
-        Navigator.pop(context); // Close the ConnectorSelectionDialog if open
+        Navigator.pop(context);
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -221,14 +259,13 @@ void initState() {
   void navigateToQRViewExample() async {
     final scannedCode = await Navigator.push<String>(
       context,
-      MaterialPageRoute(builder: (context) => QRViewExample(handleSearchRequestCallback: handleSearchRequest,username:widget.username,userId: widget.userId,)),
+      MaterialPageRoute(builder: (context) => QRViewExample(handleSearchRequestCallback: handleSearchRequest, username: widget.username, userId: widget.userId,)),
     );
 
     if (scannedCode != null) {
       setState(() {
         searchChargerID = scannedCode;
       });
-      // handleSearchRequest(scannedCode);
     }
   }
 
@@ -238,7 +275,7 @@ void initState() {
       isScrollControlled: true,
       isDismissible: false,
       enableDrag: false,
-      backgroundColor: Colors.black, // Set background color to black
+      backgroundColor: Colors.black,
       builder: (BuildContext context) {
         return Padding(
           padding: MediaQuery.of(context).viewInsets,
@@ -246,13 +283,13 @@ void initState() {
         );
       },
     ).then((_) {
-      Navigator.of(context).popUntil((route) => route.isFirst); // Close the QR code scanner page and return to the Home Page
+      Navigator.of(context).popUntil((route) => route.isFirst);
     });
   }
 
   Future<void> fetchRecentSessionDetails() async {
     setState(() {
-      isLoading = true; // Set loading to true
+      isLoading = true;
     });
 
     try {
@@ -260,7 +297,7 @@ void initState() {
         Uri.parse('http://122.166.210.142:9098/getRecentSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'user_id':widget.userId,
+          'user_id': widget.userId,
         }),
       );
 
@@ -268,66 +305,64 @@ void initState() {
         final data = json.decode(response.body);
         setState(() {
           recentSessions = data['data'] ?? [];
-          activeFilter = 'Previously Used'; // Set active filter
-          isLoading = false; // Set loading to false
+          activeFilter = 'Previously Used';
+          isLoading = false;
         });
       } else {
         final errorData = json.decode(response.body);
         showErrorDialog(context, errorData['message']);
         setState(() {
-          isLoading = false; // Set loading to false
+          isLoading = false;
         });
         setState(() {
-        activeFilter = 'All Chargers'; // Set active filter
-        isLoading = false; // Set loading to false
-      });
+          activeFilter = 'All Chargers';
+          isLoading = false;
+        });
       }
     } catch (error) {
       showErrorDialog(context, 'Internal server error ');
       setState(() {
-        isLoading = false; // Set loading to false
+        isLoading = false;
       });
     }
   }
 
-Future<void> fetchAllChargers() async {
-  setState(() {
-    isLoading = true; // Set loading to true
-  });
+  Future<void> fetchAllChargers() async {
+    setState(() {
+      isLoading = true;
+    });
 
-  try {
-    final response = await http.post(
-      Uri.parse('http://122.166.210.142:9098/getAllChargersWithStatusAndPrice'), // Replace with your actual backend URL
-      headers: {'Content-Type': 'application/json'},
+    try {
+      final response = await http.post(
+        Uri.parse('http://122.166.210.142:9098/getAllChargersWithStatusAndPrice'),
+        headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'user_id':widget.userId,
+          'user_id': widget.userId,
         }),
       );
-      final data = json.decode(response.body);
-      print("dataAll : $data");
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      print("dataAll : $data");
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          availableChargers = data['data'] ?? [];
+          activeFilter = 'All Chargers';
+          isLoading = false;
+        });
+        _updateMarkers();
+      } else {
+        final errorData = json.decode(response.body);
+        showErrorDialog(context, errorData['message']);
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (error) {
+      showErrorDialog(context, 'Internal server error $error ');
       setState(() {
-        availableChargers = data['data'] ?? [];
-        activeFilter = 'All Chargers'; // Set active filter
-        isLoading = false; // Set loading to false
-      });
-    } else {
-      final errorData = json.decode(response.body);
-      showErrorDialog(context, errorData['message']);
-      setState(() {
-        isLoading = false; // Set loading to false
+        isLoading = false;
       });
     }
-  } catch (error) {
-      showErrorDialog(context, 'Internal server error ');
-    setState(() {
-      isLoading = false; // Set loading to false
-    });
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -335,7 +370,6 @@ Future<void> fetchAllChargers() async {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Google Map
           Positioned.fill(
             child: GoogleMap(
               onMapCreated: _onMapCreated,
@@ -344,12 +378,47 @@ Future<void> fetchAllChargers() async {
                 zoom: 16.0,
               ),
               markers: _markers,
-              zoomControlsEnabled: false, // Disable default zoom controls
-              myLocationEnabled: false, // Disable default location button
-              myLocationButtonEnabled: false, // Disable default location button
+              zoomControlsEnabled: false,
+              myLocationEnabled: false,
+              myLocationButtonEnabled: false,
+              mapToolbarEnabled: false,
+              onTap: _onMapTapped,
+              compassEnabled: false,
+              indoorViewEnabled: false,
+              trafficEnabled: false,
+              buildingsEnabled: false,
             ),
           ),
-          // Foreground content
+          Positioned(
+            top: 305,
+            right: 10,
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  heroTag: 'Navigation in google map',
+                  backgroundColor: areMapButtonsEnabled ? Colors.black : Colors.grey,
+                  onPressed: areMapButtonsEnabled ? () async {
+                    if (_selectedPosition != null) {
+                      final googleMapsUrl = "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
+                      if (await canLaunch(googleMapsUrl)) {
+                        await launch(googleMapsUrl);
+                      } else {
+                        showErrorDialog(context, 'Could not open the map. Please check your internet connection or try again later.');
+                      }
+                    }
+                  } : null,
+                  child: SizedBox(
+                    width: 30,  // Adjust width as needed
+                    height: 30, // Adjust height as needed
+                    child: Image.asset(
+                      'assets/icons/Google_map.png', // Replace with your image path
+                      fit: BoxFit.contain, // Ensure the image fits within the button
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Column(
             children: [
               Padding(
@@ -416,9 +485,9 @@ Future<void> fetchAllChargers() async {
                         ),
                         onPressed: () {
                           setState(() {
-                            activeFilter = 'All Chargers'; // Set 'All Chargers' as active filter
+                            activeFilter = 'All Chargers';
                           });
-                          fetchAllChargers(); // Fetch all chargers data
+                          fetchAllChargers();
                         },
                         icon: const Icon(Icons.ev_station, color: Colors.white),
                         label: const Text('All Chargers', style: TextStyle(color: Colors.white)),
@@ -433,9 +502,9 @@ Future<void> fetchAllChargers() async {
                         ),
                         onPressed: () {
                           setState(() {
-                            activeFilter = 'Previously Used'; // Set 'Previously Used' as active filter
+                            activeFilter = 'Previously Used';
                           });
-                          fetchRecentSessionDetails(); // Fetch recent session details on button press
+                          fetchRecentSessionDetails();
                         },
                         icon: const Icon(Icons.history, color: Colors.white),
                         label: const Text('Previously Used', style: TextStyle(color: Colors.white)),
@@ -444,14 +513,14 @@ Future<void> fetchAllChargers() async {
                   ),
                 ),
               ),
-              const Spacer(), // Added spacer to push the cards to the bottom
+              const Spacer(),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: <Widget>[
                     const SizedBox(width: 15),
                     if (isLoading)
-                      for (var i = 0; i < 3; i++) _buildShimmerCard(), // Show shimmer cards while loading
+                      for (var i = 0; i < 3; i++) _buildShimmerCard(),
                     if (!isLoading && activeFilter == 'Previously Used')
                       for (var session in recentSessions)
                         _buildChargerCard(
@@ -461,44 +530,45 @@ Future<void> fetchAllChargers() async {
                           session['status']['charger_status'] ?? 'Unknown Status',
                           "1.3 Km",
                           session['unit_price']?.toString() ?? 'Unknown Price',
-                          session['status']['connector_id'] ?? 0, // Assuming connector_id is an int
+                          session['status']['connector_id'] ?? 0,
                           session['details']['charger_accessibility']?.toString() ?? 'Unknown',
                         ),
                     if (!isLoading && activeFilter == 'All Chargers')
                       for (var charger in availableChargers)
-                      if ( charger['status'] == null )
+                        if (charger['status'] == null)
                           _buildChargerCard(
                             context,
                             charger['charger_id'] ?? 'Unknown ID',
                             charger['model'] ?? 'Unknown Model',
                             "Not yet received",
-                            "1.3 Km", // Replace with actual distance if available
+                            "1.3 Km",
                             charger['unit_price']?.toString() ?? 'Unknown Price',
                             0,
                             charger['charger_accessibility']?.toString() ?? 'Unknown',
                           ),
-                          for (var charger in availableChargers)
-                      if ( charger['status'] != null )
+                    for (var charger in availableChargers)
+                      if (charger['status'] != null)
                         for (var status in charger['status'] ?? [])
                           _buildChargerCard(
                             context,
                             charger['charger_id'] ?? 'Unknown ID',
                             charger['model'] ?? 'Unknown Model',
                             status['charger_status'] ?? 'Unknown Status',
-                            "1.3 Km", // Replace with actual distance if available
+                            "1.3 Km",
                             charger['unit_price']?.toString() ?? 'Unknown Price',
                             status['connector_id'] ?? 'Unknown Last Updated',
                             charger['charger_accessibility']?.toString() ?? 'Unknown',
                           ),
-
                   ],
                 ),
               ),
-              const SizedBox(height: 28,), // Increased bottom margin
+              const SizedBox(
+                height: 28,
+              ),
             ],
           ),
           Positioned(
-            bottom: 200,
+            bottom: 250,
             right: 10,
             child: FloatingActionButton(
               backgroundColor: const Color.fromARGB(227, 76, 175, 79),
@@ -544,7 +614,7 @@ Widget _buildChargerCard(
   String meter,
   String price,
   int connectorId,
-  String accessType, // Add this parameter to determine Public or Private
+  String accessType,
 ) {
   Color statusColor;
   IconData statusIcon;
@@ -566,17 +636,34 @@ Widget _buildChargerCard(
       statusColor = Colors.grey;
       statusIcon = Icons.help;
   }
-return GestureDetector(
-  onTap: () {
-    handleSearchRequest(chargerId);
-  },
 
+  final charger = availableChargers.firstWhere(
+    (c) => c['charger_id'] == chargerId,
+    orElse: () => null,
+  );
+
+  return GestureDetector(
+    onTap: () {
+      if (charger != null) {
+        final lat = double.tryParse(charger['lat']);
+        final lng = double.tryParse(charger['long']);
+        if (lat != null && lng != null) {
+          final position = LatLng(lat, lng);
+          mapController?.animateCamera(
+            CameraUpdate.newLatLng(position),
+          );
+          setState(() {
+            _selectedPosition = position;
+            areMapButtonsEnabled = true;
+          });
+        }
+      }
+    },
     child: Stack(
       children: [
-        // Card Container
         Container(
           width: 315,
-          margin: const EdgeInsets.only(right: 28,top:20), // Added margin for spacing
+          margin: const EdgeInsets.only(right: 28, top: 20),
           decoration: BoxDecoration(
             color: const Color(0xFF0E0E0E),
             borderRadius: BorderRadius.circular(10),
@@ -589,128 +676,185 @@ return GestureDetector(
               ),
             ],
           ),
-
-
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 3),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: "$chargerId - ",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            TextSpan(
-                              text: "[$connectorId]",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue, // Change this to your desired color
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E1E),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                              child: Row(
-                                children: [
-
-                                  IconButton(
-                                    icon:
-                                    const Icon(Icons.directions, color: Colors.red),
-                                    onPressed: () {
-                                      // Add functionality to navigate to the charger location on the map
-                                    },
-                                  ),
-                                  Text('Navigate  ',style: TextStyle(color: Colors.white70),)
-                                ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    model,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      Text(
-                        status,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: statusColor,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Icon(
-                        statusIcon,
-                        color: statusColor,
-                        size: 14,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        meter,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      Row(
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.currency_rupee,
-                            color: Colors.orange,
-                            size: 14,
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: "$chargerId - ",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: "[$connectorId]",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(height: 5),
                           Text(
-                            "$price per unit",
+                            model,
                             style: const TextStyle(
                               fontSize: 14,
-                              color: Colors.white70,
+                              color: Colors.grey,
                             ),
+                          ),
+                          const SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Text(
+                                status,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: statusColor,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Icon(
+                                statusIcon,
+                                color: statusColor,
+                                size: 14,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                meter,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.currency_rupee,
+                                    color: Colors.orange,
+                                    size: 14,
+                                  ),
+                                  Text(
+                                    "$price per unit",
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: areMapButtonsEnabled ? () async {
+                          if (_selectedPosition != null) {
+                            final googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=${_selectedPosition!.latitude},${_selectedPosition!.longitude}";
+                            if (await canLaunch(googleMapsUrl)) {
+                              await launch(googleMapsUrl);
+                            } else {
+                              print('Could not open the map.');
+                            }
+                          }
+                        } : null,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E1E1E),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.directions, color: Colors.red),
+                                onPressed: areMapButtonsEnabled ? () async {
+                                  if (_selectedPosition != null) {
+                                    final googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=${_selectedPosition!.latitude},${_selectedPosition!.longitude}";
+                                    if (await canLaunch(googleMapsUrl)) {
+                                      await launch(googleMapsUrl);
+                                    } else {
+                                      print('Could not open the map.');
+                                    }
+                                  }
+                                } : null,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: const Text(
+                                  'Navigate',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          handleSearchRequest(chargerId);
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E1E1E),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.bolt, color: Colors.yellow),
+                                onPressed: () {},
+                              ),
+                              const Text(
+                                ' Use Charger',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-
+          ),
         ),
-          SlantedLabel(accessType: accessType), // Add this widget here
+        SlantedLabel(accessType: accessType),
       ],
     ),
-
-);
-
+  );
 }
-
 
   Widget _buildShimmerCard() {
     return Shimmer.fromColors(
@@ -718,7 +862,7 @@ return GestureDetector(
       highlightColor: Colors.grey[700]!,
       child: Container(
         width: 280,
-        margin: const EdgeInsets.only(right: 15.0), // Added margin for spacing
+        margin: const EdgeInsets.only(right: 15.0),
         decoration: BoxDecoration(
           color: const Color(0xFF0E0E0E),
           borderRadius: BorderRadius.circular(10),
@@ -768,6 +912,7 @@ return GestureDetector(
     );
   }
 }
+
 class ConnectorSelectionDialog extends StatefulWidget {
   final Map<String, dynamic> chargerData;
   final Function(int, int) onConnectorSelected;
@@ -834,7 +979,7 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
               String connectorKey = 'connector_${connectorId}_type';
 
               if (!widget.chargerData.containsKey(connectorKey) || widget.chargerData[connectorKey] == null) {
-                return const SizedBox.shrink(); // Empty space if connector not available
+                return const SizedBox.shrink();
               }
 
               int connectorType = widget.chargerData[connectorKey];
@@ -865,19 +1010,19 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
           ElevatedButton(
             onPressed: _isFormValid()
                 ? () {
-              if (selectedConnector != null && selectedConnectorType != null) {
-                widget.onConnectorSelected(selectedConnector!, selectedConnectorType!);
-                Navigator.of(context).pop();
-              }
-            }
+                    if (selectedConnector != null && selectedConnectorType != null) {
+                      widget.onConnectorSelected(selectedConnector!, selectedConnectorType!);
+                      Navigator.of(context).pop();
+                    }
+                  }
                 : null,
             style: ButtonStyle(
               backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                (Set<MaterialState> states) {
                   if (states.contains(MaterialState.disabled)) {
-                    return Colors.green.withOpacity(0.2); // Light green when disabled
+                    return Colors.green.withOpacity(0.2);
                   }
-                  return const Color(0xFF1C8B40); // Dark green when enabled
+                  return const Color(0xFF1C8B40);
                 },
               ),
               minimumSize: MaterialStateProperty.all(const Size(double.infinity, 50)),
@@ -888,11 +1033,11 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
               ),
               elevation: MaterialStateProperty.all(0),
               side: MaterialStateProperty.resolveWith<BorderSide>(
-                    (Set<MaterialState> states) {
+                (Set<MaterialState> states) {
                   if (states.contains(MaterialState.disabled)) {
-                    return const BorderSide(color: Colors.transparent); // No border when disabled
+                    return const BorderSide(color: Colors.transparent);
                   }
-                  return const BorderSide(color: Colors.transparent); // No border when enabled
+                  return const BorderSide(color: Colors.transparent);
                 },
               ),
             ),
@@ -904,7 +1049,6 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
   }
 }
 
-
 class SlantedLabel extends StatelessWidget {
   final String accessType;
 
@@ -913,35 +1057,33 @@ class SlantedLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-  top: 0,
-  right: 28,
-  child: Stack(
-    children: [
-      ClipPath(
-        clipper: SlantClipper(),
-        child: Container(
-          color: accessType == '1' ? const Color(0xFF0E0E0E) : const Color(0xFF0E0E0E), // Background color for the shape
-          height: 40, // Adjust height as needed
-          width: 100, // Adjust width as needed
-        ),
+      top: 0,
+      right: 28,
+      child: Stack(
+        children: [
+          ClipPath(
+            clipper: SlantClipper(),
+            child: Container(
+              color: accessType == '1' ? const Color(0xFF0E0E0E) : const Color(0xFF0E0E0E),
+              height: 40,
+              width: 100,
+            ),
+          ),
+          Positioned(
+            right: 18,
+            top: 5,
+            child: Text(
+              accessType == '1' ? 'Public' : 'Private',
+              style: TextStyle(
+                color: accessType == '1' ? Colors.green : Colors.yellow,
+                fontWeight: FontWeight.normal,
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ],
       ),
-     Positioned(
-  right: 18,
-  top: 5, // Adjust the position of the text
-  child: Text(
-    accessType == '1' ? 'Public' : 'Private', // Display "Public" or "Private"
-    style: TextStyle(
-      color: accessType == '1' ? Colors.green : Colors.yellow, // Blue for Public, Yellow for Private
-      fontWeight: FontWeight.normal,
-      fontSize: 15, // Adjust font size as needed
-    ),
-  ),
-),
-
-    ],
-  ),
-);
-
+    );
   }
 }
 
@@ -949,12 +1091,12 @@ class SlantClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.lineTo(20, 0); // Move right by 20 pixels at the top
-    path.lineTo(0, size.height / 2); // Draw to the left middle point
-    path.lineTo(20, size.height); // Draw back to the bottom left corner
-    path.lineTo(size.width, size.height); // Draw to the bottom right corner
-    path.lineTo(size.width, 0); // Draw to the top right corner
-    path.close(); // Close the path
+    path.lineTo(20, 0);
+    path.lineTo(0, size.height / 2);
+    path.lineTo(20, size.height);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width, 0);
+    path.close();
     return path;
   }
 

@@ -50,13 +50,22 @@
 		<string>fetch</string>
 		<string>location</string>
 	</array>
+
+	<!-- Permissions -->
 	<key>NSCameraUsageDescription</key>
-	<string>We need access to your camera for profile pictures.</string>
+	<string>We need access to your camera to allow you to take and upload photos.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We need your location to provide better services.</string>
+	<string>We need your location to show nearby charging stations and other location-based services.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need access to your photo library to upload images.</string>
+	<string>We need access to your photo library to allow you to upload images from your device.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>We need access to your microphone for voice input.</string>
+	<string>We need access to your microphone for voice recognition and input functionalities.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Your location will be used to provide services even when the app is in the background.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We require your location to provide continuous services in the background.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Your location is required to help find nearby services and improve app functionality.</string>
+	
 </dict>
 </plist>
