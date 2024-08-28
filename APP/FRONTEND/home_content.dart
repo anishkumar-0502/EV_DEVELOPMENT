@@ -12,7 +12,6 @@ import '../../utilities/Alert/alert_banner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui' as ui;
 import 'dart:async';
-import 'package:cool_alert/cool_alert.dart';
 
 class HomeContent extends StatefulWidget {
   final String username;
@@ -87,43 +86,29 @@ class _HomeContentState extends State<HomeContent> {
       print('Error getting location: $e');
     }
   }
-Future<void> _showLocationServicesDialog() async {
-  CoolAlert.show(
-    context: context,
-    type: CoolAlertType.custom,
-    widget: Column(
-      children: [
-        const SizedBox(height: 16.0),
-        const Text(
-          'Enable Location',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 8.0),
-        const Text(
-          'Location services are required to use this feature. Please enable location services in your phone settings.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.black),
-        ),
-      ],
-    ),
-    confirmBtnText: 'Settings',
-    showCancelBtn: true,
-    confirmBtnColor: Colors.blue,
-    barrierDismissible: false, // This prevents closing by tapping outside
-    onConfirmBtnTap: () {
-      Geolocator.openLocationSettings(); // Open the location settings
-      Navigator.of(context, rootNavigator: true).pop(); // Close the alert dialog
-    },
-    onCancelBtnTap: () {
-      Navigator.of(context, rootNavigator: true).pop(); // Close the alert dialog
-    },
-  );
-}
 
+  Future<void> _showLocationServicesDialog() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Enable Location Services'),
+          content: Text(
+              'Location services are required to use this feature. Please enable location services in your phone settings.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Open the location settings
+                Geolocator.openLocationSettings();
+                Navigator.of(context).pop();
+              },
+              child: Text('Open Settings'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> _showPermissionDeniedDialog() async {
     showDialog(
@@ -749,7 +734,7 @@ Future<void> _showLocationServicesDialog() async {
               onMapCreated: _onMapCreated,
               initialCameraPosition: CameraPosition(
                 target: _currentPosition ?? _center,
-                zoom: 14.0,
+                zoom: 16.0,
               ),
               markers: _markers,
               polylines: _polylines, // Add polylines to the map
