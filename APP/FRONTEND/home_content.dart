@@ -12,6 +12,8 @@ import '../../utilities/Alert/alert_banner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui' as ui;
 import 'dart:async';
+import 'package:cool_alert/cool_alert.dart';
+import '../../service/location.dart';
 
 class HomeContent extends StatefulWidget {
   final String username;
@@ -24,6 +26,7 @@ class HomeContent extends StatefulWidget {
 }
 
 class _HomeContentState extends State<HomeContent> {
+    final GlobalKey _mapKey = GlobalKey(); // Global key for map widget
   final TextEditingController _searchController = TextEditingController();
   String searchChargerID = '';
   List availableChargers = [];
@@ -41,15 +44,22 @@ class _HomeContentState extends State<HomeContent> {
   bool areMapButtonsEnabled = false;
   MarkerId? _previousMarkerId; // To track the previously selected marker
   StreamSubscription<Position>? _positionStreamSubscription;
+      bool _isFetchingLocation = false; // Ensure initialization
 
   @override
   void initState() {
     super.initState();
+    _isFetchingLocation = false; // Ensure initialization
     _checkLocationPermission(); // Request location permissions on app start
     activeFilter = 'All Chargers';
     fetchAllChargers();
+    _startLiveTracking(); // Start live tracking
   }
 
+
+
+
+  // This method checks the user's location permissions
   Future<void> _checkLocationPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -70,46 +80,85 @@ class _HomeContentState extends State<HomeContent> {
     }
   }
 
-  Future<void> _getCurrentLocation() async {
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-      setState(() {
-        _currentPosition = LatLng(position.latitude, position.longitude);
-      });
 
-      mapController?.animateCamera(
-        CameraUpdate.newLatLng(_currentPosition!),
-      );
-      _updateMarkers();
+  // This method retrieves the user's current location
+  Future<void> _getCurrentLocation() async {
+    if (_isFetchingLocation) return;
+
+    setState(() {
+      _isFetchingLocation = true;
+    });
+
+    try {
+      LatLng? currentLocation =
+          await LocationService.instance.getCurrentLocation();
+
+      if (currentLocation != null) {
+        // Update the current position
+        setState(() {
+          _currentPosition = currentLocation;
+        });
+
+        if (mapController != null) {
+          // Smoothly animate the camera to the new position
+          await mapController!.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: _currentPosition!,
+                zoom: 18.0,
+              ),
+            ),
+          );
+        }
+
+        // Update the map markers with the new position
+        _updateMarkers();
+      } else {
+        // Handle the case where location couldn't be fetched
+        print('Current location could not be determined.');
+      }
     } catch (e) {
-      print('Error getting location: $e');
+      // Handle any exceptions that occur during location fetching
+      print('Error occurred while fetching the current location: $e');
+    } finally {
+      // Ensure that the loading state is reset
+      setState(() {
+        _isFetchingLocation = false;
+      });
     }
   }
-
-  Future<void> _showLocationServicesDialog() async {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Enable Location Services'),
-          content: Text(
-              'Location services are required to use this feature. Please enable location services in your phone settings.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                // Open the location settings
-                Geolocator.openLocationSettings();
-                Navigator.of(context).pop();
-              },
-              child: Text('Open Settings'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
+Future<void> _showLocationServicesDialog() async {
+  CoolAlert.show(
+    context: context,
+    type: CoolAlertType.custom,
+    widget: Column(
+      children: [
+        const SizedBox(height: 16.0),
+        const Text(
+          'Enable Location',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 8.0),
+        const Text(
+          'Location services are required to use this feature. Please enable location services in your phone settings.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.black),
+        ),
+      ],
+    ),
+    confirmBtnText: 'Settings',
+    showCancelBtn: true,
+    confirmBtnColor: Colors.blue,
+    barrierDismissible: false, // Prevent closing by tapping outside
+    onConfirmBtnTap: () {
+      Geolocator.openLocationSettings(); // Open the location settings
+    },
+  );
+}
   Future<void> _showPermissionDeniedDialog() async {
     showDialog(
       context: context,
@@ -167,17 +216,45 @@ class _HomeContentState extends State<HomeContent> {
       _updateMarkers();
     }
   }
+  
+void _onMarkerTapped(MarkerId markerId, LatLng position) async {
+  setState(() {
+    _selectedPosition = position;
+    areMapButtonsEnabled = true;
+  });
 
-  void _onMarkerTapped(MarkerId markerId, LatLng position) async {
-    setState(() {
-      _selectedPosition = position;
-      areMapButtonsEnabled = true;
-    });
+  // Change the marker icon to the selected icon
+  BitmapDescriptor newIcon =
+      await _getIconFromAsset('assets/icons/EV_location_green.png');
+  BitmapDescriptor defaultIcon =
+      await _getIconFromAssetred('assets/icons/EV_location_red.png');
 
-    if (_currentPosition != null && _selectedPosition != null) {
-      await _getPolyline(_currentPosition!, _selectedPosition!);
+  setState(() {
+    // Revert the previous marker icon to default if it exists
+    if (_previousMarkerId != null) {
+      _markers = _markers.map((marker) {
+        if (marker.markerId == _previousMarkerId) {
+          return marker.copyWith(iconParam: defaultIcon);
+        }
+        return marker;
+      }).toSet();
     }
+
+    // Update the icon for the newly selected marker
+    _markers = _markers.map((marker) {
+      if (marker.markerId == markerId) {
+        _previousMarkerId = marker.markerId;
+        return marker.copyWith(iconParam: newIcon);
+      }
+      return marker;
+    }).toSet();
+  });
+
+  // Fetch polyline if both current and selected positions are available
+  if (_currentPosition != null && _selectedPosition != null) {
+    await _getPolyline(_currentPosition!, _selectedPosition!);
   }
+}
 
   void _onMapTapped(LatLng position) {
     setState(() {
@@ -235,7 +312,7 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   Future<BitmapDescriptor> _getIconFromAsset(String assetPath,
-      {int width = 270, int height = 270}) async {
+      {int width = 400, int height = 400}) async {
     final byteData = await rootBundle.load(assetPath);
     final Uint8List bytes = byteData.buffer.asUint8List();
 
@@ -255,71 +332,141 @@ class _HomeContentState extends State<HomeContent> {
     return BitmapDescriptor.fromBytes(resizedBytes);
   }
 
-  void _updateMarkers() async {
-    // Usage:
-    BitmapDescriptor currentLocationIcon = await _getIconWithOutline(
-      Icons.circle,
-      const Color.fromARGB(255, 25, 116, 189),
-      70.0,
-      Colors.white, // Outline color
-      0.5, // Outline width
-    );
-    BitmapDescriptor Charger_icon =
-        await _getIconFromAsset('assets/icons/EV_location_red.png');
 
-    if (_currentPosition != null) {
+  Future<BitmapDescriptor> _getIconFromAssetred(String assetPath,
+      {int width = 230, int height = 230}) async {
+    final byteData = await rootBundle.load(assetPath);
+    final Uint8List bytes = byteData.buffer.asUint8List();
+
+    // Decode the image from bytes
+    final ui.Codec codec = await ui.instantiateImageCodec(
+      bytes,
+      targetWidth: width,
+      targetHeight: height,
+    );
+    final ui.FrameInfo frameInfo = await codec.getNextFrame();
+
+    // Convert the image to bytes
+    final ByteData? resizedByteData =
+        await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List resizedBytes = resizedByteData!.buffer.asUint8List();
+
+    return BitmapDescriptor.fromBytes(resizedBytes);
+  }
+
+Future<BitmapDescriptor> _getCustomMarkerWithDirection(double bearing) async {
+  final pictureRecorder = ui.PictureRecorder();
+  final canvas = Canvas(pictureRecorder);
+
+  const double radius = 50.0;
+  final Paint fillPaint = Paint()..color = Colors.blue;
+  final Paint strokePaint = Paint()
+    ..color = Colors.white
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 4.0;
+
+  // Draw the circle for location
+  canvas.drawCircle(Offset(radius, radius), radius, fillPaint);
+  canvas.drawCircle(Offset(radius, radius), radius, strokePaint);
+
+  // Draw the directional pointer
+  final Path arrowPath = Path()
+    ..moveTo(radius, radius * 0.5) // Top of the arrow
+    ..lineTo(radius * 0.7, radius * 1.5) // Left side
+    ..lineTo(radius * 1.3, radius * 1.5) // Right side
+    ..close();
+
+  final Paint arrowPaint = Paint()..color = Colors.white;
+  canvas.save();
+  canvas.translate(radius, radius); // Move origin to the center
+  canvas.rotate(bearing * 3.1415927 / 180); // Rotate according to bearing
+  canvas.translate(-radius, -radius); // Move back origin
+  canvas.drawPath(arrowPath, arrowPaint);
+  canvas.restore();
+
+  final picture = pictureRecorder.endRecording();
+  final img = await picture.toImage((radius * 2).toInt(), (radius * 2).toInt());
+  final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+  final buffer = byteData!.buffer.asUint8List();
+
+  return BitmapDescriptor.fromBytes(buffer);
+}
+
+Future<BitmapDescriptor> _createCurrentLocationMarkerIcon() async {
+  final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  final Canvas canvas = Canvas(pictureRecorder);
+  const double size = 100.0; // Adjust size as needed
+
+  // Create the custom marker using CurrentLocationMarkerPainter
+  final CurrentLocationMarkerPainter painter = CurrentLocationMarkerPainter();
+  painter.paint(canvas, Size(size, size));
+
+  final ui.Image image = await pictureRecorder.endRecording().toImage(size.toInt(), size.toInt());
+  final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  final Uint8List imageData = byteData!.buffer.asUint8List();
+
+  return BitmapDescriptor.fromBytes(imageData);
+}
+
+// This method updates the markers on the map
+void _updateMarkers() async {
+  if (_currentPosition != null) {
+    // Update the current location marker with the custom marker icon
+    final currentLocationIcon = await _createCurrentLocationMarkerIcon(); // Use the method to create the icon
+    setState(() {
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('current_location'),
+          position: _currentPosition!,
+          icon: currentLocationIcon,
+          infoWindow: const InfoWindow(title: 'Your Location'),
+          onTap: () {
+            _showCustomInfoWindow(
+              'Your Location',
+              '',
+              _currentPosition!,
+            );
+          },
+        ),
+      );
+    });
+  }
+
+  // Add markers for all available chargers (existing logic)
+  for (var charger in availableChargers) {
+    final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
+    final lat = charger['lat'] != null ? double.tryParse(charger['lat']) : null;
+    final lng = charger['long'] != null ? double.tryParse(charger['long']) : null;
+
+    if (lat != null && lng != null) {
+      if (_currentPosition != null &&
+          lat == _currentPosition!.latitude &&
+          lng == _currentPosition!.longitude) {
+        continue;
+      }
+
+      BitmapDescriptor Charger_icon =
+          await _getIconFromAssetred('assets/icons/EV_location_red.png');
+
       setState(() {
         _markers.add(
           Marker(
-            markerId: const MarkerId('current_location'),
-            position: _currentPosition!,
-            icon: currentLocationIcon, // Use the custom icon for chargers
-            infoWindow: const InfoWindow(title: 'Your Location'),
+            markerId: MarkerId(chargerId),
+            position: LatLng(lat, lng),
+            icon: Charger_icon, // Use the custom icon for chargers
+            infoWindow: InfoWindow(
+              title: charger['model'] ?? 'Unknown Model',
+              snippet: chargerId,
+            ),
             onTap: () {
-              _showCustomInfoWindow(
-                'Your Location',
-                '',
-                _currentPosition!,
-              );
+              _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
             },
           ),
         );
       });
     }
-
-    for (var charger in availableChargers) {
-      final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
-      final lat =
-          charger['lat'] != null ? double.tryParse(charger['lat']) : null;
-      final lng =
-          charger['long'] != null ? double.tryParse(charger['long']) : null;
-
-      if (lat != null && lng != null) {
-        if (_currentPosition != null &&
-            lat == _currentPosition!.latitude &&
-            lng == _currentPosition!.longitude) {
-          continue;
-        }
-
-        setState(() {
-          _markers.add(
-            Marker(
-              markerId: MarkerId(chargerId),
-              position: LatLng(lat, lng),
-              icon: Charger_icon, // Use the custom icon for chargers
-              infoWindow: InfoWindow(
-                title: charger['model'] ?? 'Unknown Model',
-                snippet: chargerId,
-              ),
-              onTap: () {
-                _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
-              },
-            ),
-          );
-        });
-      }
-    }
   }
+}
 
   Future<void> _getPolyline(LatLng start, LatLng end) async {
     final response = await http.get(Uri.parse(
@@ -587,14 +734,21 @@ class _HomeContentState extends State<HomeContent> {
     }
   }
 
-  void navigateToQRViewExample() async {
+void navigateToQRViewExample() async {
+  // Check camera permission
+  bool hasPermission = await Permission.camera.isGranted;
+
+  if (hasPermission) {
+    // Navigate to the QR scanner screen if permission is granted
     final scannedCode = await Navigator.push<String>(
       context,
       MaterialPageRoute(
-          builder: (context) => QRViewExample(
-              handleSearchRequestCallback: handleSearchRequest,
-              username: widget.username,
-              userId: widget.userId)),
+        builder: (context) => QRViewExample(
+          handleSearchRequestCallback: handleSearchRequest,
+          username: widget.username,
+          userId: widget.userId,
+        ),
+      ),
     );
 
     if (scannedCode != null) {
@@ -602,7 +756,43 @@ class _HomeContentState extends State<HomeContent> {
         searchChargerID = scannedCode;
       });
     }
+  } else {
+    // Show CoolAlert if permission is not granted
+    CoolAlert.show(
+      context: context,
+      type: CoolAlertType.custom,
+      widget: Column(
+        children: [
+          const SizedBox(height: 16.0),
+          const Text(
+            'Permission Denied',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          const Text(
+            'To Scan QR codes, allow this app access to your camera. Tap Settings > Permissions, and turn Camera on.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black),
+          ),
+        ],
+      ),
+      confirmBtnText: 'Settings',
+      cancelBtnText: 'Cancel',
+      showCancelBtn: true,
+      confirmBtnColor: Colors.blue,
+      barrierDismissible: false,
+      onConfirmBtnTap: () {
+        openAppSettings();
+      },
+   
+    );
   }
+}
+
 
   void showErrorDialog(BuildContext context, String message) {
     showModalBottomSheet(
@@ -700,293 +890,408 @@ class _HomeContentState extends State<HomeContent> {
     }
   }
 
-  void _startLiveTracking() {
-    if (_positionStreamSubscription != null) {
-      _positionStreamSubscription!.cancel();
-    }
+Future<BitmapDescriptor> _getRotatedIcon({
+  required IconData iconData,
+  required Color color,
+  required double size,
+  required double rotation,
+}) async {
+  final pictureRecorder = ui.PictureRecorder();
+  final canvas = Canvas(pictureRecorder);
 
-    _positionStreamSubscription = Geolocator.getPositionStream(
-            locationSettings: LocationSettings(
-                accuracy: LocationAccuracy.high, distanceFilter: 10))
-        .listen((Position position) {
-      setState(() {
-        _currentPosition = LatLng(position.latitude, position.longitude);
-      });
+  final textPainter = TextPainter(textDirection: TextDirection.ltr)
+    ..text = TextSpan(
+      text: String.fromCharCode(iconData.codePoint),
+      style: TextStyle(
+        fontSize: size,
+        fontFamily: iconData.fontFamily,
+        color: color,
+      ),
+    )
+    ..layout();
 
-      if (_currentPosition != null && _destinationPosition != null) {
-        _getPolyline(_currentPosition!, _destinationPosition!);
-      }
+  canvas.save();
+  canvas.translate(size / 2, size / 2); // Move the canvas origin to the center
+  canvas.rotate(rotation * 3.1415927 / 180); // Rotate the canvas to the given bearing
+  canvas.translate(-size / 2, -size / 2); // Move back the origin
 
-      mapController?.animateCamera(
-        CameraUpdate.newLatLng(_currentPosition!),
-      );
-    });
+  textPainter.paint(canvas, Offset(0, 0));
+  canvas.restore();
+
+  final picture = pictureRecorder.endRecording();
+  final img = await picture.toImage(size.toInt(), size.toInt());
+  final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+  final buffer = byteData!.buffer.asUint8List();
+
+  return BitmapDescriptor.fromBytes(buffer);
+}
+
+
+// Create a custom marker icon with a directional arrow
+Future<BitmapDescriptor> _getDirectionMarker(double bearing) async {
+  const double size = 100.0; // Size of the icon
+  final pictureRecorder = ui.PictureRecorder();
+  final canvas = Canvas(pictureRecorder);
+  final center = Offset(size / 2, size / 2);
+
+  // Draw the blue circle for current location
+  final Paint circlePaint = Paint()..color = Colors.blue;
+  canvas.drawCircle(center, size / 2, circlePaint);
+
+  // Draw the white border around the circle
+  final Paint borderPaint = Paint()
+    ..color = Colors.white
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 10.0;
+  canvas.drawCircle(center, size / 2, borderPaint);
+
+  // Draw the directional arrow
+  final Path arrowPath = Path()
+    ..moveTo(center.dx, center.dy - size / 4) // Top of the arrow
+    ..lineTo(center.dx - size / 8, center.dy + size / 4) // Left side
+    ..lineTo(center.dx + size / 8, center.dy + size / 4) // Right side
+    ..close();
+
+  final Paint arrowPaint = Paint()..color = Colors.white;
+  canvas.save();
+  canvas.translate(center.dx, center.dy); // Move origin to the center
+  canvas.rotate(bearing * 3.1415927 / 180); // Rotate according to bearing
+  canvas.translate(-center.dx, -center.dy); // Move back origin
+  canvas.drawPath(arrowPath, arrowPaint);
+  canvas.restore();
+
+  final picture = pictureRecorder.endRecording();
+  final img = await picture.toImage(size.toInt(), size.toInt());
+  final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+  final buffer = byteData!.buffer.asUint8List();
+
+  return BitmapDescriptor.fromBytes(buffer);
+}
+
+// Method to start live tracking
+void _startLiveTracking() {
+  if (_positionStreamSubscription != null) {
+    _positionStreamSubscription!.cancel();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: GoogleMap(
-              onMapCreated: _onMapCreated,
-              initialCameraPosition: CameraPosition(
-                target: _currentPosition ?? _center,
-                zoom: 16.0,
-              ),
-              markers: _markers,
-              polylines: _polylines, // Add polylines to the map
-              zoomControlsEnabled: false,
-              myLocationEnabled: false,
-              myLocationButtonEnabled: false,
-              mapToolbarEnabled: false,
-              onTap: _onMapTapped,
-              // compassEnabled: false,
-            ),
+  _positionStreamSubscription = Geolocator.getPositionStream(
+          locationSettings: LocationSettings(
+              accuracy: LocationAccuracy.high, distanceFilter: 10))
+      .listen((Position position) async {
+    final bearing = position.heading;
+
+    setState(() {
+      _currentPosition = LatLng(position.latitude, position.longitude);
+    });
+
+    // Create a custom icon with direction
+    final currentLocationIcon = await _getDirectionMarker(bearing);
+
+    setState(() {
+      // Remove the old marker
+      _markers.removeWhere(
+          (marker) => marker.markerId.value == 'current_location');
+
+      // Add a new marker with the updated location and rotation
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('current_location'),
+          position: _currentPosition!,
+          icon: currentLocationIcon,
+          rotation: bearing,
+          anchor: const Offset(0.5, 0.5), // Center the icon
+        ),
+      );
+    });
+
+    if (mapController != null) {
+      // Animate camera to new position and bearing
+      mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: _currentPosition!,
+            zoom: 18.0,
+            bearing: bearing, // Rotate the map to match the user's direction
+            tilt: 45.0,
           ),
-          Positioned(
-            top: 305,
-            right: 10,
-            child: Column(
-              children: [
-                FloatingActionButton(
-                  heroTag: 'Navigation in google map',
-                  backgroundColor:
-                      areMapButtonsEnabled ? Colors.black : Colors.grey,
-                  onPressed: areMapButtonsEnabled
-                      ? () async {
-                          if (_selectedPosition != null) {
-                            final googleMapsUrl =
-                                "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
-                            if (await canLaunch(googleMapsUrl)) {
-                              await launch(googleMapsUrl);
-                            } else {
-                              showErrorDialog(context,
-                                  'Could not open the map. Please check your internet connection or try again later.');
+        ),
+      );
+    }
+  });
+}
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.black,
+    body: Stack(
+      children: [
+        Positioned.fill(
+          child: GoogleMap(
+            key: _mapKey, // Assign GlobalKey to GoogleMap
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: _currentPosition ?? _center,
+              zoom: 16.0,
+            ),
+            markers: _markers,
+            polylines: _polylines, // Add polylines to the map
+            zoomControlsEnabled: false,
+            myLocationEnabled: false,
+            myLocationButtonEnabled: false,
+            mapToolbarEnabled: false,
+            onTap: _onMapTapped,
+          ),
+        ),
+        Positioned(
+          bottom: 250,
+          right: 10,
+          child: FloatingActionButton(
+            backgroundColor: const Color.fromARGB(227, 76, 175, 79),
+            onPressed: _getCurrentLocation,
+            child: const Icon(Icons.my_location, color: Colors.white),
+          ),
+        ),
+        Positioned(
+          top: 305,
+          right: 10,
+          child: Column(
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  FloatingActionButton(
+                    heroTag: 'Navigation in google map',
+                    backgroundColor: Colors.black,
+                    onPressed: areMapButtonsEnabled
+                        ? () async {
+                            if (_selectedPosition != null) {
+                              final googleMapsUrl =
+                                  "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
+                              if (await canLaunch(googleMapsUrl)) {
+                                await launch(googleMapsUrl);
+                              } else {
+                                showErrorDialog(context,
+                                    'Could not open the map. Please check your internet connection or try again later.');
+                              }
                             }
                           }
-                        }
-                      : null,
-                  child: SizedBox(
-                    width: 30, // Adjust width as needed
-                    height: 30, // Adjust height as needed
-                    child: Image.asset(
-                      'assets/icons/Google_map.png', // Replace with your image path
-                      fit: BoxFit
-                          .contain, // Ensure the image fits within the button
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.only(top: 40.0, left: 16.0, right: 16.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onSubmitted: (value) {
-                          handleSearchRequest(value);
-                        },
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: const Color(0xFF0E0E0E),
-                          hintText: 'Search ChargerId...',
-                          hintStyle: const TextStyle(color: Colors.white70),
-                          prefixIcon:
-                              const Icon(Icons.search, color: Colors.white),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30.0),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
+                        : null,
+                    child: SizedBox(
+                      width: 30, // Adjust width as needed
+                      height: 30, // Adjust height as needed
+                      child: Image.asset(
+                        'assets/icons/Google_map.png', // Replace with your image path
+                        fit: BoxFit.contain, // Ensure the image fits within the button
                       ),
                     ),
-                    const SizedBox(width: 10),
+                  ),
+                  if (!areMapButtonsEnabled)
                     Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0E0E0E),
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.qr_code,
-                            color: Colors.white, size: 30),
-                        onPressed: () {
-                          navigateToQRViewExample();
-                        },
+                      width: 56, // Match the size of the FloatingActionButton
+                      height: 56,
+                      child: CustomPaint(
+                        painter: CrossPainter(),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 10.0),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: activeFilter == 'All Chargers'
-                              ? Colors.blue
-                              : const Color(0xFF0E0E0E),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            activeFilter = 'All Chargers';
-                          });
-                          fetchAllChargers();
-                        },
-                        icon: const Icon(Icons.ev_station, color: Colors.white),
-                        label: const Text('All Chargers',
-                            style: TextStyle(color: Colors.white)),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: activeFilter == 'Previously Used'
-                              ? Colors.blue
-                              : const Color(0xFF0E0E0E),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            activeFilter = 'Previously Used';
-                          });
-                          fetchRecentSessionDetails();
-                        },
-                        icon: const Icon(Icons.history, color: Colors.white),
-                        label: const Text('Previously Used',
-                            style: TextStyle(color: Colors.white)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const Spacer(),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: <Widget>[
-                    const SizedBox(width: 15),
-                    if (isLoading)
-                      for (var i = 0; i < 3; i++) _buildShimmerCard(),
-                    if (!isLoading && activeFilter == 'Previously Used')
-                      for (var session in recentSessions)
-                        _buildChargerCard(
-                          context,
-                          session['details']['charger_id'] ?? 'Unknown ID',
-                          session['details']['model'] ?? 'Unknown Model',
-                          session['status']['charger_status'] ??
-                              'Unknown Status',
-                          "1.3 Km",
-                          session['unit_price']?.toString() ?? 'Unknown Price',
-                          session['status']['connector_id'] ?? 0,
-                          session['details']['charger_accessibility']
-                                  ?.toString() ??
-                              'Unknown',
-                        ),
-                    if (!isLoading && activeFilter == 'All Chargers')
-                      for (var charger in availableChargers)
-                        if (charger['status'] == null)
-                          _buildChargerCard(
-                            context,
-                            charger['charger_id'] ?? 'Unknown ID',
-                            charger['model'] ?? 'Unknown Model',
-                            "Not yet received",
-                            "1.3 Km",
-                            charger['unit_price']?.toString() ??
-                                'Unknown Price',
-                            0,
-                            charger['charger_accessibility']?.toString() ??
-                                'Unknown',
-                          ),
-                    for (var charger in availableChargers)
-                      if (charger['status'] != null)
-                        for (var status in charger['status'] ?? [])
-                          _buildChargerCard(
-                            context,
-                            charger['charger_id'] ?? 'Unknown ID',
-                            charger['model'] ?? 'Unknown Model',
-                            status['charger_status'] ?? 'Unknown Status',
-                            "1.3 Km",
-                            charger['unit_price']?.toString() ??
-                                'Unknown Price',
-                            status['connector_id'] ?? 'Unknown Last Updated',
-                            charger['charger_accessibility']?.toString() ??
-                                'Unknown',
-                          ),
-                  ],
-                ),
-              ),
-              const SizedBox(
-                height: 28,
+                ],
               ),
             ],
           ),
-          Positioned(
-            bottom: 250,
-            right: 10,
-            child: FloatingActionButton(
-              backgroundColor: const Color.fromARGB(227, 76, 175, 79),
-              onPressed: _getCurrentLocation,
-              child: const Icon(Icons.my_location, color: Colors.white),
+        ),
+        Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 40.0, left: 16.0, right: 16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onSubmitted: (value) {
+                        handleSearchRequest(value);
+                      },
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFF0E0E0E),
+                        hintText: 'Search ChargerId...',
+                        hintStyle: const TextStyle(color: Colors.white70),
+                        prefixIcon: const Icon(Icons.search, color: Colors.white),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0E0E0E),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.qr_code, color: Colors.white, size: 30),
+                      onPressed: () {
+                        navigateToQRViewExample();
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Positioned(
-            top: 170,
-            right: 10,
-            child: Column(
-              children: [
-                FloatingActionButton(
-                  heroTag: 'zoom_in',
-                  backgroundColor: Colors.black,
-                  onPressed: () {
-                    mapController?.animateCamera(CameraUpdate.zoomIn());
-                  },
-                  child: const Icon(Icons.zoom_in_map_rounded,
-                      color: Colors.white),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: activeFilter == 'All Chargers'
+                            ? Colors.blue
+                            : const Color(0xFF0E0E0E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          activeFilter = 'All Chargers';
+                        });
+                        fetchAllChargers();
+                      },
+                      icon: const Icon(Icons.ev_station, color: Colors.white),
+                      label: const Text('All Chargers',
+                          style: TextStyle(color: Colors.white)),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: activeFilter == 'Previously Used'
+                            ? Colors.blue
+                            : const Color(0xFF0E0E0E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          activeFilter = 'Previously Used';
+                        });
+                        fetchRecentSessionDetails();
+                      },
+                      icon: const Icon(Icons.history, color: Colors.white),
+                      label: const Text('Previously Used',
+                          style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                FloatingActionButton(
-                  heroTag: 'zoom_out',
-                  backgroundColor: Colors.black,
-                  onPressed: () {
-                    mapController?.animateCamera(CameraUpdate.zoomOut());
-                  },
-                  child: const Icon(Icons.zoom_out_map_rounded,
-                      color: Colors.red),
-                ),
-              ],
+              ),
             ),
+            const Spacer(),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: <Widget>[
+                  const SizedBox(width: 15),
+                  if (isLoading)
+                    for (var i = 0; i < 3; i++) _buildShimmerCard(),
+                  if (!isLoading && activeFilter == 'Previously Used')
+                    for (var session in recentSessions)
+                      _buildChargerCard(
+                        context,
+                        session['details']['charger_id'] ?? 'Unknown ID',
+                        session['details']['model'] ?? 'Unknown Model',
+                        session['status']['charger_status'] ?? 'Unknown Status',
+                        "1.3 Km",
+                        session['unit_price']?.toString() ?? 'Unknown Price',
+                        session['status']['connector_id'] ?? 0,
+                        session['details']['charger_accessibility']
+                                ?.toString() ?? 'Unknown',
+                      ),
+                  if (!isLoading && activeFilter == 'All Chargers')
+                    for (var charger in availableChargers)
+                      if (charger['status'] == null)
+                        _buildChargerCard(
+                          context,
+                          charger['charger_id'] ?? 'Unknown ID',
+                          charger['model'] ?? 'Unknown Model',
+                          "Not yet received",
+                          "1.3 Km",
+                          charger['unit_price']?.toString() ?? 'Unknown Price',
+                          0,
+                          charger['charger_accessibility']?.toString() ??
+                              'Unknown',
+                        ),
+                  for (var charger in availableChargers)
+                    if (charger['status'] != null)
+                      for (var status in charger['status'] ?? [])
+                        _buildChargerCard(
+                          context,
+                          charger['charger_id'] ?? 'Unknown ID',
+                          charger['model'] ?? 'Unknown Model',
+                          status['charger_status'] ?? 'Unknown Status',
+                          "1.3 Km",
+                          charger['unit_price']?.toString() ?? 'Unknown Price',
+                          status['connector_id'] ?? 'Unknown Last Updated',
+                          charger['charger_accessibility']?.toString() ?? 'Unknown',
+                        ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+          ],
+        ),
+        Positioned(
+          bottom: 250,
+          right: 10,
+          child: FloatingActionButton(
+            backgroundColor: const Color.fromARGB(227, 76, 175, 79),
+            onPressed: _getCurrentLocation,
+            child: const Icon(Icons.my_location, color: Colors.white),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        Positioned(
+          top: 170,
+          right: 10,
+          child: Column(
+            children: [
+              FloatingActionButton(
+                heroTag: 'zoom_in',
+                backgroundColor: Colors.black,
+                onPressed: () {
+                  mapController?.animateCamera(CameraUpdate.zoomIn());
+                },
+                child: const Icon(Icons.zoom_in_map_rounded,
+                    color: Colors.white),
+              ),
+              const SizedBox(height: 10),
+              FloatingActionButton(
+                heroTag: 'zoom_out',
+                backgroundColor: Colors.black,
+                onPressed: () {
+                  mapController?.animateCamera(CameraUpdate.zoomOut());
+                },
+                child: const Icon(Icons.zoom_out_map_rounded,
+                    color: Colors.red),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildChargerCard(
     BuildContext context,
@@ -1045,7 +1350,7 @@ class _HomeContentState extends State<HomeContent> {
             BitmapDescriptor newIcon =
                 await _getIconFromAsset('assets/icons/EV_location_green.png');
             BitmapDescriptor defaultIcon =
-                await _getIconFromAsset('assets/icons/EV_location_red.png');
+                await _getIconFromAssetred('assets/icons/EV_location_red.png');
 
             setState(() {
               // Revert the previous marker icon to default if it exists
@@ -1529,6 +1834,70 @@ class SlantClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) {
+    return false;
+  }
+}
+
+
+class CrossPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF8E8E8E)
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+
+    // Calculate offsets for top and bottom reduction
+    final offset = size.height * 0.1; // Adjust this factor to change the reduction
+
+    // Draw the diagonal line from top-right to bottom-left with equal reduction
+    canvas.drawLine(
+      Offset(size.width - offset, offset), // Starting point (inward from top-right)
+      Offset(offset, size.height - offset), // Ending point (inward from bottom-left)
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
+  }
+}
+
+
+class CurrentLocationMarkerPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Adjust the size of the translucent outer circle to fit within the canvas
+    final double outerCircleRadius = size.width /2;  // Set to 75% of the width for better coverage
+
+    // Size of the solid blue circle and the border remains the same
+    final double dotRadius = size.width / 4;
+    final double borderThickness = size.width / 20;  // Thickness of the white border
+
+    final Paint circlePaint = Paint()
+      ..color = Colors.blue.withOpacity(0.2)
+      ..style = PaintingStyle.fill;
+
+    final Paint dotPaint = Paint()
+      ..color = Colors.blue
+      ..style = PaintingStyle.fill;
+
+    final Paint borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = borderThickness;
+
+    // Draw the translucent circle with adjusted size
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), outerCircleRadius, circlePaint);
+
+    // Draw the solid blue dot with a white border (same size as before)
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), dotRadius, dotPaint);
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), dotRadius, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
   }
 }

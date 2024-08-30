@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui' as ui;
 import 'dart:async';
 import 'package:cool_alert/cool_alert.dart';
+import '../../service/location.dart';
 
 class HomeContent extends StatefulWidget {
   final String username;
@@ -25,6 +26,7 @@ class HomeContent extends StatefulWidget {
 }
 
 class _HomeContentState extends State<HomeContent> {
+  final GlobalKey _mapKey = GlobalKey(); // Global key for map widget
   final TextEditingController _searchController = TextEditingController();
   String searchChargerID = '';
   List availableChargers = [];
@@ -42,33 +44,19 @@ class _HomeContentState extends State<HomeContent> {
   bool areMapButtonsEnabled = false;
   MarkerId? _previousMarkerId; // To track the previously selected marker
   StreamSubscription<Position>? _positionStreamSubscription;
-bool _isFetchingLocation = false;
+  bool _isFetchingLocation = false; // Ensure initialization
 
   @override
   void initState() {
     super.initState();
+    _isFetchingLocation = false; // Ensure initialization
     _checkLocationPermission(); // Request location permissions on app start
     activeFilter = 'All Chargers';
     fetchAllChargers();
+    _startLiveTracking(); // Start live tracking
   }
-  
-Widget _buildLoadingIndicator() {
-  return Container(
-    width: double.infinity,
-    height: double.infinity,
-    color: Colors.black.withOpacity(0.75), // Transparent black background
-    child: Center(
-      child: Image.asset(
-        'assets/gif/current_location.gif', // Update this path according to where the GIF is stored
-        width: 300, // Adjust the size as needed
-        height: 300,
-      ),
-    ),
-  );
-}
 
-
-
+  // This method checks the user's location permissions
   Future<void> _checkLocationPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -89,73 +77,86 @@ Widget _buildLoadingIndicator() {
     }
   }
 
-Future<void> _getCurrentLocation() async {
-  // Check if location services are enabled
-  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) {
-    // Show CoolAlert if location services are not enabled
-    _showLocationServicesDialog();
-    return; // Stop further execution if location services are disabled
-  }
+  // This method retrieves the user's current location
+  Future<void> _getCurrentLocation() async {
+    if (_isFetchingLocation) return;
 
-  // If location services are enabled, proceed to get the current location
-  setState(() {
-    _isFetchingLocation = true; // Start showing the loading indicator
-  });
-
-  try {
-    await Future.delayed(const Duration(seconds: 2)); // Simulate loading for 2 seconds
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
     setState(() {
-      _currentPosition = LatLng(position.latitude, position.longitude);
+      _isFetchingLocation = true;
     });
 
-    mapController?.animateCamera(
-      CameraUpdate.newLatLng(_currentPosition!),
-    );
-    _updateMarkers();
-  } catch (e) {
-    print('Error getting location: $e');
-  } finally {
-    setState(() {
-      _isFetchingLocation = false; // Stop showing the loading indicator
-    });
-  }
-}
+    try {
+      LatLng? currentLocation =
+          await LocationService.instance.getCurrentLocation();
 
-Future<void> _showLocationServicesDialog() async {
-  CoolAlert.show(
-    context: context,
-    type: CoolAlertType.custom,
-    widget: Column(
-      children: [
-        const SizedBox(height: 16.0),
-        const Text(
-          'Enable Location',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+      if (currentLocation != null) {
+        // Update the current position
+        setState(() {
+          _currentPosition = currentLocation;
+        });
+
+        if (mapController != null) {
+          // Smoothly animate the camera to the new position
+          await mapController!.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: _currentPosition!,
+                zoom: 18.0,
+              ),
+            ),
+          );
+        }
+
+        // Update the map markers with the new position
+        _updateMarkers();
+      } else {
+        // Handle the case where location couldn't be fetched
+        print('Current location could not be determined.');
+      }
+    } catch (e) {
+      // Handle any exceptions that occur during location fetching
+      print('Error occurred while fetching the current location: $e');
+    } finally {
+      // Ensure that the loading state is reset
+      setState(() {
+        _isFetchingLocation = false;
+      });
+    }
+  }
+
+  Future<void> _showLocationServicesDialog() async {
+    CoolAlert.show(
+      context: context,
+      type: CoolAlertType.custom,
+      widget: Column(
+        children: [
+          const SizedBox(height: 16.0),
+          const Text(
+            'Enable Location',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
-        ),
-        const SizedBox(height: 8.0),
-        const Text(
-          'Location services are required to use this feature. Please enable location services in your phone settings.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.black),
-        ),
-      ],
-    ),
-    confirmBtnText: 'Settings',
-    showCancelBtn: true,
-    confirmBtnColor: Colors.blue,
-    barrierDismissible: false, // Prevent closing by tapping outside
-    onConfirmBtnTap: () {
-      Geolocator.openLocationSettings(); // Open the location settings
-    },
-  );
-}
+          const SizedBox(height: 8.0),
+          const Text(
+            'Location services are required to use this feature. Please enable location services in your phone settings.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black),
+          ),
+        ],
+      ),
+      confirmBtnText: 'Settings',
+      showCancelBtn: true,
+      confirmBtnColor: Colors.blue,
+      barrierDismissible: false, // Prevent closing by tapping outside
+      onConfirmBtnTap: () {
+        Geolocator.openLocationSettings(); // Open the location settings
+      },
+    );
+  }
+
   Future<void> _showPermissionDeniedDialog() async {
     showDialog(
       context: context,
@@ -213,44 +214,45 @@ Future<void> _showLocationServicesDialog() async {
       _updateMarkers();
     }
   }
-void _onMarkerTapped(MarkerId markerId, LatLng position) async {
-  setState(() {
-    _selectedPosition = position;
-    areMapButtonsEnabled = true;
-  });
 
-  // Change the marker icon to the selected icon
-  BitmapDescriptor newIcon =
-      await _getIconFromAsset('assets/icons/EV_location_green.png');
-  BitmapDescriptor defaultIcon =
-      await _getIconFromAsset('assets/icons/EV_location_red.png');
+  void _onMarkerTapped(MarkerId markerId, LatLng position) async {
+    setState(() {
+      _selectedPosition = position;
+      areMapButtonsEnabled = true;
+    });
 
-  setState(() {
-    // Revert the previous marker icon to default if it exists
-    if (_previousMarkerId != null) {
+    // Change the marker icon to the selected icon
+    BitmapDescriptor newIcon =
+        await _getIconFromAsset('assets/icons/EV_location_green.png');
+    BitmapDescriptor defaultIcon =
+        await _getIconFromAssetred('assets/icons/EV_location_red.png');
+
+    setState(() {
+      // Revert the previous marker icon to default if it exists
+      if (_previousMarkerId != null) {
+        _markers = _markers.map((marker) {
+          if (marker.markerId == _previousMarkerId) {
+            return marker.copyWith(iconParam: defaultIcon);
+          }
+          return marker;
+        }).toSet();
+      }
+
+      // Update the icon for the newly selected marker
       _markers = _markers.map((marker) {
-        if (marker.markerId == _previousMarkerId) {
-          return marker.copyWith(iconParam: defaultIcon);
+        if (marker.markerId == markerId) {
+          _previousMarkerId = marker.markerId;
+          return marker.copyWith(iconParam: newIcon);
         }
         return marker;
       }).toSet();
+    });
+
+    // Fetch polyline if both current and selected positions are available
+    if (_currentPosition != null && _selectedPosition != null) {
+      await _getPolyline(_currentPosition!, _selectedPosition!);
     }
-
-    // Update the icon for the newly selected marker
-    _markers = _markers.map((marker) {
-      if (marker.markerId == markerId) {
-        _previousMarkerId = marker.markerId;
-        return marker.copyWith(iconParam: newIcon);
-      }
-      return marker;
-    }).toSet();
-  });
-
-  // Fetch polyline if both current and selected positions are available
-  if (_currentPosition != null && _selectedPosition != null) {
-    await _getPolyline(_currentPosition!, _selectedPosition!);
   }
-}
 
   void _onMapTapped(LatLng position) {
     setState(() {
@@ -308,7 +310,7 @@ void _onMarkerTapped(MarkerId markerId, LatLng position) async {
   }
 
   Future<BitmapDescriptor> _getIconFromAsset(String assetPath,
-      {int width = 270, int height = 270}) async {
+      {int width = 400, int height = 400}) async {
     final byteData = await rootBundle.load(assetPath);
     final Uint8List bytes = byteData.buffer.asUint8List();
 
@@ -328,71 +330,150 @@ void _onMarkerTapped(MarkerId markerId, LatLng position) async {
     return BitmapDescriptor.fromBytes(resizedBytes);
   }
 
-  void _updateMarkers() async {
-    // Usage:
-    BitmapDescriptor currentLocationIcon = await _getIconWithOutline(
-      Icons.circle,
-      const Color.fromARGB(255, 25, 116, 189),
-      70.0,
-      Colors.white, // Outline color
-      0.5, // Outline width
-    );
-    BitmapDescriptor Charger_icon =
-        await _getIconFromAsset('assets/icons/EV_location_red.png');
+  Future<BitmapDescriptor> _getIconFromAssetred(String assetPath,
+      {int width = 230, int height = 230}) async {
+    final byteData = await rootBundle.load(assetPath);
+    final Uint8List bytes = byteData.buffer.asUint8List();
 
-    if (_currentPosition != null) {
+    // Decode the image from bytes
+    final ui.Codec codec = await ui.instantiateImageCodec(
+      bytes,
+      targetWidth: width,
+      targetHeight: height,
+    );
+    final ui.FrameInfo frameInfo = await codec.getNextFrame();
+
+    // Convert the image to bytes
+    final ByteData? resizedByteData =
+        await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List resizedBytes = resizedByteData!.buffer.asUint8List();
+
+    return BitmapDescriptor.fromBytes(resizedBytes);
+  }
+
+  Future<BitmapDescriptor> _getCustomMarkerWithDirection(double bearing) async {
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+
+    const double radius = 50.0;
+    final Paint fillPaint = Paint()..color = Colors.blue;
+    final Paint strokePaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0;
+
+    // Draw the circle for location
+    canvas.drawCircle(Offset(radius, radius), radius, fillPaint);
+    canvas.drawCircle(Offset(radius, radius), radius, strokePaint);
+
+    // Draw the directional pointer
+    final Path arrowPath = Path()
+      ..moveTo(radius, radius * 0.5) // Top of the arrow
+      ..lineTo(radius * 0.7, radius * 1.5) // Left side
+      ..lineTo(radius * 1.3, radius * 1.5) // Right side
+      ..close();
+
+    final Paint arrowPaint = Paint()..color = Colors.white;
+    canvas.save();
+    canvas.translate(radius, radius); // Move origin to the center
+    canvas.rotate(bearing * 3.1415927 / 180); // Rotate according to bearing
+    canvas.translate(-radius, -radius); // Move back origin
+    canvas.drawPath(arrowPath, arrowPaint);
+    canvas.restore();
+
+    final picture = pictureRecorder.endRecording();
+    final img =
+        await picture.toImage((radius * 2).toInt(), (radius * 2).toInt());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final buffer = byteData!.buffer.asUint8List();
+
+    return BitmapDescriptor.fromBytes(buffer);
+  }
+Future<BitmapDescriptor> _createCurrentLocationMarkerIcon(double bearing) async {
+  final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  final Canvas canvas = Canvas(pictureRecorder);
+  const double size = 150.0; // Adjust size as needed
+
+  // Create the custom marker using CurrentLocationMarkerPainter
+  final CurrentLocationMarkerPainter painter = CurrentLocationMarkerPainter(
+    bearing: bearing,
+    animatedRadius: 80.0 , // Provide a fixed value for animatedRadius
+  );
+  
+  painter.paint(canvas, Size(size, size));
+
+  final ui.Image image = await pictureRecorder
+      .endRecording()
+      .toImage(size.toInt(), size.toInt());
+  final ByteData? byteData =
+      await image.toByteData(format: ui.ImageByteFormat.png);
+  final Uint8List imageData = byteData!.buffer.asUint8List();
+
+  return BitmapDescriptor.fromBytes(imageData);
+}
+
+void _updateMarkers() async {
+  if (_currentPosition != null) {
+    // Assuming bearing is 0.0 if not available
+    final double defaultBearing = 0.0;
+
+    // Update the current location marker with the custom marker icon
+    final currentLocationIcon = await _createCurrentLocationMarkerIcon(defaultBearing);
+
+    setState(() {
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('current_location'),
+          position: _currentPosition!,
+          icon: currentLocationIcon,
+          infoWindow: const InfoWindow(title: 'Your Location'),
+          onTap: () {
+            _showCustomInfoWindow(
+              'Your Location',
+              '',
+              _currentPosition!,
+            );
+          },
+        ),
+      );
+    });
+  }
+
+  // Add markers for all available chargers (existing logic)
+  for (var charger in availableChargers) {
+    final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
+    final lat = charger['lat'] != null ? double.tryParse(charger['lat']) : null;
+    final lng = charger['long'] != null ? double.tryParse(charger['long']) : null;
+
+    if (lat != null && lng != null) {
+      if (_currentPosition != null &&
+          lat == _currentPosition!.latitude &&
+          lng == _currentPosition!.longitude) {
+        continue;
+      }
+
+      BitmapDescriptor Charger_icon =
+          await _getIconFromAssetred('assets/icons/EV_location_red.png');
+
       setState(() {
         _markers.add(
           Marker(
-            markerId: const MarkerId('current_location'),
-            position: _currentPosition!,
-            icon: currentLocationIcon, // Use the custom icon for chargers
-            infoWindow: const InfoWindow(title: 'Your Location'),
+            markerId: MarkerId(chargerId),
+            position: LatLng(lat, lng),
+            icon: Charger_icon, // Use the custom icon for chargers
+            infoWindow: InfoWindow(
+              title: charger['model'] ?? 'Unknown Model',
+              snippet: chargerId,
+            ),
             onTap: () {
-              _showCustomInfoWindow(
-                'Your Location',
-                '',
-                _currentPosition!,
-              );
+              _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
             },
           ),
         );
       });
     }
-
-    for (var charger in availableChargers) {
-      final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
-      final lat =
-          charger['lat'] != null ? double.tryParse(charger['lat']) : null;
-      final lng =
-          charger['long'] != null ? double.tryParse(charger['long']) : null;
-
-      if (lat != null && lng != null) {
-        if (_currentPosition != null &&
-            lat == _currentPosition!.latitude &&
-            lng == _currentPosition!.longitude) {
-          continue;
-        }
-
-        setState(() {
-          _markers.add(
-            Marker(
-              markerId: MarkerId(chargerId),
-              position: LatLng(lat, lng),
-              icon: Charger_icon, // Use the custom icon for chargers
-              infoWindow: InfoWindow(
-                title: charger['model'] ?? 'Unknown Model',
-                snippet: chargerId,
-              ),
-              onTap: () {
-                _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
-              },
-            ),
-          );
-        });
-      }
-    }
   }
+}
 
   Future<void> _getPolyline(LatLng start, LatLng end) async {
     final response = await http.get(Uri.parse(
@@ -470,7 +551,8 @@ void _onMarkerTapped(MarkerId markerId, LatLng position) async {
             ),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
-              topRight: Radius.circular(20), // Adjust the radius value as needed
+              topRight:
+                  Radius.circular(20), // Adjust the radius value as needed
             ),
             boxShadow: [
               BoxShadow(
@@ -660,65 +742,63 @@ void _onMarkerTapped(MarkerId markerId, LatLng position) async {
     }
   }
 
-void navigateToQRViewExample() async {
-  // Check camera permission
-  bool hasPermission = await Permission.camera.isGranted;
+  void navigateToQRViewExample() async {
+    // Check camera permission
+    bool hasPermission = await Permission.camera.isGranted;
 
-  if (hasPermission) {
-    // Navigate to the QR scanner screen if permission is granted
-    final scannedCode = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => QRViewExample(
-          handleSearchRequestCallback: handleSearchRequest,
-          username: widget.username,
-          userId: widget.userId,
+    if (hasPermission) {
+      // Navigate to the QR scanner screen if permission is granted
+      final scannedCode = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => QRViewExample(
+            handleSearchRequestCallback: handleSearchRequest,
+            username: widget.username,
+            userId: widget.userId,
+          ),
         ),
-      ),
-    );
+      );
 
-    if (scannedCode != null) {
-      setState(() {
-        searchChargerID = scannedCode;
-      });
-    }
-  } else {
-    // Show CoolAlert if permission is not granted
-    CoolAlert.show(
-      context: context,
-      type: CoolAlertType.custom,
-      widget: Column(
-        children: [
-          const SizedBox(height: 16.0),
-          const Text(
-            'Permission Denied',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+      if (scannedCode != null) {
+        setState(() {
+          searchChargerID = scannedCode;
+        });
+      }
+    } else {
+      // Show CoolAlert if permission is not granted
+      CoolAlert.show(
+        context: context,
+        type: CoolAlertType.custom,
+        widget: Column(
+          children: [
+            const SizedBox(height: 16.0),
+            const Text(
+              'Permission Denied',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
-          ),
-          const SizedBox(height: 8.0),
-          const Text(
-            'To Scan QR codes, allow this app access to your camera. Tap Settings > Permissions, and turn Camera on.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black),
-          ),
-        ],
-      ),
-      confirmBtnText: 'Settings',
-      cancelBtnText: 'Cancel',
-      showCancelBtn: true,
-      confirmBtnColor: Colors.blue,
-      barrierDismissible: false,
-      onConfirmBtnTap: () {
-        openAppSettings();
-      },
-   
-    );
+            const SizedBox(height: 8.0),
+            const Text(
+              'To Scan QR codes, allow this app access to your camera. Tap Settings > Permissions, and turn Camera on.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.black),
+            ),
+          ],
+        ),
+        confirmBtnText: 'Settings',
+        cancelBtnText: 'Cancel',
+        showCancelBtn: true,
+        confirmBtnColor: Colors.blue,
+        barrierDismissible: false,
+        onConfirmBtnTap: () {
+          openAppSettings();
+        },
+      );
+    }
   }
-}
-
 
   void showErrorDialog(BuildContext context, String message) {
     showModalBottomSheet(
@@ -816,28 +896,139 @@ void navigateToQRViewExample() async {
     }
   }
 
-  void _startLiveTracking() {
-    if (_positionStreamSubscription != null) {
-      _positionStreamSubscription!.cancel();
-    }
+  Future<BitmapDescriptor> _getRotatedIcon({
+    required IconData iconData,
+    required Color color,
+    required double size,
+    required double rotation,
+  }) async {
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
 
-    _positionStreamSubscription = Geolocator.getPositionStream(
-            locationSettings: LocationSettings(
-                accuracy: LocationAccuracy.high, distanceFilter: 10))
-        .listen((Position position) {
-      setState(() {
-        _currentPosition = LatLng(position.latitude, position.longitude);
-      });
+    final textPainter = TextPainter(textDirection: TextDirection.ltr)
+      ..text = TextSpan(
+        text: String.fromCharCode(iconData.codePoint),
+        style: TextStyle(
+          fontSize: size,
+          fontFamily: iconData.fontFamily,
+          color: color,
+        ),
+      )
+      ..layout();
 
-      if (_currentPosition != null && _destinationPosition != null) {
-        _getPolyline(_currentPosition!, _destinationPosition!);
-      }
+    canvas.save();
+    canvas.translate(
+        size / 2, size / 2); // Move the canvas origin to the center
+    canvas.rotate(
+        rotation * 3.1415927 / 180); // Rotate the canvas to the given bearing
+    canvas.translate(-size / 2, -size / 2); // Move back the origin
 
-      mapController?.animateCamera(
-        CameraUpdate.newLatLng(_currentPosition!),
+    textPainter.paint(canvas, Offset(0, 0));
+    canvas.restore();
+
+    final picture = pictureRecorder.endRecording();
+    final img = await picture.toImage(size.toInt(), size.toInt());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final buffer = byteData!.buffer.asUint8List();
+
+    return BitmapDescriptor.fromBytes(buffer);
+  }
+  Future<BitmapDescriptor> _getDirectionMarker(double bearing) async {
+  const double size = 100.0; // Size of the icon
+  final pictureRecorder = ui.PictureRecorder();
+  final canvas = Canvas(pictureRecorder);
+
+  // Load the image from assets
+  final ByteData imageData = await rootBundle.load('assets/arrow.png');
+  final ui.Image image = await loadImageFromBytes(imageData.buffer.asUint8List());
+
+  // Adjust the center point based on the arrow's orientation
+  final double offsetX = size * 0.25; // 25% from the left
+  final double offsetY = size * 0.75; // 75% from the top
+
+  // Draw the image on the canvas
+  canvas.save();
+  canvas.translate(offsetX, offsetY); // Move origin to the adjusted center
+  canvas.rotate(bearing * 3.1415927 / 180); // Rotate according to bearing
+  canvas.translate(-offsetX, -offsetY); // Move back origin
+
+  // Draw the image with the same size as the canvas
+  canvas.drawImageRect(
+    image,
+    Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+    Rect.fromLTWH(0, 0, size, size),
+    Paint(),
+  );
+
+  canvas.restore();
+
+  final picture = pictureRecorder.endRecording();
+  final img = await picture.toImage(size.toInt(), size.toInt());
+  final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+  final buffer = byteData!.buffer.asUint8List();
+
+  return BitmapDescriptor.fromBytes(buffer);
+}
+
+// Helper function to load an image from bytes
+Future<ui.Image> loadImageFromBytes(Uint8List imgBytes) async {
+  final Completer<ui.Image> completer = Completer();
+  ui.decodeImageFromList(imgBytes, (ui.Image img) {
+    return completer.complete(img);
+  });
+  return completer.future;
+}
+
+void _startLiveTracking() {
+  if (_positionStreamSubscription != null) {
+    _positionStreamSubscription!.cancel();
+  }
+
+  _positionStreamSubscription = Geolocator.getPositionStream(
+          locationSettings: LocationSettings(
+              accuracy: LocationAccuracy.high, distanceFilter: 10))
+      .listen((Position position) async {
+    final bearing = position.heading;
+
+    setState(() {
+      _currentPosition = LatLng(position.latitude, position.longitude);
+    });
+
+    // Create a custom icon with direction bearing
+    final currentLocationIcon = await _createCurrentLocationMarkerIcon(bearing);
+
+    setState(() {
+      // Remove the old marker
+      _markers.removeWhere(
+          (marker) => marker.markerId.value == 'current_location');
+
+      // Add a new marker with the updated location and rotation
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('current_location'),
+          position: _currentPosition!,
+          icon: currentLocationIcon,
+          rotation: bearing,
+          anchor: const Offset(0.5, 0.5), // Center the icon
+        ),
       );
     });
-  }
+
+    if (mapController != null) {
+      // Animate camera to new position and bearing
+      mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: _currentPosition!,
+            zoom: 18.0,
+            bearing: bearing, // Rotate the map to match the user's direction
+            tilt: 45.0,
+          ),
+        ),
+      );
+    }
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -847,10 +1038,11 @@ void navigateToQRViewExample() async {
         children: [
           Positioned.fill(
             child: GoogleMap(
+              key: _mapKey, // Assign GlobalKey to GoogleMap
               onMapCreated: _onMapCreated,
               initialCameraPosition: CameraPosition(
                 target: _currentPosition ?? _center,
-                zoom: 14.0,
+                zoom: 16.0,
               ),
               markers: _markers,
               polylines: _polylines, // Add polylines to the map
@@ -859,42 +1051,61 @@ void navigateToQRViewExample() async {
               myLocationButtonEnabled: false,
               mapToolbarEnabled: false,
               onTap: _onMapTapped,
-              // compassEnabled: false,
             ),
           ),
-          if (_isFetchingLocation) _buildLoadingIndicator(), // Show the loading GIF
+          Positioned(
+            bottom: 250,
+            right: 10,
+            child: FloatingActionButton(
+              backgroundColor: const Color.fromARGB(227, 76, 175, 79),
+              onPressed: _getCurrentLocation,
+              child: const Icon(Icons.my_location, color: Colors.white),
+            ),
+          ),
           Positioned(
             top: 305,
             right: 10,
             child: Column(
               children: [
-                FloatingActionButton(
-                  heroTag: 'Navigation in google map',
-                  backgroundColor:
-                      areMapButtonsEnabled ? Colors.black : Colors.grey,
-                  onPressed: areMapButtonsEnabled
-                      ? () async {
-                          if (_selectedPosition != null) {
-                            final googleMapsUrl =
-                                "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
-                            if (await canLaunch(googleMapsUrl)) {
-                              await launch(googleMapsUrl);
-                            } else {
-                              showErrorDialog(context,
-                                  'Could not open the map. Please check your internet connection or try again later.');
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    FloatingActionButton(
+                      heroTag: 'Navigation in google map',
+                      backgroundColor: Colors.black,
+                      onPressed: areMapButtonsEnabled
+                          ? () async {
+                              if (_selectedPosition != null) {
+                                final googleMapsUrl =
+                                    "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
+                                if (await canLaunch(googleMapsUrl)) {
+                                  await launch(googleMapsUrl);
+                                } else {
+                                  showErrorDialog(context,
+                                      'Could not open the map. Please check your internet connection or try again later.');
+                                }
+                              }
                             }
-                          }
-                        }
-                      : null,
-                  child: SizedBox(
-                    width: 30, // Adjust width as needed
-                    height: 30, // Adjust height as needed
-                    child: Image.asset(
-                      'assets/icons/Google_map.png', // Replace with your image path
-                      fit: BoxFit
-                          .contain, // Ensure the image fits within the button
+                          : null,
+                      child: SizedBox(
+                        width: 30, // Adjust width as needed
+                        height: 30, // Adjust height as needed
+                        child: Image.asset(
+                          'assets/icons/Google_map.png', // Replace with your image path
+                          fit: BoxFit
+                              .contain, // Ensure the image fits within the button
+                        ),
+                      ),
                     ),
-                  ),
+                    if (!areMapButtonsEnabled)
+                      Container(
+                        width: 56, // Match the size of the FloatingActionButton
+                        height: 56,
+                        child: CustomPaint(
+                          painter: CrossPainter(),
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -1059,9 +1270,7 @@ void navigateToQRViewExample() async {
                   ],
                 ),
               ),
-              const SizedBox(
-                height: 28,
-              ),
+              const SizedBox(height: 28),
             ],
           ),
           Positioned(
@@ -1094,8 +1303,8 @@ void navigateToQRViewExample() async {
                   onPressed: () {
                     mapController?.animateCamera(CameraUpdate.zoomOut());
                   },
-                  child: const Icon(Icons.zoom_out_map_rounded,
-                      color: Colors.red),
+                  child:
+                      const Icon(Icons.zoom_out_map_rounded, color: Colors.red),
                 ),
               ],
             ),
@@ -1162,7 +1371,7 @@ void navigateToQRViewExample() async {
             BitmapDescriptor newIcon =
                 await _getIconFromAsset('assets/icons/EV_location_green.png');
             BitmapDescriptor defaultIcon =
-                await _getIconFromAsset('assets/icons/EV_location_red.png');
+                await _getIconFromAssetred('assets/icons/EV_location_red.png');
 
             setState(() {
               // Revert the previous marker icon to default if it exists
@@ -1325,16 +1534,16 @@ void navigateToQRViewExample() async {
                             child: Row(
                               children: [
                                 IconButton(
-                                  icon: const Icon(
-                                      Icons.directions, color: Colors.red),
-                                  onPressed: null, // Remove the redundant onPressed
+                                  icon: const Icon(Icons.directions,
+                                      color: Colors.red),
+                                  onPressed:
+                                      null, // Remove the redundant onPressed
                                 ),
                                 const Padding(
                                   padding: EdgeInsets.all(8.0),
                                   child: Text(
                                     'Navigate',
-                                    style:
-                                        TextStyle(color: Colors.white70),
+                                    style: TextStyle(color: Colors.white70),
                                   ),
                                 ),
                               ],
@@ -1363,8 +1572,7 @@ void navigateToQRViewExample() async {
                                 ),
                                 const Text(
                                   ' Use Charger',
-                                  style:
-                                      TextStyle(color: Colors.white70),
+                                  style: TextStyle(color: Colors.white70),
                                 ),
                               ],
                             ),
@@ -1455,8 +1663,7 @@ class ConnectorSelectionDialog extends StatefulWidget {
       _ConnectorSelectionDialogState();
 }
 
-class _ConnectorSelectionDialogState
-    extends State<ConnectorSelectionDialog> {
+class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
   int? selectedConnector;
   int? selectedConnectorType;
 
@@ -1581,8 +1788,8 @@ class _ConnectorSelectionDialogState
                 },
               ),
             ),
-            child: const Text('Continue',
-                style: TextStyle(color: Colors.white)),
+            child:
+                const Text('Continue', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1593,8 +1800,7 @@ class _ConnectorSelectionDialogState
 class SlantedLabel extends StatelessWidget {
   final String accessType;
 
-  const SlantedLabel({required this.accessType, Key? key})
-      : super(key: key);
+  const SlantedLabel({required this.accessType, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1647,5 +1853,144 @@ class SlantClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) {
     return false;
+  }
+}
+
+class CrossPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF8E8E8E)
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+
+    // Calculate offsets for top and bottom reduction
+    final offset =
+        size.height * 0.1; // Adjust this factor to change the reduction
+
+    // Draw the diagonal line from top-right to bottom-left with equal reduction
+    canvas.drawLine(
+      Offset(size.width - offset,
+          offset), // Starting point (inward from top-right)
+      Offset(offset,
+          size.height - offset), // Ending point (inward from bottom-left)
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
+  }
+}
+
+class CurrentLocationMarkerPainter extends CustomPainter {
+  final double bearing; // Direction bearing
+  final double animatedRadius; // Dynamic radius for animation
+
+  CurrentLocationMarkerPainter({required this.bearing, required this.animatedRadius});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double outerCircleRadius = animatedRadius; // Use the animated radius
+    final double dotRadius = size.width / 5; // Adjusted size for the inner dot
+    final double borderThickness = size.width / 20;
+
+    // Draw the translucent outer circle
+    final Paint circlePaint = Paint()
+      ..color = Colors.blue.withOpacity(0.2)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), outerCircleRadius, circlePaint);
+
+    // Draw the solid blue dot with a white border
+    final Paint dotPaint = Paint()
+      ..color = Colors.blue
+      ..style = PaintingStyle.fill;
+
+    final Paint borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = borderThickness;
+
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), dotRadius, dotPaint);
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), dotRadius, borderPaint);
+
+    // Draw the highlighted directional flash (90-160 degree arc)
+    final Rect arcRect = Rect.fromCircle(
+      center: Offset(size.width / 2, size.height / 2),
+      radius: outerCircleRadius,
+    );
+
+    final Paint arcPaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+
+    // Align the arc direction with the bearing direction
+    canvas.drawArc(
+      arcRect,
+      (bearing - 45) * 3.1415927 / 180, // Start angle aligned with bearing, offset for visual spread
+      90 * 3.1415927 / 180, // Sweep angle (90 degrees)
+      true,
+      arcPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class CurrentLocationMarker extends StatefulWidget {
+  final double bearing;
+
+  CurrentLocationMarker({required this.bearing});
+
+  @override
+  _CurrentLocationMarkerState createState() => _CurrentLocationMarkerState();
+}
+
+class _CurrentLocationMarkerState extends State<CurrentLocationMarker> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize the animation controller
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true); // Loop the animation
+
+    // Define the animation for the circle's radius
+    _animation = Tween<double>(begin: 50.0, end: 100.0).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose(); // Dispose of the controller when not needed
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return CustomPaint(
+          painter: CurrentLocationMarkerPainter(
+            bearing: widget.bearing,
+            animatedRadius: _animation.value, // Pass the animated radius
+          ),
+          child: Container(), // Empty container just to hold the CustomPainter
+        );
+      },
+    );
   }
 }
