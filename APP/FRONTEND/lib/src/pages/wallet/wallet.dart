@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ev_app/src/utilities/Alert/alert_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -21,6 +22,7 @@ class _WalletPageState extends State<WalletPage> {
   double? walletBalance;
   double? _lastPaymentAmount; // Store the last payment amount
   final TextEditingController _amountController = TextEditingController(text: '500');
+  String? _alertMessage; // Variable to hold the alert message
 
   List<Map<String, dynamic>> transactionDetails = []; // Define transactionDetails
 
@@ -181,6 +183,19 @@ class _WalletPageState extends State<WalletPage> {
       print('Error saving payment details: $error');
     }
   }
+
+void _showAlertBanner(String message) {
+  setState(() {
+    _alertMessage = message; // Set the alert message
+  });
+
+  // Clear the alert message after 3 seconds
+  Future.delayed(const Duration(seconds: 3), () {
+    setState(() {
+      _alertMessage = null; // Clear the alert message
+    });
+  });
+}
 
   void _handlePaymentError(PaymentFailureResponse response) {
     String? username = widget.username;
@@ -361,33 +376,41 @@ class _WalletPageState extends State<WalletPage> {
                 color: const Color(0xFF1E1E1E),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
+              child: Column( // Change from Row to Column to stack the TextField and AlertBanner vertically
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _amountController,
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        hintText: 'Enter amount',
-                        hintStyle: TextStyle(color: Colors.white54),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _amountController,
+                          style: const TextStyle(color: Colors.white, fontSize: 18),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Enter amount',
+                            hintStyle: TextStyle(color: Colors.white54),
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly,
+                            LimitRangeTextInputFormatter(min: 0, max: 10000), // Restricting the value between 0 and 10000
+                          ],
+                        ),
                       ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.digitsOnly,
-                        LimitRangeTextInputFormatter(min: 0, max: 10000), // Restricting the value between 0 and 10000
-                      ],
-                    ),
+                      IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.white54),
+                        onPressed: () {
+                          _amountController.clear();
+                        },
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.clear, color: Colors.white54),
-                    onPressed: () {
-                      _amountController.clear();
-                    },
-                  ),
+                  if (_alertMessage != null)
+                    AlertBanner(message: _alertMessage!), // Display the alert banner if there's a message
                 ],
               ),
             ),
+
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -448,10 +471,10 @@ class _WalletPageState extends State<WalletPage> {
               ),
               onPressed: () {
                 double amount = double.tryParse(_amountController.text) ?? 0.0;
-                if (amount > 0) {
-                  handlePayment(amount);
+                if (amount <= 0) {
+                _showAlertBanner('Amount should not be empty');
                 } else {
-                  // Handle invalid input or amount
+                  handlePayment(amount);
                 }
               },
               child: Row(
@@ -461,6 +484,7 @@ class _WalletPageState extends State<WalletPage> {
                 ],
               ),
             ),
+
             const SizedBox(height: 24),
           ],
         ),

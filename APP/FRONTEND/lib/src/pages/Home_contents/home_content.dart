@@ -42,6 +42,7 @@ class _HomeContentState extends State<HomeContent> {
   bool areMapButtonsEnabled = false;
   MarkerId? _previousMarkerId; // To track the previously selected marker
   StreamSubscription<Position>? _positionStreamSubscription;
+bool _isFetchingLocation = false;
 
   @override
   void initState() {
@@ -50,6 +51,23 @@ class _HomeContentState extends State<HomeContent> {
     activeFilter = 'All Chargers';
     fetchAllChargers();
   }
+  
+Widget _buildLoadingIndicator() {
+  return Container(
+    width: double.infinity,
+    height: double.infinity,
+    color: Colors.black.withOpacity(0.75), // Transparent black background
+    child: Center(
+      child: Image.asset(
+        'assets/gif/current_location.gif', // Update this path according to where the GIF is stored
+        width: 300, // Adjust the size as needed
+        height: 300,
+      ),
+    ),
+  );
+}
+
+
 
   Future<void> _checkLocationPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -71,22 +89,41 @@ class _HomeContentState extends State<HomeContent> {
     }
   }
 
-  Future<void> _getCurrentLocation() async {
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-      setState(() {
-        _currentPosition = LatLng(position.latitude, position.longitude);
-      });
-
-      mapController?.animateCamera(
-        CameraUpdate.newLatLng(_currentPosition!),
-      );
-      _updateMarkers();
-    } catch (e) {
-      print('Error getting location: $e');
-    }
+Future<void> _getCurrentLocation() async {
+  // Check if location services are enabled
+  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    // Show CoolAlert if location services are not enabled
+    _showLocationServicesDialog();
+    return; // Stop further execution if location services are disabled
   }
+
+  // If location services are enabled, proceed to get the current location
+  setState(() {
+    _isFetchingLocation = true; // Start showing the loading indicator
+  });
+
+  try {
+    await Future.delayed(const Duration(seconds: 2)); // Simulate loading for 2 seconds
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    setState(() {
+      _currentPosition = LatLng(position.latitude, position.longitude);
+    });
+
+    mapController?.animateCamera(
+      CameraUpdate.newLatLng(_currentPosition!),
+    );
+    _updateMarkers();
+  } catch (e) {
+    print('Error getting location: $e');
+  } finally {
+    setState(() {
+      _isFetchingLocation = false; // Stop showing the loading indicator
+    });
+  }
+}
+
 Future<void> _showLocationServicesDialog() async {
   CoolAlert.show(
     context: context,
@@ -113,18 +150,12 @@ Future<void> _showLocationServicesDialog() async {
     confirmBtnText: 'Settings',
     showCancelBtn: true,
     confirmBtnColor: Colors.blue,
-    barrierDismissible: false, // This prevents closing by tapping outside
+    barrierDismissible: false, // Prevent closing by tapping outside
     onConfirmBtnTap: () {
       Geolocator.openLocationSettings(); // Open the location settings
-      Navigator.of(context, rootNavigator: true).pop(); // Close the alert dialog
-    },
-    onCancelBtnTap: () {
-      Navigator.of(context, rootNavigator: true).pop(); // Close the alert dialog
     },
   );
 }
-
-
   Future<void> _showPermissionDeniedDialog() async {
     showDialog(
       context: context,
@@ -182,17 +213,44 @@ Future<void> _showLocationServicesDialog() async {
       _updateMarkers();
     }
   }
+void _onMarkerTapped(MarkerId markerId, LatLng position) async {
+  setState(() {
+    _selectedPosition = position;
+    areMapButtonsEnabled = true;
+  });
 
-  void _onMarkerTapped(MarkerId markerId, LatLng position) async {
-    setState(() {
-      _selectedPosition = position;
-      areMapButtonsEnabled = true;
-    });
+  // Change the marker icon to the selected icon
+  BitmapDescriptor newIcon =
+      await _getIconFromAsset('assets/icons/EV_location_green.png');
+  BitmapDescriptor defaultIcon =
+      await _getIconFromAsset('assets/icons/EV_location_red.png');
 
-    if (_currentPosition != null && _selectedPosition != null) {
-      await _getPolyline(_currentPosition!, _selectedPosition!);
+  setState(() {
+    // Revert the previous marker icon to default if it exists
+    if (_previousMarkerId != null) {
+      _markers = _markers.map((marker) {
+        if (marker.markerId == _previousMarkerId) {
+          return marker.copyWith(iconParam: defaultIcon);
+        }
+        return marker;
+      }).toSet();
     }
+
+    // Update the icon for the newly selected marker
+    _markers = _markers.map((marker) {
+      if (marker.markerId == markerId) {
+        _previousMarkerId = marker.markerId;
+        return marker.copyWith(iconParam: newIcon);
+      }
+      return marker;
+    }).toSet();
+  });
+
+  // Fetch polyline if both current and selected positions are available
+  if (_currentPosition != null && _selectedPosition != null) {
+    await _getPolyline(_currentPosition!, _selectedPosition!);
   }
+}
 
   void _onMapTapped(LatLng position) {
     setState(() {
@@ -602,14 +660,21 @@ Future<void> _showLocationServicesDialog() async {
     }
   }
 
-  void navigateToQRViewExample() async {
+void navigateToQRViewExample() async {
+  // Check camera permission
+  bool hasPermission = await Permission.camera.isGranted;
+
+  if (hasPermission) {
+    // Navigate to the QR scanner screen if permission is granted
     final scannedCode = await Navigator.push<String>(
       context,
       MaterialPageRoute(
-          builder: (context) => QRViewExample(
-              handleSearchRequestCallback: handleSearchRequest,
-              username: widget.username,
-              userId: widget.userId)),
+        builder: (context) => QRViewExample(
+          handleSearchRequestCallback: handleSearchRequest,
+          username: widget.username,
+          userId: widget.userId,
+        ),
+      ),
     );
 
     if (scannedCode != null) {
@@ -617,7 +682,43 @@ Future<void> _showLocationServicesDialog() async {
         searchChargerID = scannedCode;
       });
     }
+  } else {
+    // Show CoolAlert if permission is not granted
+    CoolAlert.show(
+      context: context,
+      type: CoolAlertType.custom,
+      widget: Column(
+        children: [
+          const SizedBox(height: 16.0),
+          const Text(
+            'Permission Denied',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          const Text(
+            'To Scan QR codes, allow this app access to your camera. Tap Settings > Permissions, and turn Camera on.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black),
+          ),
+        ],
+      ),
+      confirmBtnText: 'Settings',
+      cancelBtnText: 'Cancel',
+      showCancelBtn: true,
+      confirmBtnColor: Colors.blue,
+      barrierDismissible: false,
+      onConfirmBtnTap: () {
+        openAppSettings();
+      },
+   
+    );
   }
+}
+
 
   void showErrorDialog(BuildContext context, String message) {
     showModalBottomSheet(
@@ -761,6 +862,7 @@ Future<void> _showLocationServicesDialog() async {
               // compassEnabled: false,
             ),
           ),
+          if (_isFetchingLocation) _buildLoadingIndicator(), // Show the loading GIF
           Positioned(
             top: 305,
             right: 10,

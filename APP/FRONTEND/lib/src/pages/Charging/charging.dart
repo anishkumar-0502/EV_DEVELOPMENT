@@ -87,6 +87,7 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
 
   String chargerStatus = '';
   String TagIDStatus = '';
+  bool NoResponseFromCharger = false;
   String timestamp = '';
   String chargerCapacity = '';
   bool isTimeoutRunning = false;
@@ -123,7 +124,7 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
       this.errorCode = errorCode;
     });
   }
-
+bool _isStopLoading = false;
   bool showSuccessAlert = false;
   bool showErrorAlert = false;
   bool showAlert = false;
@@ -137,6 +138,22 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
       showAlert = true;
     });
   }
+
+Widget _buildLoadingIndicator() {
+  return Container(
+    width: double.infinity,
+    height: double.infinity,
+    color: Colors.black.withOpacity(0.7), // Transparent black background
+    child: Center(
+      child: Icon(
+        Icons.bolt, // Use a charging icon like 'bolt' or 'electric_car'
+        color: Colors.yellow, // Set the icon color
+        size: 300, // Adjust the size as needed
+      ),
+    ),
+  );
+}
+
 
   void handleCloseAlert() async {
     bool checkFault = false; // Example value, set it based on your logic
@@ -215,6 +232,19 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
       showAlertLoading = true;
     });
   }
+
+  void showNoResponseAlert() {
+  setState(() {
+    NoResponseFromCharger = true;
+  });
+
+  // Automatically hide the alert after 3 seconds
+  Timer(const Duration(seconds: 3), () {
+    setState(() {
+      NoResponseFromCharger = false;
+    });
+  });
+}
 
   Future<void> endChargingSession(String chargerID, int? connectorId) async {
     try {
@@ -494,204 +524,208 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
   }
 
 
+void RcdMsg(Map<String, dynamic> parsedMessage) async {
+  final String chargerID = widget.searchChargerID;
 
-  void RcdMsg(Map<String, dynamic> parsedMessage) async {
-    final String chargerID = widget.searchChargerID;
-    
-    if (parsedMessage['DeviceID'] != chargerID) return;
+  if (parsedMessage['DeviceID'] != chargerID) return;
 
-    final List<dynamic> message = parsedMessage['message'];
+  final List<dynamic> message = parsedMessage['message'];
 
-    if (message.length < 4 || message[3] == null) return;
+  if (message.length < 4 || message[3] == null) return;
 
-    String chargerStatus = '';
-    String currentTime = '';
-    String vendorErrorCode = '';
-    int? connectorIds = message[3]['connectorId']; // Extract connectorId
-    String msg = message[2]; // Extract msg
+  String chargerStatus = '';
+  String currentTime = '';
+  String vendorErrorCode = '';
+  int? connectorIds = message[3]['connectorId']; // Extract connectorId
+  String msg = message[2]; // Extract msg
 
-    if (parsedMessage['DeviceID'] == chargerID && connectorIds == widget.connector_id&& msg.isNotEmpty) {
-      print('Received message: $parsedMessage');
-      switch (message[2]) {
-        case 'StatusNotification':
-          vendorErrorCode = message[3]['vendorErrorCode'] ?? '';
-          chargerStatus = message[3]['status'] ?? '';
-          TagIDStatus = message[3]['TagIDStatus'] ?? '';
-          currentTime = formatTimestamp(DateTime.tryParse(message[3]['timestamp'] ?? DateTime.now().toString()) ?? DateTime.now());
-          errorCode = message[3]['errorCode'] ?? '';
+  if (parsedMessage['DeviceID'] == chargerID && connectorIds == widget.connector_id && msg.isNotEmpty) {
+    print('Received message: $parsedMessage');
+    switch (message[2]) {
+      case 'StatusNotification':
+        vendorErrorCode = message[3]['vendorErrorCode'] ?? '';
+        chargerStatus = message[3]['status'] ?? '';
+        TagIDStatus = message[3]['TagIDStatus'] ?? '';
+        currentTime = formatTimestamp(DateTime.tryParse(message[3]['timestamp'] ?? DateTime.now().toString()) ?? DateTime.now());
+        errorCode = message[3]['errorCode'] ?? '';
 
-          if (chargerStatus == 'Preparing') {
-            setState(() {
-              charging = false;
-            });
-            stopTimeout();
-            setIsStarted(false);
-          } else if(TagIDStatus == 'Invalid' ){
-            setState(() {
-              TagIDStatus = 'Invalid';
-            });
-            // Clear the TagIDStatus after 3 seconds
-            Future.delayed(const Duration(seconds: 3), () {
-              setState(() {
-                TagIDStatus = ''; // Clear the status after 3 seconds
-              });
-            });
-          } else if(TagIDStatus == 'Blocked' ){
-            setState(() {
-              TagIDStatus = 'Blocked';
-            });
-            // Clear the TagIDStatus after 3 seconds
-            Future.delayed(const Duration(seconds: 3), () {
-              setState(() {
-                TagIDStatus = ''; // Clear the status after 3 seconds
-              });
-            });
-          } else if(TagIDStatus == 'Expired' ){
-            setState(() {
-              TagIDStatus = 'Expired';
-            });
-            // Clear the TagIDStatus after 3 seconds
-            Future.delayed(const Duration(seconds: 3), () {
-              setState(() {
-                TagIDStatus = ''; // Clear the status after 3 seconds
-              });
-            });
-          } else if(TagIDStatus == 'ConcurrentTx' ){
-            setState(() {
-              TagIDStatus = 'ConcurrentTx';
-            });
-            // Clear the TagIDStatus after 3 seconds
-            Future.delayed(const Duration(seconds: 3), () {
-              setState(() {
-                TagIDStatus = ''; // Clear the status after 3 seconds
-              });
-            });
-          } else if (chargerStatus == 'Available' || chargerStatus == 'Unavailable') {
-            setState(() {
-              charging = false;
-            });
-            startTimeout();
-            setIsStarted(false);
-          } else if (chargerStatus == 'Charging') {
-            setState(() {
-              charging = true;
-            });
-            toggleBatteryScreen();
-            setIsStarted(true);
-          } else if (chargerStatus == 'Finishing') {
-            setIsStarted(false);
-            setState(() {
-              charging = false;
-            });
-            handleLoadingStop();
-            toggleBatteryScreen();
-            await updateSessionPriceToUser(widget.connector_id);
-          } else if (chargerStatus == 'Faulted') {
-            setIsStarted(false);
-            setState(() {
-              charging = false;
-              toggleBatteryScreen();
-              print("checkout: $checkFault");
-              if(!checkFault){
-                  showErrorDialog(context);
-                  setCheckFault(true);
-              }
-              });
-            print("checkout: $checkFault");
-          } else if (chargerStatus == 'Unavailable') {
-            setIsStarted(false);
-            setState(() {
-              charging = false;
-              toggleBatteryScreen();
-              if(!checkFault){
-                  showErrorDialog(context);
-              }
-            });
-          }
-
-          if (errorCode != 'NoError') {
-            Map<String, dynamic> entry = {
-              'serialNumber': history.length + 1,
-              'currentTime': currentTime,
-              'chargerStatus': chargerStatus,
-              'errorCode': errorCode != 'InternalError' ? errorCode : vendorErrorCode,
-            };
-
-            setState(() {
-              history.add(entry);
-              checkFault = true;
-            });
-          } else {
-            setState(() {
-              checkFault = false;
-            });
-          }
-          seterrorCode(errorCode);
-          break;
-
-        case 'Heartbeat':
-          currentTime = formatTimestamp(DateTime.now());
-          setState(() {
-            timestamp = currentTime;
-          });
-          print("chargerStatus: $chargerStatus $errorCode");
-          break;
-
-        case 'MeterValues':
-          final meterValues = message[3]['meterValue'] ?? [];
-          final sampledValue = meterValues.isNotEmpty ? meterValues[0]['sampledValue'] : [];
-
-          Map<String, dynamic> formattedJson = convertToFormattedJson(sampledValue);
-          currentTime = formatTimestamp(DateTime.now());
-
-          setState(() {
-            setChargerStatus('Charging');
-            setTimestamp(currentTime);
-            setVoltage((formattedJson['Voltage'] ?? '').toString());
-            setCurrent((formattedJson['Current.Import'] ?? '').toString());
-            setPower((formattedJson['Power.Active.Import'] ?? '').toString());
-            setEnergy((formattedJson['Energy.Active.Import.Register'] ?? '').toString());
-            setFrequency((formattedJson['Frequency'] ?? '').toString());
-            setTemperature((formattedJson['Temperature'] ?? '').toString());
-          });
-
-          print('{ "V": ${formattedJson['Voltage']},"A": ${formattedJson['Current.Import']},"W": ${formattedJson['Power.Active.Import']},"Wh": ${formattedJson['Energy.Active.Import.Register']},"Hz": ${formattedJson['Frequency']},"Kelvin": ${formattedJson['Temperature']}}');
-          break;
-
-        case 'Authorize':
-          print("errorCode: $errorCode");
-          chargerStatus = (errorCode == 'NoError' || errorCode.isEmpty) ? 'Authorize' : 'Faulted';
-          currentTime = formatTimestamp(DateTime.now());
-          break;
-
-        case 'FirmwareStatusNotification':
-          chargerStatus = message[3]['status']?.toUpperCase() ?? '';
-          currentTime = formatTimestamp(DateTime.now());
-          break;
-
-        case 'StopTransaction':
-          setIsStarted(false);
+        if (chargerStatus == 'Preparing') {
           setState(() {
             charging = false;
           });
-          currentTime = formatTimestamp(DateTime.now());
-          print("StopTransaction");
-          break;
+          stopTimeout();
+          setIsStarted(false);
+        } else if (TagIDStatus == 'Invalid') {
+          setState(() {
+            TagIDStatus = 'Invalid';
+          });
+          // Clear the TagIDStatus after 3 seconds
+          Future.delayed(const Duration(seconds: 3), () {
+            setState(() {
+              TagIDStatus = ''; // Clear the status after 3 seconds
+            });
+          });
+        } else if (TagIDStatus == 'Blocked') {
+          setState(() {
+            TagIDStatus = 'Blocked';
+          });
+          // Clear the TagIDStatus after 3 seconds
+          Future.delayed(const Duration(seconds: 3), () {
+            setState(() {
+              TagIDStatus = ''; // Clear the status after 3 seconds
+            });
+          });
+        } else if (TagIDStatus == 'Expired') {
+          setState(() {
+            TagIDStatus = 'Expired';
+          });
+          // Clear the TagIDStatus after 3 seconds
+          Future.delayed(const Duration(seconds: 3), () {
+            setState(() {
+              TagIDStatus = ''; // Clear the status after 3 seconds
+            });
+          });
+        } else if (TagIDStatus == 'ConcurrentTx') {
+          setState(() {
+            TagIDStatus = 'ConcurrentTx';
+          });
+          // Clear the TagIDStatus after 3 seconds
+          Future.delayed(const Duration(seconds: 3), () {
+            setState(() {
+              TagIDStatus = ''; // Clear the status after 3 seconds
+            });
+          });
+        } else if (chargerStatus == 'Available' || chargerStatus == 'Unavailable') {
+          setState(() {
+            charging = false;
+          });
+          startTimeout();
+          setIsStarted(false);
+        } else if (chargerStatus == 'Charging') {
+          setState(() {
+            charging = true;
+            isLoading = false; // Stop loading when charging starts
+          });
+          toggleBatteryScreen();
+          setIsStarted(true);
+        } else if (chargerStatus == 'Finishing') {
+          setIsStarted(false);
+          setState(() {
+            charging = false;
+            isLoading = false; // Stop loading if it was still running
+          });
+          handleLoadingStop();
+          toggleBatteryScreen();
+          await updateSessionPriceToUser(widget.connector_id);
+        } else if (chargerStatus == 'Faulted') {
+          setIsStarted(false);
+          setState(() {
+            charging = false;
+            isLoading = false; // Stop loading if it was still running
+            toggleBatteryScreen();
+            print("checkout: $checkFault");
+            if (!checkFault) {
+              showErrorDialog(context);
+              setCheckFault(true);
+            }
+          });
+          print("checkout: $checkFault");
+        } else if (chargerStatus == 'Unavailable') {
+          setIsStarted(false);
+          setState(() {
+            charging = false;
+            isLoading = false; // Stop loading if it was still running
+            toggleBatteryScreen();
+            if (!checkFault) {
+              showErrorDialog(context);
+            }
+          });
+        }
 
-        case 'Accepted':
-          chargerStatus = 'ChargerAccepted';
-          currentTime = formatTimestamp(DateTime.now());
-          break;
+        if (errorCode != 'NoError') {
+          Map<String, dynamic> entry = {
+            'serialNumber': history.length + 1,
+            'currentTime': currentTime,
+            'chargerStatus': chargerStatus,
+            'errorCode': errorCode != 'InternalError' ? errorCode : vendorErrorCode,
+          };
 
-        default:
-          break;
-      }
-    }
+          setState(() {
+            history.add(entry);
+            checkFault = true;
+          });
+        } else {
+          setState(() {
+            checkFault = false;
+          });
+        }
+        seterrorCode(errorCode);
+        break;
 
-    if (chargerStatus.isNotEmpty) {
-      appendStatusTime(chargerStatus, currentTime);
+      case 'Heartbeat':
+        currentTime = formatTimestamp(DateTime.now());
+        setState(() {
+          timestamp = currentTime;
+        });
+        print("chargerStatus: $chargerStatus $errorCode");
+        break;
+
+      case 'MeterValues':
+        final meterValues = message[3]['meterValue'] ?? [];
+        final sampledValue = meterValues.isNotEmpty ? meterValues[0]['sampledValue'] : [];
+
+        Map<String, dynamic> formattedJson = convertToFormattedJson(sampledValue);
+        currentTime = formatTimestamp(DateTime.now());
+
+        setState(() {
+          setChargerStatus('Charging');
+          setTimestamp(currentTime);
+          setVoltage((formattedJson['Voltage'] ?? '').toString());
+          setCurrent((formattedJson['Current.Import'] ?? '').toString());
+          setPower((formattedJson['Power.Active.Import'] ?? '').toString());
+          setEnergy((formattedJson['Energy.Active.Import.Register'] ?? '').toString());
+          setFrequency((formattedJson['Frequency'] ?? '').toString());
+          setTemperature((formattedJson['Temperature'] ?? '').toString());
+        });
+
+        print('{ "V": ${formattedJson['Voltage']},"A": ${formattedJson['Current.Import']},"W": ${formattedJson['Power.Active.Import']},"Wh": ${formattedJson['Energy.Active.Import.Register']},"Hz": ${formattedJson['Frequency']},"Kelvin": ${formattedJson['Temperature']}}');
+        break;
+
+      case 'Authorize':
+        print("errorCode: $errorCode");
+        chargerStatus = (errorCode == 'NoError' || errorCode.isEmpty) ? 'Authorize' : 'Faulted';
+        currentTime = formatTimestamp(DateTime.now());
+        break;
+
+      case 'FirmwareStatusNotification':
+        chargerStatus = message[3]['status']?.toUpperCase() ?? '';
+        currentTime = formatTimestamp(DateTime.now());
+        break;
+
+      case 'StopTransaction':
+        setIsStarted(false);
+        setState(() {
+          charging = false;
+          isLoading = false; // Stop loading if it was still running
+        });
+        currentTime = formatTimestamp(DateTime.now());
+        print("StopTransaction");
+        break;
+
+      case 'Accepted':
+        chargerStatus = 'ChargerAccepted';
+        currentTime = formatTimestamp(DateTime.now());
+        break;
+
+      default:
+        break;
     }
   }
+
+  if (chargerStatus.isNotEmpty) {
+    appendStatusTime(chargerStatus, currentTime);
+  }
+}
 
 
   @override
@@ -798,11 +832,34 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
     });
   }
 
-  Future<void> handleStartTransaction() async {
+  // This function starts the transaction and checks for a response
+  void handleStartTransaction() async {
     String chargerID = widget.searchChargerID;
     final int? connectorId = widget.connector_id;
 
     try {
+      setState(() {
+      isLoading = true;
+      NoResponseFromCharger = false;  // Reset the flag before starting
+    });
+
+    // Start a timer that will automatically stop loading after 10 seconds if no status is received
+    Timer(const Duration(seconds: 10), () {
+      if (isLoading) { // If still loading after 10 seconds
+        setState(() {
+          isLoading = false;  // Stop loading
+          NoResponseFromCharger = true;  // Set the flag to show the alert banner
+        });
+
+        // Automatically hide the alert after 3 seconds
+        Timer(const Duration(seconds: 3), () {
+          setState(() {
+            NoResponseFromCharger = false;  // Hide the alert
+          });
+        });
+      }
+    });
+
       final response = await http.post(
         Uri.parse('http://122.166.210.142:9098/charging/start'),
         headers: <String, String>{
@@ -812,7 +869,7 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
           'id': chargerID,
           'user_id': widget.userId,
           'connector_id': connectorId,
-          'connector_type':widget.connector_type,
+          'connector_type': widget.connector_type,
         }),
       );
 
@@ -828,37 +885,60 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
     }
   }
 
+
   void startButtonPressed() {
     handleStartTransaction();
   }
+void handleStopTransaction() async {
+  String chargerID = widget.searchChargerID;
+  final int? connectorId = widget.connector_id;
 
-  Future<void> handleStopTransaction() async {
-    String chargerID = widget.searchChargerID;
-    final int? connectorId = widget.connector_id;
+  try {
+    setState(() {
+      isLoading = true;
+      _isStopLoading = true;
+      NoResponseFromCharger = false;  // Reset the flag before starting
+    });
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/charging/stop'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, dynamic>{
-          'id': chargerID,
-          'connectorId': connectorId,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print('ChargerStopInitiated');
-        print(data['message']);
-      } else {
-        print('Failed to stop charging: ${response.reasonPhrase}');
+    // Start a timer that will automatically stop loading after 10 seconds if no status is received
+    Timer(const Duration(seconds: 10), () {
+      if (isLoading) {
+        setState(() {
+          isLoading = false;
+          _isStopLoading = false;
+        });
+        showNoResponseAlert();  // Show the "No response from charger" alert
       }
-    } catch (error) {
-      print('Error: $error');
+    });
+
+    final response = await http.post(
+      Uri.parse('http://122.166.210.142:9098/charging/stop'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'id': chargerID,
+        'connectorId': connectorId,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('ChargerStopInitiated');
+      print(data['message']);
+      await updateSessionPriceToUser(connectorId);
+    } else {
+      print('Failed to stop charging: ${response.reasonPhrase}');
     }
+  } catch (error) {
+    print('Error: $error');
+  } finally {
+    setState(() {
+      isLoading = false;
+      _isStopLoading = false;
+    });
   }
+}
 
   void stopButtonPressed() {
     handleStopTransaction();
@@ -1261,26 +1341,24 @@ Widget _buildAnimatedTempColorCircle() {
   }
 
  
+@override
+Widget build(BuildContext context) {
+  String? ChargerID = widget.searchChargerID;
+  int? connectorId = widget.connector_id;
+  int? connector_type = widget.connector_type;
 
-  @override
-  Widget build(BuildContext context) {
-    String? ChargerID = widget.searchChargerID;
-    int? connectorId = widget.connector_id;
-    int? connector_type = widget.connector_type;
-
-
-    String displayText;
-    switch (connector_type) {
-      case 1:
-        displayText = 'Socket';
-        break;
-      case 2:
-        displayText = 'Gun';
-        break;
-      default:
-        displayText = 'Unknown'; // or some default value
-        break;
-    }
+  String displayText;
+  switch (connector_type) {
+    case 1:
+      displayText = 'Socket';
+      break;
+    case 2:
+      displayText = 'Gun';
+      break;
+    default:
+      displayText = 'Unknown'; // or some default value
+      break;
+  }
 
   return WillPopScope(
     onWillPop: () async {
@@ -1293,64 +1371,64 @@ Widget _buildAnimatedTempColorCircle() {
       );
       return false; // Return false to prevent the default back behavior
     },
-    child:  Scaffold(
+    child: Scaffold(
       backgroundColor: Colors.black,
       body: LoadingOverlay(
-        showAlertLoading: showAlertLoading,
+        showAlertLoading: showAlertLoading || isLoading, // Combine both loading states
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Padding(
-                padding: const EdgeInsets.only(top: 40.0, bottom: 23, left: 12.0, right: 12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        navigateToHomePage(context, username);
-                      },
-                      child: const Padding(
-                        padding: EdgeInsets.all(0),
-                        child: Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 30,
-                        ),
+              padding: const EdgeInsets.only(
+                  top: 40.0, bottom: 23, left: 12.0, right: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      navigateToHomePage(context, username);
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.all(0),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 30,
                       ),
                     ),
-                    const Spacer(), // Adds space between the settings icons and the back icon
-                    Padding(
-                      padding: const EdgeInsets.only(top: 0),
-                      child: IconButton(
-                        onPressed: chargerStopSettings,
-                        icon: const Icon(Icons.settings, color: Colors.white),
-                      ),
+                  ),
+                  const Spacer(), // Adds space between the settings icons and the back icon
+                  Padding(
+                    padding: const EdgeInsets.only(top: 0),
+                    child: IconButton(
+                      onPressed: chargerStopSettings,
+                      icon: const Icon(Icons.settings, color: Colors.white),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 0),
-                      child: IconButton(
-                        onPressed: thresholdlevel,
-                        icon: const Icon(Icons.power_outlined, color: Colors.green),
-                      ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 0),
+                    child: IconButton(
+                      onPressed: thresholdlevel,
+                      icon: const Icon(Icons.power_outlined, color: Colors.green),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 0),
-                      child: IconButton(
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 0),
+                    child: IconButton(
                       onPressed: () => showErrorDialog(context),
-                        icon: const Icon(Icons.info_outline, color: Colors.red),
-                      ),
+                      icon: const Icon(Icons.info_outline, color: Colors.red),
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
             ),
-
             Expanded(
               child: SingleChildScrollView(
                 child: Center(
                   child: Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(left:20.0,right: 20),
+                        padding: const EdgeInsets.only(left: 20.0, right: 20),
                         child: Container(
                           height: 65,
                           width: 500,
@@ -1378,12 +1456,12 @@ Widget _buildAnimatedTempColorCircle() {
                                   ),
                                   const SizedBox(width: 15,),
                                   Text(
-                                    ChargerID,
-                                    style: const TextStyle(color: Colors.white, fontSize: 20,fontWeight: FontWeight.bold),
+                                    ChargerID!,
+                                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
-                              const Text('||',style: TextStyle(fontSize: 30),),
+                              const Text('||', style: TextStyle(fontSize: 30)),
                               Row(
                                 children: [
                                   const Icon(
@@ -1394,8 +1472,8 @@ Widget _buildAnimatedTempColorCircle() {
                                   const SizedBox(width: 15,),
                                   Text(
                                     displayText,
-                                    style: const TextStyle(color: Colors.white, fontSize: 20,fontWeight: FontWeight.bold),
-                                  )
+                                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                                  ),
                                 ],
                               ),
                             ],
@@ -1438,10 +1516,10 @@ Widget _buildAnimatedTempColorCircle() {
                                       if (connectorId != null)
                                         Text(
                                           '$connectorId',
-                                          style: const TextStyle(fontSize: 24, color: Colors.white70,fontWeight: FontWeight.normal),
+                                          style: const TextStyle(fontSize: 24, color: Colors.white70, fontWeight: FontWeight.normal),
                                         ),
                                       const SizedBox(width: 20,),
-                                      const Icon(Icons.ev_station_outlined,color: Colors.red,),
+                                      const Icon(Icons.ev_station_outlined, color: Colors.red,),
                                     ],
                                   ),
                                   Row(
@@ -1461,30 +1539,30 @@ Widget _buildAnimatedTempColorCircle() {
                                         ),
                                       ),
                                     ],
-                                  )
+                                  ),
                                 ],
                               ),
                             ],
                           ),
                         ),
                       ),
-
                       Padding(
                         padding: const EdgeInsets.only(top: 0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            if (chargerStatus == 'Preparing' )
+                            if (chargerStatus == 'Preparing')
                               StartButton(
                                 chargerStatus: chargerStatus,
                                 isStartButtonEnabled: isStartButtonEnabled,
                                 onPressed: startButtonPressed,
                               )
                             else if (chargerStatus == 'Available' || chargerStatus == 'Finishing' || chargerStatus == 'Faulted' || chargerStatus == "SuspendedEV")
-                            const DisableButton()
+                              const DisableButton()
                             else if (chargerStatus == 'Charging')
                               StopButton(
                                 isStopButtonEnabled: isStopButtonEnabled,
+                                isStopLoading: _isStopLoading, // Pass the loading state here
                                 onPressed: stopButtonPressed,
                               ),
                             const SizedBox(width: 8),
@@ -1494,7 +1572,7 @@ Widget _buildAnimatedTempColorCircle() {
                       ),
                       if (isBatteryScreenVisible)
                         Padding(
-                          padding: const EdgeInsets.only(top: 15, bottom: 15,left: 20),
+                          padding: const EdgeInsets.only(top: 15, bottom: 15, left: 20),
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             controller: _scrollController,
@@ -1508,8 +1586,7 @@ Widget _buildAnimatedTempColorCircle() {
                                         Padding(
                                           padding: const EdgeInsets.only(left: 8.0),
                                           child: Container(
-
-                                            height:190,
+                                            height: 190,
                                             decoration: BoxDecoration(
                                               color: Colors.grey.shade900,
                                               borderRadius: BorderRadius.circular(15.0),
@@ -1586,7 +1663,6 @@ Widget _buildAnimatedTempColorCircle() {
                                                         ),
                                                       ),
                                                     ),
-
                                                     SizedBox(
                                                       width: 150, // Reduced width
                                                       height: 85, // Reduced height
@@ -1649,9 +1725,8 @@ Widget _buildAnimatedTempColorCircle() {
                                         Padding(
                                           padding: const EdgeInsets.only(right: 35.0),
                                           child: Container(
-                                            width:280,
-                                            height:190,
-
+                                            width: 280,
+                                            height: 190,
                                             decoration: BoxDecoration(
                                               color: Colors.grey.shade900,
                                               borderRadius: BorderRadius.circular(15.0),
@@ -1696,7 +1771,6 @@ Widget _buildAnimatedTempColorCircle() {
                                                     ),
                                                   ),
                                                 ),
-
                                                 SizedBox(
                                                   width: 300, // Reduced width
                                                   height: 87, // Reduced height
@@ -1752,7 +1826,7 @@ Widget _buildAnimatedTempColorCircle() {
                             ),
                           ),
                         ),
-                        ],
+                    ],
                   ),
                 ),
               ),
@@ -1762,14 +1836,14 @@ Widget _buildAnimatedTempColorCircle() {
                 message: 'Invalid NFC Card',
                 backgroundColor: Colors.red,
               ),
-              if (TagIDStatus == 'blocked')
+            if (TagIDStatus == 'blocked')
               AlertBanner(
                 message: 'Your account is blocked',
                 backgroundColor: Colors.red,
               ),
-              if (TagIDStatus == 'expired')
+            if (TagIDStatus == 'expired')
               AlertBanner(
-              message: 'Your NFC Card has expired',
+                message: 'Your NFC Card has expired',
                 backgroundColor: Colors.red,
               ),
             if (TagIDStatus == 'Concurrent')
@@ -1777,12 +1851,18 @@ Widget _buildAnimatedTempColorCircle() {
                 message: 'Concurrent transaction in progress',
                 backgroundColor: Colors.red,
               ),
+              if (NoResponseFromCharger)
+                AlertBanner(
+                message:'No response from the charger. Please try again!' ,
+                backgroundColor: Colors.red,
+              ),
           ],
         ),
       ),
-    )
-    );
-  }
+    ),
+  );
+}
+
 }
 
 class BatteryChargeScreen extends StatefulWidget {
@@ -1872,54 +1952,7 @@ class BatteryPainter extends CustomPainter {
   }
 }
 
-class LoadingOverlay extends StatelessWidget {
-  final bool showAlertLoading;
-  final Widget child;
 
-  LoadingOverlay({required this.showAlertLoading, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        child, // The main content
-        if (showAlertLoading)
-          const Opacity(
-            opacity: 0.5,
-            child: ModalBarrier(dismissible: false, color: Colors.black),
-          ),
-        if (showAlertLoading)
-          Center(
-            child: Container(
-              width: 200,
-              height: 100,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(110, 0, 0, 0),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-                  ),
-                  SizedBox(height: 20),
-                  Flexible(
-                    child: Text(
-                      'Loading...',
-                      style: TextStyle(fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
 class StartButton extends StatefulWidget {
   final String chargerStatus;
   final bool isStartButtonEnabled;
@@ -2007,13 +2040,14 @@ class _PowerButtonWidgetState extends State<StartButton>
     );
   }
 }
-
 class StopButton extends StatefulWidget {
   final bool isStopButtonEnabled;
+  final bool isStopLoading; // New parameter for loading state
   final VoidCallback? onPressed;
 
   const StopButton({
     required this.isStopButtonEnabled,
+    required this.isStopLoading, // Pass the loading state
     this.onPressed,
     Key? key,
   }) : super(key: key);
@@ -2085,6 +2119,7 @@ class _StopButtonWidgetState extends State<StopButton>
                 icon: const Icon(Icons.stop, color: Colors.white, size: 32),
                 onPressed: widget.isStopButtonEnabled ? widget.onPressed : null,
               ),
+
             ),
           ),
         ),
@@ -2092,8 +2127,6 @@ class _StopButtonWidgetState extends State<StopButton>
     );
   }
 }
-
-
 
 
 class DisableButton extends StatefulWidget {
@@ -2489,5 +2522,142 @@ class ChargingCompleteModal extends StatelessWidget {
   String formatTimestamp(String? timestamp) {
     if (timestamp == null) return 'N/A';
     return DateFormat('MM/dd/yyyy, hh:mm:ss a').format(DateTime.parse(timestamp).toLocal());
+  }
+}
+
+class LoadingOverlay extends StatelessWidget {
+  final bool showAlertLoading;
+  final Widget child;
+
+  LoadingOverlay({required this.showAlertLoading, required this.child});
+
+  Widget _buildLoadingIndicator() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: Colors.black.withOpacity(0.75), // Transparent black background
+      child: Center(
+        child: _AnimatedChargingIcon(), // Use the animated charging icon
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        child, // The main content
+        if (showAlertLoading)
+          _buildLoadingIndicator(), // Use the animated loading indicator
+      ],
+    );
+  }
+}
+class _AnimatedChargingIcon extends StatefulWidget {
+  @override
+  __AnimatedChargingIconState createState() => __AnimatedChargingIconState();
+}
+
+class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _rotationAnimation;
+  late Animation<double> _opacityAnimation;
+  late Animation<double> _circleScaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat();
+
+    _scaleAnimation = TweenSequence([
+      TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.2), weight: 70),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.2, end: 0.0), weight: 30),
+    ]).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _rotationAnimation = Tween<double>(begin: 0.0, end: 2 * 3.14159).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.linear,
+      ),
+    );
+
+    _opacityAnimation = TweenSequence([
+      TweenSequenceItem(tween: Tween<double>(begin: 0.5, end: 1.0), weight: 70),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0), weight: 30),
+    ]).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _circleScaleAnimation = TweenSequence([
+      TweenSequenceItem(tween: Tween<double>(begin: 0.9, end: 1.1), weight: 70),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.1, end: 0.0), weight: 30),
+    ]).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Transform.scale(
+              scale: _circleScaleAnimation.value,
+              child: Container(
+                width: 250, // Adjust the circle size as needed
+                height: 250,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.green.withOpacity(0.7),
+                    width: 4.0, // Border thickness
+                  ),
+                ),
+              ),
+            ),
+            Transform.rotate(
+              angle: _rotationAnimation.value,
+              child: Transform.scale(
+                scale: _scaleAnimation.value,
+                child: Opacity(
+                  opacity: _opacityAnimation.value,
+                  child: child,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+      child: Icon(
+        Icons.bolt, // Charging icon
+        color: Colors.green, // Set the icon color
+        size: 170, // Adjust the size as needed
+      ),
+    );
   }
 }
