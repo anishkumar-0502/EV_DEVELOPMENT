@@ -264,12 +264,33 @@ void _reloadPage() {
     }
   }
 
-  void _onMapTapped(LatLng position) {
+void _onMapTapped(LatLng position) async {
+  setState(() {
+    areMapButtonsEnabled = false;
+    _polylines.clear(); // Clear the route when the map is tapped elsewhere
+  });
+
+  if (_previousMarkerId != null) {
+    // Load the custom red icon
+    BitmapDescriptor defaultIcon = await _getIconFromAssetred('assets/icons/EV_location_red.png');
+
     setState(() {
-      areMapButtonsEnabled = false;
-      _polylines.clear(); // Clear the route when the map is tapped elsewhere
+      // Update the marker with the red icon
+      _markers = _markers.map((marker) {
+        if (marker.markerId == _previousMarkerId) {
+          return marker.copyWith(
+            iconParam: defaultIcon,
+          );
+        }
+        return marker;
+      }).toSet();
+
+      // Reset the previous marker ID
+      _previousMarkerId = null;
     });
   }
+}
+
 
   Future<BitmapDescriptor> _getIconWithOutline(
       IconData iconData,
@@ -320,7 +341,7 @@ void _reloadPage() {
   }
 
   Future<BitmapDescriptor> _getIconFromAsset(String assetPath,
-      {int width = 400, int height = 400}) async {
+      {int width = 300, int height = 300}) async {
     final byteData = await rootBundle.load(assetPath);
     final Uint8List bytes = byteData.buffer.asUint8List();
 
