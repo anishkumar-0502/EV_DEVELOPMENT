@@ -123,39 +123,49 @@ class _HomeContentState extends State<HomeContent> {
       });
     }
   }
+Future<void> _showLocationServicesDialog() async {
+  await CoolAlert.show(
+    context: context,
+    type: CoolAlertType.custom,
+    widget: Column(
+      children: [
+        const SizedBox(height: 16.0),
+        const Text(
+          'Enable Location',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 8.0),
+        const Text(
+          'Location services are required to use this feature. Please enable location services in your phone settings.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.black),
+        ),
+      ],
+    ),
+    confirmBtnText: 'Settings',
+    showCancelBtn: true,
+    confirmBtnColor: Colors.blue,
+    barrierDismissible: false, // Prevent closing by tapping outside
+    onConfirmBtnTap: () {
+      Geolocator.openLocationSettings(); // Open the location settings
+    },
+  );
 
-  Future<void> _showLocationServicesDialog() async {
-    CoolAlert.show(
-      context: context,
-      type: CoolAlertType.custom,
-      widget: Column(
-        children: [
-          const SizedBox(height: 16.0),
-          const Text(
-            'Enable Location',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8.0),
-          const Text(
-            'Location services are required to use this feature. Please enable location services in your phone settings.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black),
-          ),
-        ],
-      ),
-      confirmBtnText: 'Settings',
-      showCancelBtn: true,
-      confirmBtnColor: Colors.blue,
-      barrierDismissible: false, // Prevent closing by tapping outside
-      onConfirmBtnTap: () {
-        Geolocator.openLocationSettings(); // Open the location settings
-      },
-    );
-  }
+  // This block is executed when the dialog is dismissed
+  _reloadPage(); // Trigger a reload of the HomeContent page
+}
+
+void _reloadPage() {
+  setState(() {
+    // Update the state to trigger a reload of the HomeContent
+    fetchAllChargers(); // Fetch chargers again if necessary
+    _startLiveTracking(); // Restart live tracking
+  });
+}
 
   Future<void> _showPermissionDeniedDialog() async {
     showDialog(
@@ -389,7 +399,8 @@ class _HomeContentState extends State<HomeContent> {
 
     return BitmapDescriptor.fromBytes(buffer);
   }
-Future<BitmapDescriptor> _createCurrentLocationMarkerIcon(double bearing) async {
+  
+  Future<BitmapDescriptor> _createCurrentLocationMarkerIcon(double bearing) async {
   final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
   const double size = 150.0; // Adjust size as needed
@@ -985,8 +996,10 @@ void _startLiveTracking() {
   }
 
   _positionStreamSubscription = Geolocator.getPositionStream(
-          locationSettings: LocationSettings(
-              accuracy: LocationAccuracy.high, distanceFilter: 10))
+          locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.bestForNavigation, // Use highest accuracy
+              distanceFilter: 0, // Set to 0 to get updates as frequently as possible
+              timeLimit: Duration(seconds: 1))) // Optional: Limit update frequency to once per second
       .listen((Position position) async {
     final bearing = position.heading;
 
@@ -1050,6 +1063,7 @@ void _startLiveTracking() {
               myLocationEnabled: false,
               myLocationButtonEnabled: false,
               mapToolbarEnabled: false,
+              compassEnabled: false,
               onTap: _onMapTapped,
             ),
           ),
@@ -1888,7 +1902,10 @@ class CurrentLocationMarkerPainter extends CustomPainter {
   final double bearing; // Direction bearing
   final double animatedRadius; // Dynamic radius for animation
 
-  CurrentLocationMarkerPainter({required this.bearing, required this.animatedRadius});
+  CurrentLocationMarkerPainter({
+    required this.bearing,
+    required this.animatedRadius,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1903,6 +1920,15 @@ class CurrentLocationMarkerPainter extends CustomPainter {
 
     canvas.drawCircle(Offset(size.width / 2, size.height / 2), outerCircleRadius, circlePaint);
 
+    // Save the current state of the canvas before rotation
+    canvas.save();
+
+    // Translate the canvas to the center of the marker
+    canvas.translate(size.width / 2, size.height / 2);
+
+    // Rotate the canvas based on the bearing
+    canvas.rotate(bearing * 3.1415927 / 180);
+
     // Draw the solid blue dot with a white border
     final Paint dotPaint = Paint()
       ..color = Colors.blue
@@ -1913,8 +1939,15 @@ class CurrentLocationMarkerPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = borderThickness;
 
+    // Translate back after rotation
+    canvas.translate(-size.width / 2, -size.height / 2);
+
+    // Draw the dot and the border at the rotated position
     canvas.drawCircle(Offset(size.width / 2, size.height / 2), dotRadius, dotPaint);
     canvas.drawCircle(Offset(size.width / 2, size.height / 2), dotRadius, borderPaint);
+
+    // Restore the canvas state after drawing the rotated elements
+    canvas.restore();
 
     // Draw the highlighted directional flash (90-160 degree arc)
     final Rect arcRect = Rect.fromCircle(
