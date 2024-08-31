@@ -162,8 +162,7 @@ Future<void> _showLocationServicesDialog() async {
 void _reloadPage() {
   setState(() {
     // Update the state to trigger a reload of the HomeContent
-    fetchAllChargers(); // Fetch chargers again if necessary
-    _startLiveTracking(); // Restart live tracking
+    initState(); // Fetch chargers again if necessary
   });
 }
 
@@ -425,7 +424,7 @@ void _onMapTapped(LatLng position) async {
   final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
   const double size = 150.0; // Adjust size as needed
-
+  print("_createCurrentLocationMarkerIcon: $bearing");
   // Create the custom marker using CurrentLocationMarkerPainter
   final CurrentLocationMarkerPainter painter = CurrentLocationMarkerPainter(
     bearing: bearing,
@@ -447,7 +446,7 @@ void _onMapTapped(LatLng position) async {
 void _updateMarkers() async {
   if (_currentPosition != null) {
     // Assuming bearing is 0.0 if not available
-    final double defaultBearing = 0.0;
+    final double defaultBearing = 10.0;
 
     // Update the current location marker with the custom marker icon
     final currentLocationIcon = await _createCurrentLocationMarkerIcon(defaultBearing);
@@ -1017,11 +1016,14 @@ void _startLiveTracking() {
   }
 
   _positionStreamSubscription = Geolocator.getPositionStream(
-          locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.bestForNavigation, // Use highest accuracy
-              distanceFilter: 0, // Set to 0 to get updates as frequently as possible
-              timeLimit: Duration(seconds: 1))) // Optional: Limit update frequency to once per second
-      .listen((Position position) async {
+    locationSettings: const LocationSettings(
+      accuracy: LocationAccuracy.bestForNavigation,
+      distanceFilter: 0, // Set to 0 to get updates as frequently as possible
+      timeLimit: Duration(seconds: 1),
+    ),
+  ).listen((Position position) async {
+    print('Position updated: ${position.latitude}, ${position.longitude}');
+
     final bearing = position.heading;
 
     setState(() {
@@ -1034,7 +1036,8 @@ void _startLiveTracking() {
     setState(() {
       // Remove the old marker
       _markers.removeWhere(
-          (marker) => marker.markerId.value == 'current_location');
+        (marker) => marker.markerId.value == 'current_location',
+      );
 
       // Add a new marker with the updated location and rotation
       _markers.add(
@@ -1049,6 +1052,7 @@ void _startLiveTracking() {
     });
 
     if (mapController != null) {
+      print('Animating camera to new position');
       // Animate camera to new position and bearing
       mapController!.animateCamera(
         CameraUpdate.newCameraPosition(
@@ -1060,7 +1064,11 @@ void _startLiveTracking() {
           ),
         ),
       );
+    } else {
+      print('Map controller is null, cannot animate camera');
     }
+  }, onError: (error) {
+    print('Error in live tracking: $error');
   });
 }
 
@@ -1918,7 +1926,6 @@ class CrossPainter extends CustomPainter {
     return false;
   }
 }
-
 class CurrentLocationMarkerPainter extends CustomPainter {
   final double bearing; // Direction bearing
   final double animatedRadius; // Dynamic radius for animation
@@ -1941,6 +1948,13 @@ class CurrentLocationMarkerPainter extends CustomPainter {
 
     canvas.drawCircle(Offset(size.width / 2, size.height / 2), outerCircleRadius, circlePaint);
 
+    // Draw the solid blue dot without rotation
+    final Paint dotPaint = Paint()
+      ..color = Colors.blue
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), dotRadius, dotPaint);
+
     // Save the current state of the canvas before rotation
     canvas.save();
 
@@ -1950,44 +1964,29 @@ class CurrentLocationMarkerPainter extends CustomPainter {
     // Rotate the canvas based on the bearing
     canvas.rotate(bearing * 3.1415927 / 180);
 
-    // Draw the solid blue dot with a white border
-    final Paint dotPaint = Paint()
-      ..color = Colors.blue
-      ..style = PaintingStyle.fill;
-
+    // Draw the white border with rotation
     final Paint borderPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = borderThickness;
 
-    // Translate back after rotation
-    canvas.translate(-size.width / 2, -size.height / 2);
+    canvas.drawCircle(Offset(0, 0), dotRadius, borderPaint);
 
-    // Draw the dot and the border at the rotated position
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), dotRadius, dotPaint);
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), dotRadius, borderPaint);
+    // Draw the arrow pointing in the bearing direction
+    final Path arrowPath = Path()
+      ..moveTo(0, -outerCircleRadius) // Start at the top point
+      ..lineTo(-outerCircleRadius / 3, -outerCircleRadius / 2) // Left side of arrow
+      ..lineTo(outerCircleRadius / 3, -outerCircleRadius / 2) // Right side of arrow
+      ..close(); // Connect to the starting point
+
+    final Paint arrowPaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.8)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(arrowPath, arrowPaint);
 
     // Restore the canvas state after drawing the rotated elements
     canvas.restore();
-
-    // Draw the highlighted directional flash (90-160 degree arc)
-    final Rect arcRect = Rect.fromCircle(
-      center: Offset(size.width / 2, size.height / 2),
-      radius: outerCircleRadius,
-    );
-
-    final Paint arcPaint = Paint()
-      ..color = Colors.blueAccent.withOpacity(0.3)
-      ..style = PaintingStyle.fill;
-
-    // Align the arc direction with the bearing direction
-    canvas.drawArc(
-      arcRect,
-      (bearing - 45) * 3.1415927 / 180, // Start angle aligned with bearing, offset for visual spread
-      90 * 3.1415927 / 180, // Sweep angle (90 degrees)
-      true,
-      arcPaint,
-    );
   }
 
   @override
