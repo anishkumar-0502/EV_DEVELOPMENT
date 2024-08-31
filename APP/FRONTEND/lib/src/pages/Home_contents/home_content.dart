@@ -45,16 +45,26 @@ class _HomeContentState extends State<HomeContent> {
   MarkerId? _previousMarkerId; // To track the previously selected marker
   StreamSubscription<Position>? _positionStreamSubscription;
   bool _isFetchingLocation = false; // Ensure initialization
+LatLng? _previousPosition;
+double? _previousBearing;
 
-  @override
-  void initState() {
-    super.initState();
-    _isFetchingLocation = false; // Ensure initialization
-    _checkLocationPermission(); // Request location permissions on app start
-    activeFilter = 'All Chargers';
-    fetchAllChargers();
-    _startLiveTracking(); // Start live tracking
-  }
+@override
+void initState() {
+  super.initState();
+  _isFetchingLocation = false;
+  _checkLocationPermission();
+  activeFilter = 'All Chargers';
+  fetchAllChargers();
+  _startLiveTracking(); // Start live tracking
+  // No need to start a timer here anymore
+}
+
+// Remove the timer cancellation in dispose
+@override
+void dispose() {
+  _positionStreamSubscription?.cancel(); // Cancel the subscription
+  super.dispose();
+}
 
   // This method checks the user's location permissions
   Future<void> _checkLocationPermission() async {
@@ -77,52 +87,51 @@ class _HomeContentState extends State<HomeContent> {
     }
   }
 
-  // This method retrieves the user's current location
-  Future<void> _getCurrentLocation() async {
-    if (_isFetchingLocation) return;
+// This method is already present, but you should keep this logic to handle camera animation
+Future<void> _getCurrentLocation() async {
+  if (_isFetchingLocation) return;
 
-    setState(() {
-      _isFetchingLocation = true;
-    });
+  setState(() {
+    _isFetchingLocation = true;
+  });
 
-    try {
-      LatLng? currentLocation =
-          await LocationService.instance.getCurrentLocation();
+  try {
+    LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
 
-      if (currentLocation != null) {
-        // Update the current position
-        setState(() {
-          _currentPosition = currentLocation;
-        });
-
-        if (mapController != null) {
-          // Smoothly animate the camera to the new position
-          await mapController!.animateCamera(
-            CameraUpdate.newCameraPosition(
-              CameraPosition(
-                target: _currentPosition!,
-                zoom: 18.0,
-              ),
-            ),
-          );
-        }
-
-        // Update the map markers with the new position
-        _updateMarkers();
-      } else {
-        // Handle the case where location couldn't be fetched
-        print('Current location could not be determined.');
-      }
-    } catch (e) {
-      // Handle any exceptions that occur during location fetching
-      print('Error occurred while fetching the current location: $e');
-    } finally {
-      // Ensure that the loading state is reset
+    if (currentLocation != null) {
+      // Update the current position
       setState(() {
-        _isFetchingLocation = false;
+        _currentPosition = currentLocation;
       });
+
+      if (mapController != null) {
+        // Smoothly animate the camera to the new position
+        await mapController!.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: _currentPosition!,
+              zoom: 18.0,
+              tilt: 45.0,
+              bearing: _previousBearing ?? 0,
+            ),
+          ),
+        );
+      }
+
+      // Update the map markers with the new position
+      await _updateCurrentLocationMarker(_previousBearing ?? 0);
+    } else {
+      print('Current location could not be determined.');
     }
+  } catch (e) {
+    print('Error occurred while fetching the current location: $e');
+  } finally {
+    setState(() {
+      _isFetchingLocation = false;
+    });
   }
+}
+
 Future<void> _showLocationServicesDialog() async {
   await CoolAlert.show(
     context: context,
@@ -443,68 +452,74 @@ void _onMapTapped(LatLng position) async {
   return BitmapDescriptor.fromBytes(imageData);
 }
 
-void _updateMarkers() async {
-  if (_currentPosition != null) {
-    // Assuming bearing is 0.0 if not available
-    final double defaultBearing = 10.0;
-
-    // Update the current location marker with the custom marker icon
-    final currentLocationIcon = await _createCurrentLocationMarkerIcon(defaultBearing);
-
-    setState(() {
-      _markers.add(
-        Marker(
-          markerId: const MarkerId('current_location'),
-          position: _currentPosition!,
-          icon: currentLocationIcon,
-          infoWindow: const InfoWindow(title: 'Your Location'),
-          onTap: () {
-            _showCustomInfoWindow(
-              'Your Location',
-              '',
-              _currentPosition!,
-            );
-          },
-        ),
+  // Update the markers function
+  void _updateMarkers() async {
+    if (_currentPosition != null) {
+      // Fetch the dynamic bearing
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.bestForNavigation,
       );
-    });
-  }
+      final double bearing = position.heading; // Get the current bearing
 
-  // Add markers for all available chargers (existing logic)
-  for (var charger in availableChargers) {
-    final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
-    final lat = charger['lat'] != null ? double.tryParse(charger['lat']) : null;
-    final lng = charger['long'] != null ? double.tryParse(charger['long']) : null;
-
-    if (lat != null && lng != null) {
-      if (_currentPosition != null &&
-          lat == _currentPosition!.latitude &&
-          lng == _currentPosition!.longitude) {
-        continue;
-      }
-
-      BitmapDescriptor Charger_icon =
-          await _getIconFromAssetred('assets/icons/EV_location_red.png');
+      // Update the current location marker with the custom marker icon and bearing
+      final currentLocationIcon = await _createCurrentLocationMarkerIcon(bearing);
 
       setState(() {
         _markers.add(
           Marker(
-            markerId: MarkerId(chargerId),
-            position: LatLng(lat, lng),
-            icon: Charger_icon, // Use the custom icon for chargers
-            infoWindow: InfoWindow(
-              title: charger['model'] ?? 'Unknown Model',
-              snippet: chargerId,
-            ),
+            markerId: const MarkerId('current_location'),
+            position: _currentPosition!,
+            icon: currentLocationIcon,
+            infoWindow: const InfoWindow(title: 'Your Location'),
             onTap: () {
-              _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
+              _showCustomInfoWindow(
+                'Your Location',
+                '',
+                _currentPosition!,
+              );
             },
           ),
         );
       });
     }
+
+    // Add markers for all available chargers (existing logic)
+    for (var charger in availableChargers) {
+      final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
+      final lat = charger['lat'] != null ? double.tryParse(charger['lat']) : null;
+      final lng = charger['long'] != null ? double.tryParse(charger['long']) : null;
+
+      if (lat != null && lng != null) {
+        if (_currentPosition != null &&
+            lat == _currentPosition!.latitude &&
+            lng == _currentPosition!.longitude) {
+          continue;
+        }
+
+        BitmapDescriptor Charger_icon =
+            await _getIconFromAssetred('assets/icons/EV_location_red.png');
+
+        setState(() {
+          _markers.add(
+            Marker(
+              markerId: MarkerId(chargerId),
+              position: LatLng(lat, lng),
+              icon: Charger_icon, // Use the custom icon for chargers
+              infoWindow: InfoWindow(
+                title: charger['model'] ?? 'Unknown Model',
+                snippet: chargerId,
+              ),
+              onTap: () {
+                _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
+              },
+            ),
+          );
+        });
+      }
+    }
   }
-}
+
+
 
   Future<void> _getPolyline(LatLng start, LatLng end) async {
     final response = await http.get(Uri.parse(
@@ -1001,6 +1016,7 @@ void _updateMarkers() async {
   return BitmapDescriptor.fromBytes(buffer);
 }
 
+
 // Helper function to load an image from bytes
 Future<ui.Image> loadImageFromBytes(Uint8List imgBytes) async {
   final Completer<ui.Image> completer = Completer();
@@ -1011,67 +1027,87 @@ Future<ui.Image> loadImageFromBytes(Uint8List imgBytes) async {
 }
 
 void _startLiveTracking() {
-  if (_positionStreamSubscription != null) {
-    _positionStreamSubscription!.cancel();
-  }
+  // Cancel any existing subscription to prevent memory leaks
+  _positionStreamSubscription?.cancel();
 
+  // Set up the position stream subscription
   _positionStreamSubscription = Geolocator.getPositionStream(
     locationSettings: const LocationSettings(
       accuracy: LocationAccuracy.bestForNavigation,
-      distanceFilter: 0, // Set to 0 to get updates as frequently as possible
-      timeLimit: Duration(seconds: 1),
+      distanceFilter: 0, // Receive updates for any movement
     ),
   ).listen((Position position) async {
-    print('Position updated: ${position.latitude}, ${position.longitude}');
+    final LatLng newPosition = LatLng(position.latitude, position.longitude);
+    final double newBearing = position.heading;
 
-    final bearing = position.heading;
+    // Update the current position and marker if there's a significant change
+    if (_hasSignificantChange(newPosition, newBearing)) {
+      _currentPosition = newPosition;
+      _previousPosition = newPosition;
+      _previousBearing = newBearing;
 
-    setState(() {
-      _currentPosition = LatLng(position.latitude, position.longitude);
-    });
+      await _updateCurrentLocationMarker(newBearing);
 
-    // Create a custom icon with direction bearing
-    final currentLocationIcon = await _createCurrentLocationMarkerIcon(bearing);
-
-    setState(() {
-      // Remove the old marker
-      _markers.removeWhere(
-        (marker) => marker.markerId.value == 'current_location',
-      );
-
-      // Add a new marker with the updated location and rotation
-      _markers.add(
-        Marker(
-          markerId: const MarkerId('current_location'),
-          position: _currentPosition!,
-          icon: currentLocationIcon,
-          rotation: bearing,
-          anchor: const Offset(0.5, 0.5), // Center the icon
-        ),
-      );
-    });
-
-    if (mapController != null) {
-      print('Animating camera to new position');
-      // Animate camera to new position and bearing
-      mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: _currentPosition!,
-            zoom: 18.0,
-            bearing: bearing, // Rotate the map to match the user's direction
-            tilt: 45.0,
-          ),
-        ),
-      );
-    } else {
-      print('Map controller is null, cannot animate camera');
+      // **Remove the automatic camera update** here
+      // if (mapController != null) {
+      //   mapController!.animateCamera(
+      //     CameraUpdate.newCameraPosition(
+      //       CameraPosition(
+      //         target: _currentPosition!,
+      //         zoom: 18.0,
+      //         bearing: newBearing,
+      //         tilt: 45.0,
+      //       ),
+      //     ),
+      //   );
+      // }
     }
   }, onError: (error) {
     print('Error in live tracking: $error');
   });
 }
 
+
+// Function to check if there's a significant change
+bool _hasSignificantChange(LatLng newPosition, double newBearing) {
+  const double bearingThreshold = 5.0; // Minimum change in degrees to update
+  const double distanceThreshold = 0.0001; // Minimum change in distance (in degrees) to update
+
+  final double bearingChange = (_previousBearing != null)
+      ? (newBearing - _previousBearing!).abs()
+      : double.infinity;
+  final double distanceChange = (_previousPosition != null)
+      ? Geolocator.distanceBetween(
+              _previousPosition!.latitude,
+              _previousPosition!.longitude,
+              newPosition.latitude,
+              newPosition.longitude) /
+          1000
+      : double.infinity;
+
+  return bearingChange > bearingThreshold || distanceChange > distanceThreshold;
+}
+
+Future<void> _updateCurrentLocationMarker(double bearing) async {
+  // Create a custom icon that reflects the current bearing
+  final currentLocationIcon = await _createCurrentLocationMarkerIcon(bearing);
+  print("_updateCurrentLocationMarker: $currentLocationIcon ");
+  setState(() {
+    // Remove any previous marker for the current location
+    _markers.removeWhere((marker) => marker.markerId.value == 'current_location');
+
+    // Add a new marker with the updated location and rotation
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('current_location'),
+        position: _currentPosition!,
+        icon: currentLocationIcon,
+        rotation: bearing,
+        anchor: const Offset(0.5, 0.5), // Center the icon
+      ),
+    );
+  });
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1689,6 +1725,8 @@ void _startLiveTracking() {
       ),
     );
   }
+
+
 }
 
 class ConnectorSelectionDialog extends StatefulWidget {
@@ -1926,6 +1964,7 @@ class CrossPainter extends CustomPainter {
     return false;
   }
 }
+
 class CurrentLocationMarkerPainter extends CustomPainter {
   final double bearing; // Direction bearing
   final double animatedRadius; // Dynamic radius for animation
@@ -2003,7 +2042,6 @@ class CurrentLocationMarker extends StatefulWidget {
   @override
   _CurrentLocationMarkerState createState() => _CurrentLocationMarkerState();
 }
-
 class _CurrentLocationMarkerState extends State<CurrentLocationMarker> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -2012,13 +2050,13 @@ class _CurrentLocationMarkerState extends State<CurrentLocationMarker> with Sing
   void initState() {
     super.initState();
 
-    // Initialize the animation controller
+    // Initialize the animation controller with a slightly longer duration
     _controller = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 2), // Longer duration for smoother animation
       vsync: this,
     )..repeat(reverse: true); // Loop the animation
 
-    // Define the animation for the circle's radius
+    // Define the animation for the circle's radius with smoother transitions
     _animation = Tween<double>(begin: 50.0, end: 100.0).animate(CurvedAnimation(
       parent: _controller,
       curve: Curves.easeInOut,

@@ -55,4 +55,5 @@ flutter:
     - assets/icons/EV_location_green.png
     - assets/gif/loading.gif 
     - assets/gif/current_location.gif 
+    - assets/gif/map_permission.gif
     
