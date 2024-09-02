@@ -11,16 +11,12 @@ import '../../../utilities/User_Model/ImageProvider.dart'; // Ensure you have th
 class EditUserModal extends StatefulWidget {
   final String username;
   final String email;
-  final int? phoneNo;
-  final String? password;
   final int? userId;
 
   const EditUserModal({
     super.key,
     required this.username,
     required this.email,
-    this.phoneNo,
-    this.password,
     this.userId,
   });
 
@@ -35,19 +31,18 @@ class _EditUserModalState extends State<EditUserModal> {
   final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _isOldPasswordInteracted = false;
-  bool _isNewPasswordVisible = false;
 
-  bool _isNewPasswordInteracted = false;
-  bool _obscureText = true;
+  bool _isOldPasswordObscured = true;  // For current password visibility
+  bool _isNewPasswordObscured = true;  // For new password visibility
 
   @override
   void initState() {
     super.initState();
     _usernameController.text = widget.username;
     _emailController.text = widget.email;
-    if (widget.phoneNo != null) {
-      _phoneController.text = widget.phoneNo.toString();
+
+    if (widget.userId != null) {
+      fetchUserDetails();
     }
   }
 
@@ -61,25 +56,52 @@ class _EditUserModalState extends State<EditUserModal> {
     super.dispose();
   }
 
-  String? _validateUsername(String value) {
-    final usernameRegex = RegExp(r'^[a-zA-Z]+$');
-    if (!usernameRegex.hasMatch(value)) {
-      return 'Username must be alphabets only';
+  String? _validatePhoneNumber(String value) {
+    if (value.isEmpty) {
+      return 'Phone number is required';
     }
     return null;
   }
 
-  String? _validatePassword(String? value, {bool isNew = false}) {
+  String? _validateOldPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Enter your password';
-    }
-    if (isNew && (value.length != 4 || !RegExp(r'^\d+$').hasMatch(value))) {
-      return 'New password must be exactly 4 digits';
-    }
-    if (!isNew && (value.length > 4 || !RegExp(r'^\d*$').hasMatch(value))) {
-      return 'Old password must be up to 4 digits';
+      return 'Enter your old password';
     }
     return null;
+  }
+
+  bool get isFormValid {
+    final phoneValid = _validatePhoneNumber(_phoneController.text) == null;
+    final oldPasswordValid = _validateOldPassword(_oldPasswordController.text) == null;
+    return phoneValid && oldPasswordValid;
+  }
+
+  Future<void> fetchUserDetails() async {
+    int? userId = widget.userId;
+
+    print('Fetching user details for user ID: $userId');
+
+    try {
+      var response = await http.post(
+        Uri.parse('http://122.166.210.142:9098/profile/FetchUserProfile'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': userId}),
+      );
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
+
+        setState(() {
+          _phoneController.text = data['data']['phone_no'] is int
+              ? data['data']['phone_no'].toString()
+              : data['data']['phone_no'].toString();
+          print(data['data']['password']);
+        });
+      } else {
+        throw Exception('Error fetching user details');
+      }
+    } catch (error) {
+      print('Error fetching user details: $error');
+    }
   }
 
   void _handleUpdate() async {
@@ -92,7 +114,15 @@ class _EditUserModalState extends State<EditUserModal> {
     final String username = _usernameController.text;
     final String phone = _phoneController.text;
     final String oldPassword = _oldPasswordController.text;
-    final String newPassword = _newPasswordController.text;
+    final String? newPassword = _newPasswordController.text.isNotEmpty
+        ? _newPasswordController.text
+        : null; // Set newPassword to null if it's empty
+
+    // Check if old and new passwords are the same
+    if (oldPassword == newPassword && newPassword != null) {
+      _showAlertBanner('Current password and new password should not be the same');
+      return;
+    }
 
     try {
       var response = await http.post(
@@ -106,6 +136,8 @@ class _EditUserModalState extends State<EditUserModal> {
           'new_password': newPassword,
         }),
       );
+      final responseData = jsonDecode(response.body);
+      print("responseData: $responseData");
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -117,13 +149,16 @@ class _EditUserModalState extends State<EditUserModal> {
           ),
         );
         Navigator.pop(context, 'refresh');
-      } else {
+      } else if (response.statusCode == 400) {
         final responseData = jsonDecode(response.body);
-        final errorMessage = responseData['error_message'] ?? "Failed to update! No changes are made, kindly check the credentials";
+        final errorMessage = responseData['error_message'] ?? "Failed to update! No changes are made";
+        _showAlertBanner(errorMessage);
+      } else {
+        final errorMessage = "Check your credentials";
         _showAlertBanner(errorMessage);
       }
     } catch (e) {
-      _showAlertBanner( 'Internal server error ');
+      _showAlertBanner('Internal server error');
     }
   }
 
@@ -151,7 +186,6 @@ class _EditUserModalState extends State<EditUserModal> {
     final userImageProvider = Provider.of<UserImageProvider>(context);
 
     return Scaffold(
-
       body: Column(
         children: [
           Container(
@@ -166,7 +200,7 @@ class _EditUserModalState extends State<EditUserModal> {
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 8.0),
                         child: Text(
-                          ' Profile',
+                          'Profile',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 25,
@@ -187,7 +221,6 @@ class _EditUserModalState extends State<EditUserModal> {
               ],
             ),
           ),
-
           Expanded(
             child: SingleChildScrollView(
               child: Container(
@@ -241,7 +274,7 @@ class _EditUserModalState extends State<EditUserModal> {
                             ),
                           ],
                         ),
-                        const SizedBox(width: 20,),
+                        const SizedBox(width: 20),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -259,9 +292,10 @@ class _EditUserModalState extends State<EditUserModal> {
                                 _emailController.text, // Display the email
                                 style: const TextStyle(
                                   color: Colors.grey,
-                                  fontSize: 14,
+                                  fontSize: 16,
                                 ),
                               ),
+                              const SizedBox(height: 10),
                             ],
                           ),
                         ),
@@ -272,122 +306,101 @@ class _EditUserModalState extends State<EditUserModal> {
                       key: _formKey,
                       child: Column(
                         children: [
-                        TextFormField(
-                        controller: _oldPasswordController,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: const Color.fromARGB(200, 58, 58, 60),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide.none,
-                          ),
-                          hintText: "Current Password (Required)",
-                          hintStyle: const TextStyle(color: Colors.grey),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscureText ? Icons.visibility_off : Icons.visibility,
-                              color: Colors.grey,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscureText = !_obscureText;
-                              });
-                            },
-                          ),
-                        ),
-                        style: const TextStyle(color: Colors.white),
-                        cursorColor: const Color(0xFF1ED760),
-                        obscureText: _obscureText,
-                        validator: (value) {
-                          if (!_isOldPasswordInteracted) return null;
-                          return _validatePassword(value, isNew: false) ?? '';
-                        },
-                        onChanged: (value) {
-                          setState(() {}); // Always enable the button
-                        },
-                        onTap: () {
-                          setState(() {
-                            _isOldPasswordInteracted = true;
-                          });
-                        },
-                      ),
-                          const SizedBox(height: 20),
-                        TextFormField(
-                          controller: _newPasswordController,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: const Color.fromARGB(200, 58, 58, 60),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: BorderSide.none,
-                            ),
-                            hintText: "New Password (Only if you want to update)",
-                            hintStyle: const TextStyle(color: Colors.grey),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _isNewPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                                color: Colors.grey,
+                          // Current Password Field
+                          TextFormField(
+                            controller: _oldPasswordController,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color.fromARGB(200, 58, 58, 60),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: BorderSide.none,
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _isNewPasswordVisible = !_isNewPasswordVisible; // Toggle visibility state
-                                });
-                              },
+                              hintText: "Current Password (Required)",
+                              hintStyle: const TextStyle(color: Colors.grey),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isOldPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isOldPasswordObscured = !_isOldPasswordObscured;
+                                  });
+                                },
+                              ),
                             ),
+                            obscureText: _isOldPasswordObscured, // Hide text when obscureText is true
+                            style: const TextStyle(color: Colors.white),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly, // Only allow digits
+                              LengthLimitingTextInputFormatter(4), // Limit length to 4 digits
+                            ],
+                            validator: _validateOldPassword,
                           ),
-                          style: const TextStyle(color: Colors.white),
-                          cursorColor: const Color(0xFF1ED760),
-                          obscureText: !_isNewPasswordVisible, // Toggle based on _isNewPasswordVisible
-                          validator: (value) {
-                            if (!_isNewPasswordInteracted) return null;
-                            return _validatePassword(value, isNew: true) ?? '';
-                          },
-                          onChanged: (value) {
-                            setState(() {}); // Always enable the button
-                          },
-                          onTap: () {
-                            setState(() {
-                              _isNewPasswordInteracted = true;
-                            });
-                          },
-                        ),
+                          const SizedBox(height: 16),
 
-                        const SizedBox(height: 20),
-                        IntlPhoneField(
-                          controller: _phoneController,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: const Color.fromARGB(200, 58, 58, 60),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: BorderSide.none,
+                          // New Password Field
+                          TextFormField(
+                            controller: _newPasswordController,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color.fromARGB(200, 58, 58, 60),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: BorderSide.none,
+                              ),
+                              hintText: "New Password (Only if you want to update)",
+                              hintStyle: const TextStyle(color: Colors.grey),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isNewPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isNewPasswordObscured = !_isNewPasswordObscured;
+                                  });
+                                },
+                              ),
                             ),
-                            hintText: 'Phone Number',
-                            hintStyle: const TextStyle(color: Colors.grey),
+                            obscureText: _isNewPasswordObscured, // Hide text when obscureText is true
+                            style: const TextStyle(color: Colors.white),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly, // Only allow digits
+                              LengthLimitingTextInputFormatter(4), // Limit length to 4 digits
+                            ],
                           ),
-                          style: const TextStyle(color: Colors.white),
-                          initialCountryCode: 'IN',
-                          onChanged: (value) {
-                            setState(() {
-                              // Any additional logic you want to add on change
-                            });
-                          },
-                          onCountryChanged: (country) {
-                            print('Country changed to: ' + country.name);
-                          },
-                          inputFormatters: <TextInputFormatter>[
-                            FilteringTextInputFormatter.digitsOnly, // This ensures only digits are allowed
-                          ],
-                        ),
-
-
                           const SizedBox(height: 20),
 
-                          Center(
-                            child: CustomGradientButton(
-                              buttonText: 'Save Changes',
-                              onPressed: _handleUpdate,
+                          // Phone Number Field (No eye icon)
+                          IntlPhoneField(
+                            controller: _phoneController,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color.fromARGB(200, 58, 58, 60),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: BorderSide.none,
+                              ),
+                              hintText: "Enter your phone no",
+                              hintStyle: const TextStyle(color: Colors.grey),
                             ),
+                            initialCountryCode: 'IN',
+                            style: const TextStyle(color: Colors.white),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly, // Only allow digits
+                            ],
+                          ),
+
+                          const SizedBox(height: 16),
+                          CustomGradientButton(
+                            buttonText: 'Save Changes',
+                            isEnabled: isFormValid,
+                            onPressed: _handleUpdate,
                           ),
                         ],
                       ),
@@ -396,9 +409,7 @@ class _EditUserModalState extends State<EditUserModal> {
                 ),
               ),
             ),
-          )
-
-
+          ),
         ],
       ),
     );
@@ -407,46 +418,38 @@ class _EditUserModalState extends State<EditUserModal> {
 
 class CustomGradientButton extends StatelessWidget {
   final String buttonText;
+  final bool isEnabled;
   final VoidCallback onPressed;
 
   const CustomGradientButton({
     Key? key,
     required this.buttonText,
+    required this.isEnabled,
     required this.onPressed,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.transparent,
-        shadowColor: Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ).copyWith(
-        elevation: WidgetStateProperty.all(0),
-        backgroundColor: WidgetStateProperty.resolveWith(
-              (states) => Colors.transparent,
-        ),
+    return Container(
+      width: double.infinity,
+      height: 50,
+      decoration: BoxDecoration(
+        gradient: isEnabled
+            ? LinearGradient(colors: [Colors.green, Colors.lightGreen])
+            : LinearGradient(colors: [Colors.grey, Colors.grey[400]!]),
+        borderRadius: BorderRadius.circular(8),
       ),
-      onPressed: onPressed,
-      child: Ink(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.green, Colors.lightGreen],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(10),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         ),
-        child: Container(
-          constraints: BoxConstraints(maxWidth: 200, maxHeight: 50),
-          alignment: Alignment.center,
-          child: Text(
-            buttonText,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        onPressed: isEnabled ? onPressed : null,
+        child: Text(
+          buttonText,
+          style: TextStyle(
+            color: isEnabled ? Colors.white : Colors.black54,
+            fontSize: 16,
           ),
         ),
       ),
@@ -457,8 +460,8 @@ class CustomGradientButton extends StatelessWidget {
 class CustomGradientDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 1.2, // Adjust this to change the overall height of the divider
+    return Container(
+      height: 1.2,
       child: CustomPaint(
         painter: GradientPainter(),
         child: const SizedBox.expand(),
@@ -474,9 +477,9 @@ class GradientPainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.centerLeft,
         colors: [
-          Color.fromRGBO(0, 0, 0, 0.75), // Darker black shade
-          Color.fromRGBO(0, 128, 0, 0.75), // Darker green for blending
-          Colors.green, // Green color in the middle
+          Color.fromRGBO(0, 0, 0, 0.75),
+          Color.fromRGBO(0, 128, 0, 0.75),
+          Colors.green,
         ],
         end: Alignment.center,
       ).createShader(Rect.fromLTRB(0, 0, size.width, size.height));
@@ -496,3 +499,8 @@ class GradientPainter extends CustomPainter {
     return false;
   }
 }
+
+
+
+
+

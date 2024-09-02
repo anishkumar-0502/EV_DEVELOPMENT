@@ -15,8 +15,9 @@ import 'Account/Account.dart';
 class ProfilePage extends StatefulWidget {
   final String username;
   final int? userId;
+  final String? email;
 
-  const ProfilePage({super.key, required this.username, this.userId});
+  const ProfilePage({super.key, required this.username, this.userId,this.email});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -31,41 +32,14 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    fetchUserDetails();
+    // fetchUserDetails();
+    email = widget.email;
+    print(email);
     final userImageProvider = Provider.of<UserImageProvider>(context, listen: false);
     userImageProvider.loadImage(); // Load user image when the profile page is initialized
   }
 
-  Future<void> fetchUserDetails() async {
-    String? username = widget.username;
-    int? user_id = widget.userId;
 
-    print('Fetching user details for user: $username, $user_id');
-
-    try {
-      var response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/profile/FetchUserProfile'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'user_id': user_id}),
-      );
-      if (response.statusCode == 200) {
-        var data = json.decode(response.body);
-
-        setState(() {
-          email = data['data']['email_id'].toString();
-          phoneNo = data['data']['phone_no'] is int
-              ? data['data']['phone_no']
-              : int.tryParse(data['data']['phone_no'].toString());
-          password = data['data']['password']; // Store the hashed password
-          print(password);
-        });
-      } else {
-        throw Exception('Error fetching user details');
-      }
-    } catch (error) {
-      print('Error fetching user details: $error');
-    }
-  }
 
   Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -96,16 +70,16 @@ class _ProfilePageState extends State<ProfilePage> {
           child:  EditUserModal(
             username: widget.username,
             email: email ?? '',
-            phoneNo: phoneNo,
+
             userId: widget.userId,
-            password: password,
+
           ),
         );
       },
     ).then((result) {
-    //   // Check if result is 'refresh' to trigger data fetch
+      //   // Check if result is 'refresh' to trigger data fetch
       if (result == 'refresh') {
-        fetchUserDetails();
+        // fetchUserDetails();
         final userImageProvider = Provider.of<UserImageProvider>(context, listen: false);
         userImageProvider.loadImage(); // Reload user image when the modal is closed
       }
@@ -193,50 +167,51 @@ class _ProfilePageState extends State<ProfilePage> {
                         style: TextStyle(color: Colors.grey[400], fontSize: 16),
                         textAlign: TextAlign.center,
                       ),
+
                       const SizedBox(height: 20,width: 20,),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                        Container(
-                        width: 200, // Increase the width of the container
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            width: 2,
+                          Container(
+                            width: 200, // Increase the width of the container
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                width: 2,
 
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.lightGreenAccent.withOpacity(0.3), // Light green color with some transparency
-                              Colors.lightGreen.withOpacity(0.6)
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                        child: ElevatedButton(
-                          onPressed: _showEditUserModal,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent, // Keep the button background transparent
-                            foregroundColor: Colors.white, // Text and icon color white
-                            shape: RoundedRectangleBorder(
+                              ),
                               borderRadius: BorderRadius.circular(20),
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.lightGreenAccent.withOpacity(0.3), // Light green color with some transparency
+                                  Colors.lightGreen.withOpacity(0.6)
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                             ),
-                            elevation: 1,
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // Adjust padding for a larger button
-                            shadowColor: Colors.transparent,
-                            minimumSize: const Size(180, 50), // Ensure the button has the desired size
+                            child: ElevatedButton(
+                              onPressed: _showEditUserModal,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent, // Keep the button background transparent
+                                foregroundColor: Colors.white, // Text and icon color white
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                elevation: 1,
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // Adjust padding for a larger button
+                                shadowColor: Colors.transparent,
+                                minimumSize: const Size(180, 50), // Ensure the button has the desired size
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.edit, size: 16, color: Colors.white), // White icon color
+                                  SizedBox(width: 8),
+                                  Text('Edit profile', style: TextStyle(color: Colors.white, fontSize: 14)), // White text color
+                                ],
+                              ),
+                            ),
                           ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.edit, size: 16, color: Colors.white), // White icon color
-                              SizedBox(width: 8),
-                              Text('Edit profile', style: TextStyle(color: Colors.white, fontSize: 14)), // White text color
-                            ],
-                          ),
-                        ),
-                      ),
                         ],
                       ),
 

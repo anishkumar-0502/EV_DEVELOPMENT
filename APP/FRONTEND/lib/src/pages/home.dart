@@ -12,8 +12,9 @@ import 'package:permission_handler/permission_handler.dart'; // Import the permi
 class HomePage extends StatefulWidget {
   final String username;
   final int? userId;
+  final String email;
 
-  const HomePage({super.key, required this.username, this.userId});
+  const HomePage({super.key, required this.username, this.userId, required this.email});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -93,7 +94,7 @@ class _HomePageState extends State<HomePage> {
       HomeContent(username: widget.username, userId: widget.userId),
       WalletPage(username: widget.username, userId: widget.userId),
       HistoryPage(username: widget.username, userId: widget.userId),
-      ProfilePage(username: widget.username, userId: widget.userId),
+      ProfilePage(username: widget.username, userId: widget.userId, email: widget.email),
     ];
 
     return WillPopScope(

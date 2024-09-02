@@ -308,7 +308,7 @@ Widget _buildLoadingIndicator() {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => HomePage(username: username,userId: widget.userId,),
+                builder: (context) => HomePage(username: username,userId: widget.userId, email: '',),
               ),
             );
           }
@@ -1318,7 +1318,7 @@ Widget _buildAnimatedTempColorCircle() {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => HomePage(username: username,userId: widget.userId,),
+        builder: (context) => HomePage(username: username,userId: widget.userId, email: '',),
       ),
     );
     endChargingSession(chargerID, widget.connector_id);
@@ -1366,7 +1366,7 @@ Widget build(BuildContext context) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => HomePage(username: username, userId: widget.userId),
+          builder: (context) => HomePage(username: username, userId: widget.userId, email: '',),
         ),
       );
       return false; // Return false to prevent the default back behavior
@@ -1456,7 +1456,7 @@ Widget build(BuildContext context) {
                                   ),
                                   const SizedBox(width: 15,),
                                   Text(
-                                    ChargerID!,
+                                    ChargerID,
                                     style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                                   ),
                                 ],

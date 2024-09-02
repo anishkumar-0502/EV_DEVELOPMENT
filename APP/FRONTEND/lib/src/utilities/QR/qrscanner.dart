@@ -76,7 +76,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                 MaterialPageRoute(
                   builder: (context) => HomePage(
                     username: widget.username,
-                    userId: widget.userId,
+                    userId: widget.userId, email: '',
                   ),
                 ),
               );
