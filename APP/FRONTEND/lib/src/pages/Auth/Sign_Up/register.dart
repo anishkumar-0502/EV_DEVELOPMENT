@@ -27,6 +27,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isPasswordVisible = false;
   String? _alertMessage;
   String? SussessMsg;
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +47,17 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _validateAndUpdate() {
+    // Truncate email input if it contains anything after `.com`
+    final emailValue = _emailController.text;
+    if (emailValue.contains('.com')) {
+      final index = emailValue.indexOf('.com');
+      if (index + 4 < emailValue.length) {
+        _emailController.text = emailValue.substring(0, index + 4);
+        _emailController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _emailController.text.length));
+      }
+    }
+
     setState(() {
       _isButtonEnabled = _formKey.currentState?.validate() ?? false;
     });
@@ -60,41 +72,42 @@ class _RegisterPageState extends State<RegisterPage> {
     final usernameRegex = RegExp(r'^[a-zA-Z]+$');
     return usernameRegex.hasMatch(value);
   }
-void _handleRegister() async {
-  final String username = _usernameController.text;
-  final String email = _emailController.text;
-  final String phone = _phoneController.text;
-  final String password = _passwordController.text;
 
-  try {
-    var response = await http.post(
-      Uri.parse('http://122.166.210.142:9098/profile/RegisterNewUser'),
-      headers: {'Content-Type': 'application/json'}, // Ensure content type is set
-      body: jsonEncode({
-        'username': username,
-        'email_id': email,
-        'phone_no': phone,
-        'password': password,
-      }),
-    );
-    if (response.statusCode == 200) {
-      _showAlertBannerSussess("User successfully registered");
-      // Handle successful registration
-      await Future.delayed(const Duration(seconds: 3)); // Wait for 3 seconds
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
+  void _handleRegister() async {
+    final String username = _usernameController.text;
+    final String email = _emailController.text;
+    final String phone = _phoneController.text;
+    final String password = _passwordController.text;
+
+    try {
+      var response = await http.post(
+        Uri.parse('http://122.166.210.142:4444/profile/RegisterNewUser'),
+        headers: {'Content-Type': 'application/json'}, // Ensure content type is set
+        body: jsonEncode({
+          'username': username,
+          'email_id': email,
+          'phone_no': phone,
+          'password': password,
+        }),
       );
-    } else {
-      final data = json.decode(response.body);
-      _showAlertBanner(data['message']);
+      if (response.statusCode == 200) {
+        _showAlertBannerSussess("User successfully registered");
+        // Handle successful registration
+        await Future.delayed(const Duration(seconds: 3)); // Wait for 3 seconds
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      } else {
+        final data = json.decode(response.body);
+        _showAlertBanner(data['message']);
+      }
+    } catch (e) {
+      _showAlertBanner('Internal server error');
     }
-  } catch (e) {
-    _showAlertBanner('Internal server error');
   }
-}
 
-  void _showAlertBanner(String message)  {
+  void _showAlertBanner(String message) {
     setState(() {
       _alertMessage = message;
     });
@@ -105,7 +118,7 @@ void _handleRegister() async {
     });
   }
 
-    void _showAlertBannerSussess(String message) async {
+  void _showAlertBannerSussess(String message) async {
     setState(() {
       SussessMsg = message;
     });
@@ -115,7 +128,6 @@ void _handleRegister() async {
       });
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -257,7 +269,7 @@ void _handleRegister() async {
                       keyboardType: TextInputType.number,
                       inputFormatters: [
                         LengthLimitingTextInputFormatter(4), // Limit to 4 digits
-                        FilteringTextInputFormatter.digitsOnly, // Only digits allowed
+                        FilteringTextInputFormatter.digitsOnly, // Allow only digits
                       ],
                       validator: (value) {
                         if (!_isPasswordInteracted) return null; // Show error only if interacted
@@ -265,7 +277,7 @@ void _handleRegister() async {
                           return 'Enter your password';
                         }
                         if (value.length != 4) {
-                          return 'Password must be exactly 4 digits';
+                          return 'Password must be 4 digits';
                         }
                         return null;
                       },
@@ -290,12 +302,18 @@ void _handleRegister() async {
                         ),
                         hintText: 'Phone Number',
                         hintStyle: const TextStyle(color: Colors.grey),
-                        prefixStyle: const TextStyle(color: Colors.white), // Change the country code text color
                       ),
                       style: const TextStyle(color: Colors.white),
                       cursorColor: const Color(0xFF1ED760), // Cursor color
-                      initialCountryCode: 'IN',
-                      onChanged: (phone) {
+                      initialCountryCode: 'US',
+                      validator: (value) {
+                        if (!_isPhoneInteracted) return null; // Show error only if interacted
+                        if (value == null || value.number.isEmpty) {
+                          return 'Enter your phone number';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
                         _validateAndUpdate();
                       },
                       onTap: () {
@@ -303,18 +321,7 @@ void _handleRegister() async {
                           _isPhoneInteracted = true;
                         });
                       },
-                      validator: (phone) {
-                        if (!_isPhoneInteracted) return null; // Show error only if interacted
-                        if (phone == null || phone.number.isEmpty) {
-                          return 'Enter your phone number';
-                        }
-                        return null;
-                      },
-                      inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.digitsOnly, // Ensures only digits are allowed
-                      ],
-                  ),
-
+                    ),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _isButtonEnabled ? _handleRegister : null,
@@ -330,7 +337,7 @@ void _handleRegister() async {
                         elevation: 0,
                       ).copyWith(
                         backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                          (Set<MaterialState> states) {
+                              (Set<MaterialState> states) {
                             if (states.contains(MaterialState.disabled)) {
                               return Colors.green.withOpacity(0.2); // Light green gradient
                             }
@@ -363,6 +370,7 @@ void _handleRegister() async {
                         ),
                       ),
                     ),
+
                   ],
                 ),
               ),

@@ -149,12 +149,12 @@ class _EditUserModalState extends State<EditUserModal> {
           ),
         );
         Navigator.pop(context, 'refresh');
-      } else if (response.statusCode == 400) {
+      } else if (response.statusCode == 401 || response.statusCode == 400 || response.statusCode == 500 ) {
         final responseData = jsonDecode(response.body);
         final errorMessage = responseData['error_message'] ?? "Failed to update! No changes are made";
         _showAlertBanner(errorMessage);
       } else {
-        final errorMessage = "Check your credentials";
+        final errorMessage = " No Changes !! Check your credentials";
         _showAlertBanner(errorMessage);
       }
     } catch (e) {
