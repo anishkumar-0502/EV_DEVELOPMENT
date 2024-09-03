@@ -268,7 +268,7 @@ async function UpdateAssociationUser(req, res, next) {
         const updateData = {
             association_name,
             association_phone_no,
-            association_wallet:association_wallet || existingAssociation.association_wallet,
+            association_wallet:parseFloat(association_wallet) || parseFloat(existingAssociation.association_wallet),
             association_address,
             modified_date: new Date(),
             modified_by
@@ -770,8 +770,12 @@ async function CreateUser(req, res, next) {
                 { email_id: email_id }
             ]
          });
-        if (existingUser) {
-            return res.status(400).json({ message: 'Email ID already exists' });
+         if (existingUser) {
+            if (existingUser.email_id === email_id) {
+                return res.status(400).json({ message: 'Email ID already exists' });
+            } else if (existingUser.username === username) {
+                return res.status(400).json({ message: 'Username already exists' });
+            }
         }
 
         // Use aggregation to fetch the highest user_id
@@ -842,7 +846,7 @@ async function UpdateUser(req, res, next) {
                 $set: {
                     username: username,
                     phone_no: phone_no,
-                    wallet_bal: wallet_bal || existingUser.wallet_bal, 
+                    wallet_bal: parseFloat(wallet_bal) || parseFloat(existingUser.wallet_bal), 
                     modified_date: new Date(),
                     modified_by: modified_by,
                     status: status,
@@ -992,7 +996,7 @@ async function FetchFinanceDetails(req) {
                 created_date: financeDetails.created_date,
                 modified_by: financeDetails.modified_by,
                 modified_date: financeDetails.modified_date,
-                totalprice: totalPrice,
+                totalprice: totalPrice.toFixed(2),
                 status: financeDetails.status,
             };
         });
@@ -1006,13 +1010,14 @@ async function FetchFinanceDetails(req) {
 }
 
 //FetchFinanceDetailsForSelection
-async function FetchFinanceDetailsForSelection() {
+async function FetchFinanceDetailsForSelection(req) {
     try {
+        const{client_id} = req.body;
         const db = await database.connectToDatabase();
         const Collection = db.collection("finance_details");
 
         // Fetch all finance details documents
-        const financeDetailsList = await Collection.find({status: true}).toArray();
+        const financeDetailsList = await Collection.find({client_id: client_id, status: true}).toArray();
 
         // Prepare the list of finance data with total prices
         const financeDataList = financeDetailsList.map((financeDetails) => {
@@ -1046,7 +1051,7 @@ async function FetchFinanceDetailsForSelection() {
                 created_date: financeDetails.created_date,
                 modified_by: financeDetails.modified_by,
                 modified_date: financeDetails.modified_date,
-                totalprice: totalPrice,
+                totalprice: totalPrice.toFixed(2),
                 status: financeDetails.status,
             };
         });

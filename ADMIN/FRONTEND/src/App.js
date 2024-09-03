@@ -4,7 +4,7 @@ import SuperAdminApp from './adminApps/SuperAdminApp';
 import ResellerAdminApp from './adminApps/ResellerAdminApp';
 import ClientAdminApp from './adminApps/ClientAdminApp';
 import AssociationAdminApp from './adminApps/AssociationAdminApp';
-
+import Log from './log/Log';
 const App = () => {
   
   return (
@@ -14,6 +14,7 @@ const App = () => {
         <Route path="/reselleradmin/*" element={<ResellerAdminApp />} />
         <Route path="/clientadmin/*" element={<ClientAdminApp />} />
         <Route path="/associationadmin/*" element={<AssociationAdminApp />} />
+        <Route path="/log/*" element={<Log />} />
         <Route path="/" element={<Navigate to="/superadmin" />} />
       </Routes>
     </Router>

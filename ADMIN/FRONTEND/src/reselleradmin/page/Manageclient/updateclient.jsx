@@ -202,9 +202,36 @@ const UpdateClient = ({ userInfo, handleLogout }) => {
                                                                             className="form-control"
                                                                             value={client_wallet}
                                                                             onChange={(e) => {
-                                                                                const value = e.target.value;
-                                                                                const sanitizedValue = value.replace(/[^0-9]/g, '');
-                                                                                setClientWallet(sanitizedValue);}} required  />
+                                                                                let value = e.target.value;
+                                                                                
+                                                                                // Allow only numbers and a single decimal point
+                                                                                value = value.replace(/[^0-9.]/g, '');
+                                                                                
+                                                                                const parts = value.split('.');
+                                                                                
+                                                                                // Ensure there's only one decimal point and limit to two decimal places
+                                                                                if (parts.length > 2) {
+                                                                                    value = parts[0] + '.' + parts[1];
+                                                                                } else if (parts.length === 2 && parts[1].length > 2) {
+                                                                                    value = parts[0] + '.' + parts[1].slice(0, 2);
+                                                                                }
+                                                                                
+                                                                                // Limit the length to 8 characters
+                                                                                if (value.length > 8) {
+                                                                                    value = value.slice(0, 8);
+                                                                                }
+                                                                                
+                                                                                // Convert to float and validate range
+                                                                                const numericValue = parseFloat(value);
+                                                                                if (numericValue < 1 || numericValue > 99999) {
+                                                                                    setErrorMessage('Please enter a wallet between 1.00 ₹ and 99999.00 ₹.');
+                                                                                } else {
+                                                                                    setErrorMessage(''); // Clear error if within range
+                                                                                }
+                                                                                
+                                                                                setClientWallet(value);
+                                                                            }}    
+                                                                        required  />
                                                                     </div>
                                                                 </div>
                                                             </div>

@@ -234,7 +234,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                     <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Charger Accessibility: <span style={{fontWeight:'normal'}}>{newUser.charger_accessibility ? newUser.charger_accessibility : '-'}</span></div>  
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Charger Accessibility: <span style={{ fontWeight: 'normal' }}>{newUser.charger_accessibility === 1 ? 'Public' : newUser.charger_accessibility === 2 ? 'Private' : '-'}</span></div> 
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">

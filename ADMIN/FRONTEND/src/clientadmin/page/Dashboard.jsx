@@ -20,7 +20,7 @@ const Dashboard = ({ userInfo, handleLogout }) => {
             const response = await axios.post('/clientadmin/FetchAllocatedCharger', {
                 client_id: userInfo.data.client_id,
             });
-            console.log(response);
+            // console.log(response);
 
             setData(response.data.data || []);
             setLoading(false);

@@ -27,9 +27,9 @@ const ViewFinance = ({ userInfo, handleLogout }) => {
                 open_a_eb_charges: finance.open_a_eb_charges || '',
                 open_other_charges: finance.open_other_charges || '',
                 created_by: finance.created_by || '',
-                created_date: formatDate(finance.created_date) || '',
+                created_date: finance.created_date || '',
                 modified_by: finance.modified_by || '',
-                modified_date: formatDate(finance.modified_date) || '',
+                modified_date: finance.modified_date || '',
                 finance_id: finance.finance_id || '',
                 status: finance.status || '',
             });
@@ -43,12 +43,6 @@ const ViewFinance = ({ userInfo, handleLogout }) => {
             }
         }
     }, [location]);
-
-    const formatDate = (dateTimeString) => {
-        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
-        const date = new Date(dateTimeString);
-        return date.toLocaleString('en-US', options); // Adjust format based on your preference
-    };
 
     // back page
     const goBack = () => {
@@ -73,6 +67,7 @@ const ViewFinance = ({ userInfo, handleLogout }) => {
         const formattedDate = `${day}/${month}/${year} ${hours}:${minutes}:${seconds} ${ampm}`;
         return formattedDate;
     } 
+
 
     // view edit page
     const handleEdit = (newfinance) => {
@@ -127,7 +122,7 @@ const ViewFinance = ({ userInfo, handleLogout }) => {
                                                     <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>EB Charges: <span style={{fontWeight:'normal'}}>{newfinance.eb_charges ? newfinance.eb_charges : '-'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>EB Charges: <span style={{fontWeight:'normal'}}>{newfinance.eb_charges ? `₹ ${newfinance.eb_charges}` : '-'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">

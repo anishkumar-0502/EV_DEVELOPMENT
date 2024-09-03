@@ -9,12 +9,17 @@ const Sessionhistoryclient = ({ userInfo, handleLogout }) => {
     const location = useLocation();
     // State to hold session data
     const [sessions, setSessions] = useState([]);
-    
+
     useEffect(() => {
-        const { sessiondata } = location.state || {};
+        let { sessiondata } = location.state || {};
         if (sessiondata) {
-            // If sessiondata is provided in location state, set it to state
-            setSessions([sessiondata]); // Assuming sessiondata is an array, or else convert it to array if single object
+            if(sessiondata[0] === 'No session found'){
+                sessiondata =[];
+                setSessions(sessiondata);
+            }else{
+                // If sessiondata is provided in location state, set it to state
+                setSessions(sessiondata); // Assuming sessiondata is an array, or else convert it to array if single object
+            }
             // Save sessiondata to localStorage
             localStorage.setItem('sessiondataClient', JSON.stringify(sessiondata));
         } else {
@@ -25,6 +30,17 @@ const Sessionhistoryclient = ({ userInfo, handleLogout }) => {
             }
         }
     }, [location.state]);
+
+    const handleSearchInputChange = (e) => {
+        const inputValue = e.target.value.toUpperCase();
+        if (Array.isArray(sessions)) {
+            const filteredData = sessions.filter((item) =>
+                item.user.toUpperCase().includes(inputValue)||
+                item.charger_id.toUpperCase().includes(inputValue)
+            );
+            setSessions(filteredData);
+        }
+    };
 
     // backwards page navigation
     const goBack = () => {
@@ -77,7 +93,33 @@ const Sessionhistoryclient = ({ userInfo, handleLogout }) => {
                             <div className="col-lg-12 grid-margin stretch-card">
                                 <div className="card">
                                     <div className="card-body">
-                                        <h4 className="card-title">Session Details</h4>
+                                        <div className="row">
+                                            <div className="col-md-12 grid-margin">
+                                                <div className="row">
+                                                    <div className="col-4 col-xl-8">
+                                                        <h4 className="card-title" style={{ paddingTop: '10px' }}>List Of History</h4>
+                                                    </div>
+                                                    <div className="col-8 col-xl-4">
+                                                        <div className="input-group">
+                                                            <div className="input-group-prepend hover-cursor" id="navbar-search-icon">
+                                                                <span className="input-group-text" id="search">
+                                                                    <i className="icon-search"></i>
+                                                                </span>
+                                                            </div>
+                                                            <input 
+                                                                type="text" 
+                                                                className="form-control" 
+                                                                placeholder="Search user or charger id" 
+                                                                aria-label="search" 
+                                                                aria-describedby="search" 
+                                                                autoComplete="off" 
+                                                                onChange={handleSearchInputChange} 
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div className="table-responsive">
                                             <table className="table table-striped">
                                                 <thead style={{ textAlign: 'center' }}>
@@ -110,7 +152,7 @@ const Sessionhistoryclient = ({ userInfo, handleLogout }) => {
                                                         ))
                                                     ) : (
                                                         <tr className="text-center">
-                                                            <td colSpan="9">No Record Found</td>
+                                                            <td colSpan="9">No sessions found</td>
                                                         </tr>
                                                     )}
                                                 </tbody>

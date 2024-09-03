@@ -297,14 +297,31 @@ async function getAllChargersWithStatusAndPrice(req, res) {
         // Fetch all chargers where charger_accessibility is not null and the assigned_association_id matches the user's assigned_association
         if(userAssignedAssociation === null){
             allChargers = await chargerDetailsCollection.find({
-                charger_accessibility: { $ne: 2 },
-                assigned_association_id: { $ne: null }
+                charger_accessibility: 1,
+                // assigned_association_id: { $ne: null },
+                status: true
             }).toArray();
         }else{
-            allChargers = await chargerDetailsCollection.find({
-                assigned_association_id: userAssignedAssociation,
-                charger_accessibility: { $in: [1, 2] } // This will match documents where charger_accessibility is either 1 or 2
+            // Fetch documents with charger_accessibility 1
+            const chargersAccessibilityOne = await chargerDetailsCollection.find({
+                //assigned_association_id: userAssignedAssociation,
+                charger_accessibility: 1, // Fetch all documents with charger_accessibility 1
+                status: true
             }).toArray();
+
+            // Fetch documents with charger_accessibility 2 only if assigned_association_id matches
+            const chargersAccessibilityTwo = await chargerDetailsCollection.find({
+                charger_accessibility: 2, // Fetch documents with charger_accessibility 2
+                status: true,
+                $or: [
+                    { assigned_association_id: userAssignedAssociation }, // If association matches
+                    { assigned_association_id: { $exists: false } } // or if association_id is not set
+                ]
+            }).toArray();
+
+            // Combine results
+            allChargers = [...chargersAccessibilityOne, ...chargersAccessibilityTwo];
+
         }
         
         // Fetch detailed information for each charger, including its status and unit price

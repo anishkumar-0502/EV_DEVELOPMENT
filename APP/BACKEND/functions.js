@@ -844,6 +844,7 @@ async function autostop_unit(firstMeterValues,lastMeterValues,autostopSettings,u
     const result = lastEnergy - startEnergy;
     let calculatedUnit = parseFloat(result / 1000).toFixed(3);
 
+    console.dir(autostopSettings);
     // console.log(`${autostopSettings.unit_value},${calculatedUnit}`);
 
     if (autostopSettings.unit_value && autostopSettings.isUnitChecked === true) {
@@ -943,7 +944,6 @@ async function UpdateCommissionToWallet(sessionPrice, uniqueIdentifier) {
         clientPriceUpdate = await updateWallet(AssociationDetailsCollection, association_id, parseFloat(AssociationPrice), 'association');
     }
 
-
     if(resellerCommissionUpdate && clientCommissionUpdate && clientPriceUpdate){
         console.log(`All commissions updated successfully !`);
         return true;
@@ -955,11 +955,13 @@ async function UpdateCommissionToWallet(sessionPrice, uniqueIdentifier) {
 
 async function updateWallet(collection, id, amount, type) {
     const walletField = `${type}_wallet`;
-    const numericAmount = parseFloat(amount.toFixed(2));
+    const numericAmount = parseFloat(amount.toFixed(3));
+
+    const roundedAmount = Math.round(numericAmount * 1000) / 1000;
 
     const updateResult = await collection.updateOne(
         { [`${type}_id`]: id },
-        { $inc: { [walletField]: numericAmount } }
+        { $inc: { [walletField]: roundedAmount } }
     );
 
     if (updateResult.modifiedCount > 0) {
@@ -1147,6 +1149,8 @@ const insertSocketGunConfig = async (uniqueIdentifier, chargePointModel) => {
         }
     }
 };
+
+
 
 
 

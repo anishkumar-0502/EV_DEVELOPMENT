@@ -358,8 +358,12 @@ async function CreateUser(req, res, next) {
                 { email_id: email_id }
             ]
          });
-        if (existingUser) {
-            return res.status(400).json({ message: 'Email ID already exists' });
+         if (existingUser) {
+            if (existingUser.email_id === email_id) {
+                return res.status(400).json({ message: 'Email ID already exists' });
+            } else if (existingUser.username === username) {
+                return res.status(400).json({ message: 'Username already exists' });
+            }
         }
 
         // Use aggregation to fetch the highest user_id
@@ -429,7 +433,7 @@ async function UpdateUser(req, res, next) {
                 $set: {
                     username: username,
                     phone_no: phone_no,
-                    wallet_bal: wallet_bal || existingUser.wallet_bal, 
+                    wallet_bal: parseFloat(wallet_bal) || parseFloat(existingUser.wallet_bal), 
                     modified_date: new Date(),
                     password: parseInt(password),
                     modified_by: modified_by,
@@ -971,7 +975,7 @@ async function UpdateReseller(req, res) {
                 $set: {
                     reseller_phone_no,
                     reseller_address,
-                    reseller_wallet,
+                    reseller_wallet: parseFloat(reseller_wallet),
                     modified_date: new Date(),
                     modified_by,
                     status
