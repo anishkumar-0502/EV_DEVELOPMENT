@@ -91,7 +91,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final _pageOptions = [
-      HomeContent(username: widget.username, userId: widget.userId),
+      HomeContent(username: widget.username, userId: widget.userId, email: widget.email,),
       WalletPage(username: widget.username, userId: widget.userId),
       HistoryPage(username: widget.username, userId: widget.userId),
       ProfilePage(username: widget.username, userId: widget.userId, email: widget.email),

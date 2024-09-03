@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -42,6 +43,14 @@ class _SessionHandlerState extends State<SessionHandler> {
     _connectivity = Connectivity();
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
     _retrieveUserData();
+
+    // Check the connection status on startup
+    _checkInitialConnection();
+  }
+
+  Future<void> _checkInitialConnection() async {
+    var result = await _connectivity.checkConnectivity();
+    _updateConnectionStatus(result);
   }
 
   @override
@@ -74,15 +83,13 @@ class _SessionHandlerState extends State<SessionHandler> {
       type: CoolAlertType.error,
       title: "No Internet Connection",
       text: "Please check your internet connection.",
-      confirmBtnText: "Settings",
-      cancelBtnText: "Close",
-      showCancelBtn: true,
-      onConfirmBtnTap: () {
-        // SystemSettings.system(); // Open mobile data settings
+      confirmBtnText: "Close App",
+      showCancelBtn: false,
+      barrierDismissible: false,  // Prevents closing by tapping outside the alert
+      onConfirmBtnTap: () async {
+                SystemNavigator.pop(); // Close the app
       },
-      onCancelBtnTap: () {
-
-      },
+  
     );
   }
 

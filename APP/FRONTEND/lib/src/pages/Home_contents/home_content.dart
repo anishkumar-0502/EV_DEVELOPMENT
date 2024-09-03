@@ -16,18 +16,19 @@ import 'dart:async';
 import 'package:cool_alert/cool_alert.dart';
 import '../../service/location.dart';
 import 'package:share_plus/share_plus.dart';
-
 class HomeContent extends StatefulWidget {
   final String username;
   final int? userId;
+    final String email;
 
-  const HomeContent({super.key, required this.username, required this.userId});
+
+  const HomeContent({super.key, required this.username, required this.userId, required this.email});
 
   @override
   _HomeContentState createState() => _HomeContentState();
 }
 
-class _HomeContentState extends State<HomeContent> {
+class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   final GlobalKey _mapKey = GlobalKey(); // Global key for map widget
   final TextEditingController _searchController = TextEditingController();
   String searchChargerID = '';
@@ -49,32 +50,39 @@ class _HomeContentState extends State<HomeContent> {
   bool _isFetchingLocation = false; // Ensure initialization
 LatLng? _previousPosition;
 double? _previousBearing;
+  bool _isCheckingPermission = false; // Flag to prevent repeated permission checks
 static const String apiKey = 'AIzaSyDezbZNhVuBMXMGUWqZTOtjegyNexKWosA';
 
-@override
-void initState() {
-  super.initState();
-  _isFetchingLocation = false;
-  _checkLocationPermission();
-  activeFilter = 'All Chargers';
-  fetchAllChargers();
-  _startLiveTracking(); // Start live tracking
-  // No need to start a timer here anymore
+ @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkLocationPermission(); // Check permissions on initialization
+    _updateMarkers();
+    activeFilter = 'All Chargers';
+    fetchAllChargers();
+    _startLiveTracking(); // Start live tracking
 }
 
-// Remove the timer cancellation in dispose
-@override
-void dispose() {
-  _positionStreamSubscription?.cancel(); // Cancel the subscription
-  super.dispose();
-}
 
-  // This method checks the user's location permissions
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _positionStreamSubscription?.cancel(); // Cancel the subscription
+    super.dispose();
+  }
+
+
   Future<void> _checkLocationPermission() async {
+    if (_isCheckingPermission) return; // Prevent multiple permission checks
+
+    _isCheckingPermission = true;
+
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       // Prompt user to enable location services
       await _showLocationServicesDialog();
+      _isCheckingPermission = false;
       return;
     }
 
@@ -88,6 +96,8 @@ void dispose() {
       // Guide the user to app settings
       await _showPermanentlyDeniedDialog();
     }
+
+    _isCheckingPermission = false;
   }
 
 // This method is already present, but you should keep this logic to handle camera animation
@@ -133,43 +143,129 @@ Future<void> _getCurrentLocation() async {
       _isFetchingLocation = false;
     });
   }
+
 }
 
-Future<void> _showLocationServicesDialog() async {
-  await CoolAlert.show(
-    context: context,
-    type: CoolAlertType.custom,
-    widget: Column(
-      children: [
-        const SizedBox(height: 16.0),
-        const Text(
-          'Enable Location',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.resumed && !_isCheckingPermission) {
+      // Check if location services are enabled when returning to the app
+      bool isLocationEnabled = await Geolocator.isLocationServiceEnabled();
+      if (isLocationEnabled) {
+        _reloadPage(); // Reload your content or update the UI
+      } else {
+        _showLocationServicesDialog();
+      }
+    }
+  }
+
+
+  Future<void> _showLocationServicesDialog() async {
+    return CoolAlert.show(
+      context: context,
+      type: CoolAlertType.custom,
+      widget: Column(
+        children: [
+          const SizedBox(height: 16.0),
+          const Text(
+            'Enable Location',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
-        ),
-        const SizedBox(height: 8.0),
-        const Text(
-          'Location services are required to use this feature. Please enable location services in your phone settings.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.black),
-        ),
-      ],
+          const SizedBox(height: 8.0),
+          const Text(
+            'Location services are required to use this feature. Please enable location services in your phone settings.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black),
+          ),
+        ],
+      ),
+      confirmBtnText: 'Settings',
+      showCancelBtn: true,
+      confirmBtnColor: Colors.blue,
+      barrierDismissible: false, // Prevent closing by tapping outside
+      onConfirmBtnTap: () async {
+        await Geolocator.openLocationSettings(); // Open the location settings
+      },
+    );
+  }
+  
+  Future<void> _showPermissionDeniedDialog() async {
+  return CoolAlert.show(
+    context: context,
+    type: CoolAlertType.custom, // Changed to custom
+    widget: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        children: [
+          const Text(
+            'Location Permission Required',
+            style: TextStyle(
+                fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          const Text(
+            'This app requires location permissions to function correctly. Please grant location permissions in settings.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black),
+          ),
+        ],
+      ),
     ),
     confirmBtnText: 'Settings',
-    showCancelBtn: true,
+    cancelBtnText: 'Cancel',
+    showCancelBtn: false,
     confirmBtnColor: Colors.blue,
-    barrierDismissible: false, // Prevent closing by tapping outside
+    barrierDismissible: false,
     onConfirmBtnTap: () {
-      Geolocator.openLocationSettings(); // Open the location settings
+      openAppSettings();
     },
   );
-
-  // This block is executed when the dialog is dismissed
-  _reloadPage(); // Trigger a reload of the HomeContent page
 }
+
+Future<void> _showPermanentlyDeniedDialog() async {
+  return CoolAlert.show(
+    context: context,
+    type: CoolAlertType.custom, // Changed to custom
+    widget: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        children: [
+          const Text(
+            'Location Permission Required',
+            style: TextStyle(
+                fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          const Text(
+            'Location permissions are permanently denied. Please enable them in the app settings.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black),
+          ),
+        ],
+      ),
+    ),
+    confirmBtnText: 'Settings',
+    cancelBtnText: 'Cancel',
+    showCancelBtn: false,
+    confirmBtnColor: Colors.blue,
+    barrierDismissible: false,
+    onConfirmBtnTap: () {
+      openAppSettings();
+    },
+  );
+}
+
 
 void _reloadPage() {
   setState(() {
@@ -178,49 +274,7 @@ void _reloadPage() {
   });
 }
 
-  Future<void> _showPermissionDeniedDialog() async {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Location Permission Required'),
-          content: Text(
-              'This app requires location permissions to function correctly. Please grant location permissions.'),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await _checkLocationPermission(); // Retry checking permissions
-              },
-              child: Text('Retry'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
-  Future<void> _showPermanentlyDeniedDialog() async {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Location Permission Required'),
-          content: Text(
-              'Location permissions are permanently denied. Please enable them in the app settings.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                openAppSettings(); // Open app settings
-                Navigator.of(context).pop();
-              },
-              child: Text('Open Settings'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;

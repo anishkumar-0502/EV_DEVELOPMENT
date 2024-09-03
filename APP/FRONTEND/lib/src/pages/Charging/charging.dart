@@ -549,6 +549,7 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
         currentTime = formatTimestamp(DateTime.tryParse(message[3]['timestamp'] ?? DateTime.now().toString()) ?? DateTime.now());
         errorCode = message[3]['errorCode'] ?? '';
 
+
         if (chargerStatus == 'Preparing') {
           setState(() {
             charging = false;
@@ -617,7 +618,7 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
           handleLoadingStop();
           toggleBatteryScreen();
           await updateSessionPriceToUser(widget.connector_id);
-        } else if (chargerStatus == 'Faulted') {
+        } else if (chargerStatus == 'Faulted' || chargerStatus ==  'SuspendedEV' ) {
           setIsStarted(false);
           setState(() {
             charging = false;
@@ -817,7 +818,7 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
     } else {
       setState(() {
         isBatteryScreenVisible = false;
-        isStartButtonEnabled = false;
+        // isStartButtonEnabled = false;
         isStopButtonEnabled = false;
       });
     }
@@ -887,6 +888,7 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
 
 
   void startButtonPressed() {
+    print("startButtonPressed");
     handleStartTransaction();
   }
 void handleStopTransaction() async {
@@ -926,7 +928,7 @@ void handleStopTransaction() async {
       final data = jsonDecode(response.body);
       print('ChargerStopInitiated');
       print(data['message']);
-      await updateSessionPriceToUser(connectorId);
+      // await updateSessionPriceToUser(connectorId);
     } else {
       print('Failed to stop charging: ${response.reasonPhrase}');
     }
