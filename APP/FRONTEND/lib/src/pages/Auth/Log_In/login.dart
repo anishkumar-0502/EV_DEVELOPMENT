@@ -161,7 +161,6 @@ class _LoginPageState extends State<LoginPage> {
             child: ListView(
               shrinkWrap: true,
               children: [
-                const SizedBox(height: 50), // Margin at the top
                 const Text(
                   'Welcome Back! Sign In to dive in?',
                   style: TextStyle(
@@ -180,7 +179,7 @@ class _LoginPageState extends State<LoginPage> {
                     fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -212,7 +211,7 @@ class _LoginPageState extends State<LoginPage> {
                     });
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
@@ -262,7 +261,7 @@ class _LoginPageState extends State<LoginPage> {
                     });
                   },
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height:15),
                 ElevatedButton(
                   onPressed: _isFormValid() ? _login : null,
                   style: ElevatedButton.styleFrom(

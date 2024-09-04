@@ -4,7 +4,7 @@ import 'package:qr_code_scanner/qr_code_scanner.dart';
 import '../../pages/home.dart';
 
 class QRViewExample extends StatefulWidget {
-  final Function(String) handleSearchRequestCallback;
+  final Future<Map<String, dynamic>?> Function(String) handleSearchRequestCallback;
   final String username;
   final int? userId;
 
@@ -76,7 +76,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                 MaterialPageRoute(
                   builder: (context) => HomePage(
                     username: widget.username,
-                    userId: widget.userId, email: '',
+                    userId: widget.userId,
+                    email: '',
                   ),
                 ),
               );
@@ -110,28 +111,31 @@ class _QRViewExampleState extends State<QRViewExample> {
       ],
     );
   }
+void _onQRViewCreated(QRViewController controller) {
+  setState(() {
+    this.controller = controller;
+  });
 
-  void _onQRViewCreated(QRViewController controller) {
-    setState(() {
-      this.controller = controller;
-    });
+  controller.scannedDataStream.listen((scanData) async {
+    if (!_isProcessing && scanData.code != null && scanData.code!.isNotEmpty) {
+      setState(() {
+        _isProcessing = true;
+      });
+      controller.pauseCamera();
 
-    controller.scannedDataStream.listen((scanData) async {
-      if (!_isProcessing && scanData.code != null && scanData.code!.isNotEmpty) {
-        setState(() {
-          _isProcessing = true;
-        });
-        controller.pauseCamera();
-        await widget.handleSearchRequestCallback(scanData.code!);
-        if (!_isDisposed) {
-          Navigator.of(context).pop(scanData.code);
-        }
-        setState(() {
-          _isProcessing = false;
-        });
-      }
-    });
-  }
+      // Call the callback and await the result
+      final response = await widget.handleSearchRequestCallback(scanData.code!);
+      print("response: $response  ");
+      print(scanData.code );
+    
+
+      setState(() {
+        _isProcessing = false;
+      });
+    }
+  });
+}
+
 
   @override
   void dispose() {

@@ -39,7 +39,6 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   GoogleMapController? mapController;
   LatLng? _currentPosition;
   LatLng? _selectedPosition; // To store the selected marker's position
-  LatLng? _destinationPosition; // For storing the destination position
   final LatLng _center = const LatLng(12.909746, 77.606360);
   Set<Marker> _markers = {};
   Set<Polyline> _polylines = {}; // To store the route polylines
@@ -48,10 +47,10 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   MarkerId? _previousMarkerId; // To track the previously selected marker
   StreamSubscription<Position>? _positionStreamSubscription;
   bool _isFetchingLocation = false; // Ensure initialization
-LatLng? _previousPosition;
-double? _previousBearing;
+  LatLng? _previousPosition;
+  double? _previousBearing;
   bool _isCheckingPermission = false; // Flag to prevent repeated permission checks
-static const String apiKey = 'AIzaSyDezbZNhVuBMXMGUWqZTOtjegyNexKWosA';
+  static const String apiKey = 'AIzaSyDezbZNhVuBMXMGUWqZTOtjegyNexKWosA';
 
  @override
   void initState() {
@@ -101,54 +100,65 @@ static const String apiKey = 'AIzaSyDezbZNhVuBMXMGUWqZTOtjegyNexKWosA';
   }
 
 // This method is already present, but you should keep this logic to handle camera animation
-Future<void> _getCurrentLocation() async {
-  if (_isFetchingLocation) return;
-
-  setState(() {
-    _isFetchingLocation = true;
-  });
-
-  try {
-    LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
-
-    if (currentLocation != null) {
-      // Update the current position
-      setState(() {
-        _currentPosition = currentLocation;
-      });
-
-      if (mapController != null) {
-        // Smoothly animate the camera to the new position
-        await mapController!.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: _currentPosition!,
-              zoom: 18.0,
-              tilt: 45.0,
-              bearing: _previousBearing ?? 0,
-            ),
-          ),
-        );
-      }
-
-      // Update the map markers with the new position
-      await _updateCurrentLocationMarker(_previousBearing ?? 0);
-    } else {
-      print('Current location could not be determined.');
+  Future<void> _getCurrentLocation() async {
+    // Check if the location permission is granted before attempting to fetch the location
+    PermissionStatus permission = await Permission.location.status;
+    if (permission.isDenied) {
+      // If permission is denied, show the permission denied dialog
+      await _showPermissionDeniedDialog();
+      return;
+    } else if (permission.isPermanentlyDenied) {
+      // If permission is permanently denied, show the permanently denied dialog
+      await _showPermanentlyDeniedDialog();
+      return;
     }
-  } catch (e) {
-    print('Error occurred while fetching the current location: $e');
-  } finally {
+
+    // If the permission is granted, proceed to fetch the location
+    if (_isFetchingLocation) return;
+
     setState(() {
-      _isFetchingLocation = false;
+      _isFetchingLocation = true;
     });
+
+    try {
+      LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
+
+      if (currentLocation != null) {
+        // Update the current position
+        setState(() {
+          _currentPosition = currentLocation;
+        });
+
+        if (mapController != null) {
+          // Smoothly animate the camera to the new position
+          await mapController!.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: _currentPosition!,
+                zoom: 18.0,
+                tilt: 45.0,
+                bearing: _previousBearing ?? 0,
+              ),
+            ),
+          );
+        }
+
+        // Update the map markers with the new position
+        await _updateCurrentLocationMarker(_previousBearing ?? 0);
+      } else {
+        print('Current location could not be determined.');
+      }
+    } catch (e) {
+      print('Error occurred while fetching the current location: $e');
+    } finally {
+      setState(() {
+        _isFetchingLocation = false;
+      });
+    }
   }
 
-}
 
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
+  @override void didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.resumed && !_isCheckingPermission) {
       // Check if location services are enabled when returning to the app
       bool isLocationEnabled = await Geolocator.isLocationServiceEnabled();
@@ -159,7 +169,6 @@ Future<void> _getCurrentLocation() async {
       }
     }
   }
-
 
   Future<void> _showLocationServicesDialog() async {
     return CoolAlert.show(
@@ -221,7 +230,7 @@ Future<void> _getCurrentLocation() async {
     ),
     confirmBtnText: 'Settings',
     cancelBtnText: 'Cancel',
-    showCancelBtn: false,
+    showCancelBtn: true,
     confirmBtnColor: Colors.blue,
     barrierDismissible: false,
     onConfirmBtnTap: () {
@@ -230,7 +239,7 @@ Future<void> _getCurrentLocation() async {
   );
 }
 
-Future<void> _showPermanentlyDeniedDialog() async {
+  Future<void> _showPermanentlyDeniedDialog() async {
   return CoolAlert.show(
     context: context,
     type: CoolAlertType.custom, // Changed to custom
@@ -257,7 +266,7 @@ Future<void> _showPermanentlyDeniedDialog() async {
     ),
     confirmBtnText: 'Settings',
     cancelBtnText: 'Cancel',
-    showCancelBtn: false,
+    showCancelBtn: true,
     confirmBtnColor: Colors.blue,
     barrierDismissible: false,
     onConfirmBtnTap: () {
@@ -890,65 +899,69 @@ Future<void> _getPolyline(LatLng start, LatLng end) async {
     return BitmapDescriptor.fromBytes(buffer);
   }
 
-  Future<void> handleSearchRequest(String searchChargerID) async {
-    if (isSearching) return;
-    if (searchChargerID.isEmpty) {
-      showErrorDialog(context, 'Please enter a charger ID.');
-      return;
-    }
-
-    setState(() {
-      isSearching = true;
-    });
-
-    try {
-      final response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/searchCharger'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'searchChargerID': searchChargerID,
-          'Username': widget.username,
-          'user_id': widget.userId,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          this.searchChargerID = searchChargerID;
-        });
-
-        await showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          isDismissible: false,
-          enableDrag: false,
-          backgroundColor: Colors.black,
-          builder: (BuildContext context) {
-            return Padding(
-              padding: MediaQuery.of(context).viewInsets,
-              child: ConnectorSelectionDialog(
-                chargerData: data['socketGunConfig'] ?? {},
-                onConnectorSelected: (connectorId, connectorType) {
-                  updateConnectorUser(
-                      searchChargerID, connectorId, connectorType);
-                },
-              ),
-            );
-          },
-        );
-      } else {
-        final errorData = json.decode(response.body);
-        showErrorDialog(context, errorData['message']);
-      }
-    } catch (error) {
-      showErrorDialog(context, 'Internal server error ');
-    } finally {
-      setState(() {
-        isSearching = false;
-      });
-    }
+Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async {
+  if (isSearching) return null;
+  if (searchChargerID.isEmpty) {
+    showErrorDialog(context, 'Please enter a charger ID.');
+    return {'error': true, 'message': 'Charger ID is empty'};
   }
+
+  setState(() {
+    isSearching = true;
+  });
+
+  try {
+    final response = await http.post(
+      Uri.parse('http://122.166.210.142:9098/searchCharger'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'searchChargerID': searchChargerID,
+        'Username': widget.username,
+        'user_id': widget.userId,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        this.searchChargerID = searchChargerID;
+      });
+
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
+        backgroundColor: Colors.black,
+        builder: (BuildContext context) {
+          return Padding(
+            padding: MediaQuery.of(context).viewInsets,
+            child: ConnectorSelectionDialog(
+              chargerData: data['socketGunConfig'] ?? {},
+              onConnectorSelected: (connectorId, connectorType) {
+                updateConnectorUser(
+                    searchChargerID, connectorId, connectorType);
+              },
+            ),
+          );
+        },
+      );
+      return data; // Return the successful response data
+    } else {
+      final errorData = json.decode(response.body);
+      showErrorDialog(context, errorData['message']);
+      print(errorData['message'] );
+      return {'error': true, 'message': errorData['message']};
+    }
+  } catch (error) {
+    showErrorDialog(context, 'Internal server error ');
+    return {'error': true, 'message': 'Internal server error'};
+  } finally {
+    setState(() {
+      isSearching = false;
+    });
+  }
+}
 
   Future<void> updateConnectorUser(
       String searchChargerID, int connectorId, int connectorType) async {
@@ -974,7 +987,8 @@ Future<void> _getPolyline(LatLng start, LatLng end) async {
               username: widget.username,
               userId: widget.userId,
               connector_id: connectorId,
-              connector_type: connectorType,
+              connector_type: connectorType, 
+              email: widget.email,
             ),
           ),
         );
@@ -1994,6 +2008,7 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
                   Navigator.of(context).pop();
+                  Navigator.of(context).popUntil((route) => route.isFirst); // Close the QR code scanner page and return to the Home Page
                 },
               ),
             ],
@@ -2334,7 +2349,7 @@ class _CustomRouteDialogState extends State<CustomRouteDialog> {
 
     return SingleChildScrollView(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+        padding: const EdgeInsets.symmetric(vertical: 50.0, horizontal: 16.0),
         decoration: const BoxDecoration(
           color: Colors.black,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),

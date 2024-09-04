@@ -8,7 +8,6 @@ import 'history/history.dart';
 import 'profile/profile.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart'; // Import the foreground task package
 import 'package:permission_handler/permission_handler.dart'; // Import the permission handler package
-
 class HomePage extends StatefulWidget {
   final String username;
   final int? userId;
