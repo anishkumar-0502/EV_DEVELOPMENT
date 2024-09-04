@@ -195,6 +195,9 @@ class _LoginPageState extends State<LoginPage> {
                   style: const TextStyle(color: Colors.white),
                   keyboardType: TextInputType.emailAddress,
                   cursorColor: const Color(0xFF1ED760),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@.]')), // Allows only letters, numbers, @, and .
+                  ],
                   validator: (value) {
                     if (!_isEmailInteracted) return null;
                     if (value == null || value.isEmpty) {
@@ -210,7 +213,7 @@ class _LoginPageState extends State<LoginPage> {
                       _isEmailInteracted = true;
                     });
                   },
-                ),
+              ),
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _passwordController,

@@ -220,6 +220,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       style: const TextStyle(color: Colors.white),
                       keyboardType: TextInputType.emailAddress,
                       cursorColor: const Color(0xFF1ED760), // Cursor color
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'[a-zA-Z0-9@._]'), // Allow alphanumeric, @, ., _
+                        ),
+                      ],
                       validator: (value) {
                         if (!_isEmailInteracted) return null; // Show error only if interacted
                         if (value == null || value.isEmpty) {
@@ -238,7 +243,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           _isEmailInteracted = true;
                         });
                       },
-                    ),
+                    ),                   
                     const SizedBox(height: 20),
                     TextFormField(
                       controller: _passwordController,
@@ -305,7 +310,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       style: const TextStyle(color: Colors.white),
                       cursorColor: const Color(0xFF1ED760), // Cursor color
-                      initialCountryCode: 'US',
+                      initialCountryCode: 'IN', // Set initial country code to India
+                      keyboardType: TextInputType.number, // Set the keyboard to numbers only
+                      inputFormatters: <TextInputFormatter>[
+                        FilteringTextInputFormatter.digitsOnly, // Allow only digits
+                      ],
                       validator: (value) {
                         if (!_isPhoneInteracted) return null; // Show error only if interacted
                         if (value == null || value.number.isEmpty) {
