@@ -59,6 +59,8 @@ class _EditUserModalState extends State<EditUserModal> {
   String? _validatePhoneNumber(String value) {
     if (value.isEmpty) {
       return 'Phone number is required';
+    } else if (value.length != 10) {
+      return 'Phone number must be exactly 10 digits';
     }
     return null;
   }
@@ -95,7 +97,7 @@ class _EditUserModalState extends State<EditUserModal> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/profile/FetchUserProfile'),
+        Uri.parse('http://122.166.210.142:4444/profile/FetchUserProfile'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId}),
       );
@@ -138,7 +140,7 @@ class _EditUserModalState extends State<EditUserModal> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/profile/UpdateUserProfile'),
+        Uri.parse('http://122.166.210.142:4444/profile/UpdateUserProfile'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': userId,

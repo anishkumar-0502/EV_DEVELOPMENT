@@ -912,7 +912,7 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
 
   try {
     final response = await http.post(
-      Uri.parse('http://122.166.210.142:9098/searchCharger'),
+      Uri.parse('http://122.166.210.142:4444/searchCharger'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'searchChargerID': searchChargerID,
@@ -967,7 +967,7 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
       String searchChargerID, int connectorId, int connectorType) async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/updateConnectorUser'),
+        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -1084,7 +1084,7 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/getRecentSessionDetails'),
+        Uri.parse('http://122.166.210.142:4444/getRecentSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
@@ -1128,13 +1128,14 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
     try {
       final response = await http.post(
         Uri.parse(
-            'http://122.166.210.142:9098/getAllChargersWithStatusAndPrice'),
+            'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
         }),
       );
-
+        final data = json.decode(response.body);
+        print("datas: $data");
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -1533,20 +1534,52 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                               'Unknown',
                         ),
                     if (!isLoading && activeFilter == 'All Chargers')
-                      for (var charger in availableChargers)
-                        if (charger['status'] == null)
-                          _buildChargerCard(
-                            context,
-                            charger['charger_id'] ?? 'Unknown ID',
-                            charger['model'] ?? 'Unknown Model',
-                            "Not yet received",
-                            "1.3 Km",
-                            charger['unit_price']?.toString() ??
-                                'Unknown Price',
-                            0,
-                            charger['charger_accessibility']?.toString() ??
-                                'Unknown',
-                          ),
+                    for (var charger in availableChargers)
+                      for (var status in charger['status'] ?? [null])  // If status is null, use [null]
+                        _buildChargerCard(
+                          context,
+                          charger['charger_id'] ?? 'Unknown ID',
+                          charger['model'] ?? 'Unknown Model',
+                          status == null
+                              ? "Not yet received"  // When status is null
+                              : status['charger_status'] ?? 'Unknown Status',
+                          "1.3 Km",
+                          charger['unit_price']?.toString() ?? 'Unknown Price',
+                          status == null
+                              ? 0  // Default connector ID when status is null
+                              : status['connector_id'] ?? 'Unknown Last Updated',
+                          charger['charger_accessibility']?.toString() ?? 'Unknown',
+                        )
+
+                      // for (var charger in availableChargers)
+                      //   if (charger['status'] == null)
+                      //     _buildChargerCard(
+                      //       context,
+                      //       charger['charger_id'] ?? 'Unknown ID',
+                      //       charger['model'] ?? 'Unknown Model',
+                      //       "Not yet received",
+                      //       "1.3 Km",
+                      //       charger['unit_price']?.toString() ??
+                      //           'Unknown Price',
+                      //       0,
+                      //       charger['charger_accessibility']?.toString() ??
+                      //           'Unknown',
+                      //     ),
+                    // for (var charger in availableChargers)
+                    //   if (charger['status'] != null)
+                    //     for (var status in charger['status'] ?? [])
+                    //       _buildChargerCard(
+                    //         context,
+                    //         charger['charger_id'] ?? 'Unknown ID',
+                    //         charger['model'] ?? 'Unknown Model',
+                    //         status['charger_status'] ?? 'Unknown Status',
+                    //         "1.3 Km",
+                    //         charger['unit_price']?.toString() ??
+                    //             'Unknown Price',
+                    //         status['connector_id'] ?? 'Unknown Last Updated',
+                    //         charger['charger_accessibility']?.toString() ??
+                    //             'Unknown',
+                    //      ),
                   ],
                 ),
               ),

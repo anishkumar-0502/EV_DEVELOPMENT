@@ -69,7 +69,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   bool _validateUsername(String value) {
-    final usernameRegex = RegExp(r'^[a-zA-Z]+$');
+    final usernameRegex = RegExp(r'^[a-zA-Z0-9]+$');  // Allows letters and numbers
     return usernameRegex.hasMatch(value);
   }
 
@@ -81,7 +81,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/profile/RegisterNewUser'),
+        Uri.parse('http://122.166.210.142:4444/profile/RegisterNewUser'),
         headers: {'Content-Type': 'application/json'}, // Ensure content type is set
         body: jsonEncode({
           'username': username,
@@ -191,7 +191,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           return 'Enter your username';
                         }
                         if (!_validateUsername(value)) {
-                          return 'Username must be alphabets only';
+                          return 'Username must be alphabets & numbers only';
                         }
                         return null;
                       },
