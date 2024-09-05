@@ -298,7 +298,7 @@ async function getAllChargersWithStatusAndPrice(req, res) {
         if(userAssignedAssociation === null){
             allChargers = await chargerDetailsCollection.find({
                 charger_accessibility: 1,
-                // assigned_association_id: { $ne: null },
+                assigned_association_id: { $ne: null },
                 status: true
             }).toArray();
         }else{
@@ -306,6 +306,7 @@ async function getAllChargersWithStatusAndPrice(req, res) {
             const chargersAccessibilityOne = await chargerDetailsCollection.find({
                 //assigned_association_id: userAssignedAssociation,
                 charger_accessibility: 1, // Fetch all documents with charger_accessibility 1
+                assigned_association_id: { $ne: null },
                 status: true
             }).toArray();
 

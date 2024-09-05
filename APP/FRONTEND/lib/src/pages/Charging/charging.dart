@@ -282,6 +282,10 @@ Widget _buildLoadingIndicator() {
   Future<void> updateSessionPriceToUser(int? connectorId) async {
     try {
       handleAlertLoadingStart(context);
+
+    // Introduce a 3-second delay before sending the request
+    await Future.delayed(const Duration(seconds: 5));
+
       var url = Uri.parse('http://122.166.210.142:9098/charging/getUpdatedCharingDetails');
       var body = {
         'chargerID': chargerID,
@@ -2970,7 +2974,10 @@ class ChargingCompleteModal extends StatelessWidget {
               ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Colors.grey.shade600,
-                  child: const Icon(Icons.attach_money, color: Colors.white, size: 24),
+                  child: const Text(
+                    '\u20B9', // Indian Rupee symbol
+                    style: TextStyle(color: Colors.white, fontSize: 24), // Customize size as needed
+                  ),
                 ),
                 title: const Text(
                   'Charging Price',

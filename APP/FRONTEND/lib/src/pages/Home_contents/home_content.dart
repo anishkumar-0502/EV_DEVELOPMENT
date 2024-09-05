@@ -1090,11 +1090,14 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
           'user_id': widget.userId,
         }),
       );
+        final data = json.decode(response.body);
+        print("Prev: $data");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
           recentSessions = data['data'] ?? [];
+
           activeFilter = 'Previously Used';
           isLoading = false;
         });
@@ -1541,21 +1544,6 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                             charger['unit_price']?.toString() ??
                                 'Unknown Price',
                             0,
-                            charger['charger_accessibility']?.toString() ??
-                                'Unknown',
-                          ),
-                    for (var charger in availableChargers)
-                      if (charger['status'] != null)
-                        for (var status in charger['status'] ?? [])
-                          _buildChargerCard(
-                            context,
-                            charger['charger_id'] ?? 'Unknown ID',
-                            charger['model'] ?? 'Unknown Model',
-                            status['charger_status'] ?? 'Unknown Status',
-                            "1.3 Km",
-                            charger['unit_price']?.toString() ??
-                                'Unknown Price',
-                            status['connector_id'] ?? 'Unknown Last Updated',
                             charger['charger_accessibility']?.toString() ??
                                 'Unknown',
                           ),

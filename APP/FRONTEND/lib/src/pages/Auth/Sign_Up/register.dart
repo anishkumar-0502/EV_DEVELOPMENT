@@ -81,7 +81,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/profile/RegisterNewUser'),
+        Uri.parse('http://122.166.210.142:9098/profile/RegisterNewUser'),
         headers: {'Content-Type': 'application/json'}, // Ensure content type is set
         body: jsonEncode({
           'username': username,
@@ -345,9 +345,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         elevation: 0,
                       ).copyWith(
-                        backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                              (Set<MaterialState> states) {
-                            if (states.contains(MaterialState.disabled)) {
+                        backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+                              (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.disabled)) {
                               return Colors.green.withOpacity(0.2); // Light green gradient
                             }
                             return const Color(0xFF1C8B40); // Dark green color

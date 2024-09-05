@@ -254,7 +254,7 @@ async function handleChargingSession(charger_id, connectorId,startTime, stopTime
     console.log(`TableCheck: ${JSON.stringify(existingDocument)}`);
 
     if (existingDocument) {
-        if (existingDocument.stop_time === null) {
+        if (existingDocument.stop_time === null && existingDocument.start_time != null) {
             const result = await collection.updateOne({ charger_id: charger_id,connector_id: connectorId, session_id: SessionID, stop_time: null }, {
                 $set: {
                     stop_time: stopTime !== null ? stopTime : undefined,
@@ -277,29 +277,31 @@ async function handleChargingSession(charger_id, connectorId,startTime, stopTime
                 console.log(`ChargerID ${charger_id}: Session/StopTimestamp not updated`);
                 logger.info(`ChargerID ${charger_id}: Session/StopTimestamp not updated`);
             }
+            return true;
         } else {
-            const newSession = {
-                charger_id: charger_id,
-                connector_id: connectorId,
-                connector_type: connectorTypeValue,
-                session_id: SessionID,
-                start_time: startTime !== null ? startTime : undefined,
-                stop_time: stopTime !== null ? stopTime : undefined,
-                unit_consummed: TotalUnitConsumed,
-                price: sessionPrice,
-                user: user,
-                created_date: new Date()
-            };
+            // const newSession = {
+            //     charger_id: charger_id,
+            //     connector_id: connectorId,
+            //     connector_type: connectorTypeValue,
+            //     session_id: SessionID,
+            //     start_time: startTime !== null ? startTime : undefined,
+            //     stop_time: stopTime !== null ? stopTime : undefined,
+            //     unit_consummed: TotalUnitConsumed,
+            //     price: sessionPrice,
+            //     user: user,
+            //     created_date: new Date()
+            // };
 
-            const result = await collection.insertOne(newSession);
+            // const result = await collection.insertOne(newSession);
 
-            if (result.acknowledged === true) {
-                console.log(`ChargerID ${charger_id}: Session/StartTimestamp inserted`);
-                logger.info(`ChargerID ${charger_id}: Session/StartTimestamp inserted`);
-            } else {
-                console.log(`ChargerID ${charger_id}: Session/StartTimestamp not inserted`);
-                logger.info(`ChargerID ${charger_id}: Session/StartTimestamp not inserted`);
-            }
+            // if (result.acknowledged === true) {
+            //     console.log(`ChargerID ${charger_id}: Session/StartTimestamp inserted`);
+            //     logger.info(`ChargerID ${charger_id}: Session/StartTimestamp inserted`);
+            // } else {
+            //     console.log(`ChargerID ${charger_id}: Session/StartTimestamp not inserted`);
+            //     logger.info(`ChargerID ${charger_id}: Session/StartTimestamp not inserted`);
+            // }
+            console.error(`ChargerID ${charger_id}: Session/StartTimestamp is current document exist but start/stop time not updated properly.`);
         }
     } else {
         // ChargerID is not in device_session_details table, insert a new document
@@ -331,6 +333,7 @@ async function handleChargingSession(charger_id, connectorId,startTime, stopTime
                 console.log(`ChargerID ${charger_id}: Please add the chargerID in the database!`);
                 logger.info(`ChargerID ${charger_id}: Please add the chargerID in the database!`);
             }
+            return true;
         } catch (error) {
             console.error(`Error querying device_session_details: ${error.message}`);
         }
@@ -842,7 +845,8 @@ async function autostop_unit(firstMeterValues,lastMeterValues,autostopSettings,u
     const lastEnergy = lastMeterValues || 0;
     
     const result = lastEnergy - startEnergy;
-    let calculatedUnit = parseFloat(result / 1000).toFixed(3);
+    // let calculatedUnit = parseFloat(result / 1000).toFixed(3);
+    let calculatedUnit = parseFloat(result).toFixed(3);
 
     console.dir(autostopSettings);
     // console.log(`${autostopSettings.unit_value},${calculatedUnit}`);
@@ -954,62 +958,67 @@ async function UpdateCommissionToWallet(sessionPrice, uniqueIdentifier) {
 }
 
 async function updateWallet(collection, id, amount, type) {
-    const walletField = `${type}_wallet`;
-    const numericAmount = parseFloat(amount.toFixed(3));
+    try {
+        const walletField = `${type}_wallet`;
+        const numericAmount = parseFloat(amount.toFixed(3));
 
-    const roundedAmount = Math.round(numericAmount * 1000) / 1000;
+        // Retrieve the current wallet value
+        const getWallet = await collection.findOne({ [`${type}_id`]: id });
 
-    const updateResult = await collection.updateOne(
-        { [`${type}_id`]: id },
-        { $inc: { [walletField]: roundedAmount } }
-    );
+        const currentWallet = parseFloat(getWallet[walletField]) || 0;
+        const updatedWallet = parseFloat((currentWallet + numericAmount).toFixed(3));
 
-    if (updateResult.modifiedCount > 0) {
-        console.log(`${type} wallet updated successfully for ID: ${id}. Amount: ${numericAmount}`);
-        return true;
-    } else {
-        console.log(`Failed to update ${type} wallet for ID: ${id}`);
-        return false;
+        // Update the wallet with the new value
+        const updateResult = await collection.updateOne(
+            { [`${type}_id`]: id },
+            { $set: { [walletField]: updatedWallet } }
+        );
+
+        if (updateResult.modifiedCount > 0) {
+            console.log(`${type} wallet updated successfully for ID: ${id}. New Amount: ${updatedWallet}`);
+            return true;
+        } else {
+            console.log(`Failed to update ${type} wallet for ID: ${id}. No changes were made.`);
+            return false;
+        }
+    } catch (error) {
+        console.error(`Error updating ${type} wallet for ID: ${id}: ${error.message}`);
+        throw new Error(`Unable to update ${type} wallet for ID: ${id}`);
     }
 }
 
-
-
 async function autostop_price(firstMeterValues, lastMeterValues, autostopSettings, uniqueIdentifier, connectorId) {
-    const startEnergy = firstMeterValues || 0;
-    const lastEnergy = lastMeterValues || 0;
-
-    // Calculate the energy consumed in kWh
-    const result = lastEnergy - startEnergy;
-    const calculatedUnit = parseFloat(result / 1000).toFixed(3);
-    const unit = isNaN(calculatedUnit) ? 0 : calculatedUnit;
-
-
     // Calculate the session price
     try {
+        const startEnergy = firstMeterValues || 0;
+        const lastEnergy = lastMeterValues || 0;
+    
+        // Calculate the energy consumed in kWh
+        let result = lastEnergy - startEnergy;
+        result = result < 0 ? 0 : result;
+
+        // const calculatedUnit = parseFloat(result / 1000).toFixed(3);
+        const calculatedUnit = parseFloat(result).toFixed(3);
+        const unit = isNaN(calculatedUnit) ? 0 : calculatedUnit;
+        console.log(`Total unit consummed: ${result} = ${lastEnergy}(last energy) - ${startEnergy}(start energy)`);
+
         const sessionPrice = await calculatePrice(unit, uniqueIdentifier);
         const formattedSessionPrice = isNaN(sessionPrice) || sessionPrice === 'NaN' ? 0 : parseFloat(sessionPrice).toFixed(2);
         console.log(`formattedPrice:`, formattedSessionPrice);
-
-        // Update commission to wallet
-        const commissionUpdateResult = await UpdateCommissionToWallet(formattedSessionPrice, uniqueIdentifier);
-        if(commissionUpdateResult){
-            console.log('Commission updated to wallet successfully');
-        }else{
-            console.log('Commission failed to update');
-        }
 
         // Check if the auto stop conditions are met
         if (autostopSettings.price_value && autostopSettings.isPriceChecked === true) {
             if (autostopSettings.price_value <= formattedSessionPrice) {
                 console.log(`Charger ${uniqueIdentifier} stop initiated - auto stop price`);
-                const result = await chargerStopCall(uniqueIdentifier, connectorId);
+                const result = await Chargercontrollers.chargerStopCall(uniqueIdentifier, connectorId);
                 if (result === true) {
                     console.log(`AutoStop price: Charger Stopped!`);
                 } else {
                     console.log(`Error: ${result}`);
                 }
             }
+        }else{
+            console.log(`Charger ${uniqueIdentifier} still price is calculating !`);
         }
     } catch (error) {
         console.log('Failed to calculate session price:', error);

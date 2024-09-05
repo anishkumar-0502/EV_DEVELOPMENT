@@ -419,7 +419,10 @@ class SessionDetailsModal extends StatelessWidget {
           ListTile(
             leading: CircleAvatar(
               backgroundColor: Colors.grey.shade600,
-              child: const Icon(Icons.attach_money, color: Colors.white, size: 24),
+              child: const Text(
+                '\u20B9', // Indian Rupee symbol
+                style: TextStyle(color: Colors.white, fontSize: 24), // Customize size as needed
+              ),
             ),
             title: const Text(
               'Price',
