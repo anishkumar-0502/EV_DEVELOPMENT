@@ -56,6 +56,10 @@ async function UpdateUserProfile(req, res, next) {
             return res.status(404).json({ error_message: 'User not found' });
         }
 
+        if (phone_no.toString().length !== 10) {
+            return res.status(401).json({ error_message: 'Phone number should be 10 digits' });
+        }
+
         // Validate the current password
         //const isCurrentPasswordValid = await bcrypt.compare(current_password, existingUser.password);
         const isCurrentPasswordValid = (parseInt(current_password) === existingUser.password);
