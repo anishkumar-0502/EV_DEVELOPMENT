@@ -70,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   bool _validateEmail(String value) {
-    final emailRegex = RegExp(r'^[^@]+@gmail\.com$');
+  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
     return emailRegex.hasMatch(value);
   }
 

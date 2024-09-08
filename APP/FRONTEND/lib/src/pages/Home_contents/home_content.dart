@@ -458,13 +458,16 @@ Future<void> _onNavigateButtonPressed() async {
 void _showCustomRouteDialog(String placeName, String address, String duration, String distance, String chargerId) { // Add chargerId
   showModalBottomSheet(
     context: context,
-    isScrollControlled: true,
+    isScrollControlled: false,
     builder: (BuildContext context) {
-      return CustomRouteDialog(
-        placeName: placeName,
-        duration: duration,
-        distance: distance,
-        chargerId: chargerId, // Pass the chargerId here
+      return Container(
+        height: MediaQuery.of(context).size.height * 0.38,
+        child: CustomRouteDialog(        
+          placeName: placeName,
+          duration: duration,
+          distance: distance,
+          chargerId: chargerId, // Pass the chargerId here
+        ),
       );
     },
   );
@@ -1841,10 +1844,10 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                                     // Show the modal bottom sheet with the dynamic data
                                     showModalBottomSheet(
                                       context: context,
-                                      isScrollControlled: true,
+                                      isScrollControlled: false,
                                       builder: (BuildContext context) {
                                         return Container(
-                                          height: MediaQuery.of(context).size.height * 0.32,
+                                          height: MediaQuery.of(context).size.height * 0.38,
                                           child: CustomRouteDialog(
                                             chargerId: chargerId, // Pass the chargerId here
                                             placeName: placeName, // Use the fetched place name
@@ -2357,8 +2360,6 @@ class CustomRouteDialog extends StatefulWidget {
   _CustomRouteDialogState createState() => _CustomRouteDialogState();
 }
 
-
-
 class _CustomRouteDialogState extends State<CustomRouteDialog> {
   bool _showFullText = false;
 
@@ -2368,192 +2369,212 @@ class _CustomRouteDialogState extends State<CustomRouteDialog> {
         ? widget.placeName
         : _truncateText(widget.placeName, 13); // Show first 13 words
 
-    return SingleChildScrollView(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 50.0, horizontal: 16.0),
-        decoration: const BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Grey background for the scroll indicator area
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 7), // Add some spacing above and below the scroll indicator
+          decoration: const BoxDecoration(
+            color: Color.fromARGB(255, 48, 48, 48), // Black background for the container wrapping the scroll view
+            borderRadius: BorderRadius.vertical(top: Radius.circular(27)),
+          ),
+          child: Center(
+            child: Container(
+              width: 60,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade600,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Scroll Indicator
-            Center(
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Color.fromARGB(255, 48, 48, 48), // Black background for the container wrapping the scroll view
+            ),
+            child: SingleChildScrollView(
               child: Container(
-                width: 60,
-                height: 4,
+                padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade600,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 15),
-            // Charger ID
-            Text(
-              widget.chargerId,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 15),
-            // Place Name and Address with Location Icon at the start
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start, // Align icon and text at the start
-              children: [
-                const Icon(Icons.location_on, color: Colors.red, size: 25),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    displayText,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: Colors.black, // Black background for the main content container
+                  border: Border.all(
+                    color: Colors.transparent, // Border color
+                    width: 1, // Border width
                   ),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
-              ],
-            ),
-            
-            Container(
-              margin: const EdgeInsets.only(left: 35),
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _showFullText = !_showFullText; // Toggle between show more and show less
-                  });
-                },
-                child: Text(
-                  _showFullText ? 'Show Less' : 'Show More',
-                  style: const TextStyle(color: Colors.blue, fontSize: 14),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Duration and Distance
-            Row(
-              children: [
-                const Icon(Icons.directions_bike, color: Colors.green, size: 20),
-                const SizedBox(width: 13),
-                Text(
-                  "${widget.duration} - ",
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  "${widget.distance}",
-                  style: const TextStyle(
-                    color: Colors.yellowAccent,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Horizontal Scrolling Button Row
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Action for Directions Button
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.directions, color: Colors.white),
-                    label: const Text('Directions', style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white, backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Charger ID
+                    Text(
+                      widget.chargerId,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-                      elevation: 3,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Action for Start Button
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.navigation, color: Colors.grey),
-                    label: const Text('Start', style: TextStyle(color: Colors.grey)),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.grey, backgroundColor: const Color(0xFF1E1E1E),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                    const SizedBox(height: 15),
+                    // Place Name and Address with Location Icon at the start
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.location_on, color: Colors.red, size: 25),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            displayText,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(left: 35),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _showFullText = !_showFullText;
+                          });
+                        },
+                        child: Text(
+                          _showFullText ? 'Show Less' : 'Show More',
+                          style: const TextStyle(color: Colors.blue, fontSize: 14),
+                        ),
                       ),
-                      elevation: 3,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      final String textToShare =
-                          ' Here is the Charger ID: ${widget.chargerId}. Check out this charger location: ${widget.placeName}. It\'s just ${widget.distance} away and will take ${widget.duration} to reach from my current location.';
+                    const SizedBox(height: 8),
+                    // Duration and Distance
+                    Row(
+                      children: [
+                        const Icon(Icons.directions_bike, color: Colors.green, size: 20),
+                        const SizedBox(width: 13),
+                        Text(
+                          "${widget.duration} - ",
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.distance,
+                          style: const TextStyle(
+                            color: Colors.yellowAccent,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Horizontal Scrolling Button Row
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(Icons.directions, color: Colors.white),
+                            label: const Text('Directions', style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              backgroundColor: Colors.blue,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 3,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(Icons.navigation, color: Colors.grey),
+                            label: const Text('Start', style: TextStyle(color: Colors.grey)),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.grey,
+                              backgroundColor: const Color(0xFF1E1E1E),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 3,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              final String textToShare =
+                                  'Here is the Charger ID: ${widget.chargerId}. Check out this charger location: ${widget.placeName}. It\'s just ${widget.distance} away and will take ${widget.duration} to reach from my current location.';
 
-                      Share.share(textToShare, subject: 'EV Charger Location');
-                    },
-                    icon: const Icon(Icons.share, color: Colors.grey),
-                    label: const Text('Share', style: TextStyle(color: Colors.grey)),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.grey,
-                      backgroundColor: const Color(0xFF1E1E1E),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                              Share.share(textToShare, subject: 'EV Charger Location');
+                            },
+                            icon: const Icon(Icons.share, color: Colors.grey),
+                            label: const Text('Share', style: TextStyle(color: Colors.grey)),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.grey,
+                              backgroundColor: const Color(0xFF1E1E1E),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 3,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final googleMapsUrl =
+                                  "https://www.google.com/maps/dir/?api=1&destination=${widget.placeName}&travelmode=driving";
+                              if (await canLaunch(googleMapsUrl)) {
+                                await launch(googleMapsUrl);
+                              } else {
+                                // Handle error when URL can't be launched
+                                print('Could not launch Google Maps.');
+                              }
+                            },
+                            icon: SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: Image.asset(
+                                'assets/icons/Google_map.png', // Replace with your image path
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            label: const Text('Open in Google map', style: TextStyle(color: Colors.grey)),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.grey,
+                              backgroundColor: const Color(0xFF1E1E1E),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 3,
+                            ),
+                          ),
+                        ],
                       ),
-                      elevation: 3,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      final googleMapsUrl =
-                          "https://www.google.com/maps/dir/?api=1&destination=${widget.placeName}&travelmode=driving";
-                      if (await canLaunch(googleMapsUrl)) {
-                        await launch(googleMapsUrl);
-                      } else {
-                        // Handle error when URL can't be launched
-                        print('Could not launch Google Maps.');
-                      }
-                    },
-                    icon: SizedBox(
-                      width: 30, // Adjust width as needed
-                      height: 30, // Adjust height as needed
-                      child: Image.asset(
-                        'assets/icons/Google_map.png', // Replace with your image path
-                        fit: BoxFit.contain, // Ensure the image fits within the button
-                      ),
-                    ),
-                    label: const Text('Open in Google map', style: TextStyle(color: Colors.grey)),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.grey,
-                      backgroundColor: const Color(0xFF1E1E1E),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      elevation: 3,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
