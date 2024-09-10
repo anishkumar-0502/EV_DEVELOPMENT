@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
@@ -13,7 +12,6 @@ import '../../utilities/Alert/alert_banner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui' as ui;
 import 'dart:async';
-import 'package:cool_alert/cool_alert.dart';
 import '../../service/location.dart';
 class HomeContent extends StatefulWidget {
   final String username;
@@ -48,6 +46,8 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   LatLng? _previousPosition;
   double? _previousBearing;
   bool _isCheckingPermission = false; // Flag to prevent repeated permission checks
+  bool _isMapLoading = true; // Track if map is still loading
+  bool _isMapIdle = false;  // Track if the map is idle (tiles loaded)
 
  @override
   void initState() {
@@ -77,7 +77,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       // Prompt user to enable location services
-      await _showLocationServicesDialog();
+      // await _showLocationServicesDialog();
       _isCheckingPermission = false;
       return;
     }
@@ -85,12 +85,6 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     PermissionStatus permission = await Permission.location.request();
     if (permission.isGranted) {
       await _getCurrentLocation();
-    } else if (permission.isDenied) {
-      // Show a dialog explaining why permissions are needed
-      await _showPermissionDeniedDialog();
-    } else if (permission.isPermanentlyDenied) {
-      // Guide the user to app settings
-      await _showPermanentlyDeniedDialog();
     }
 
     _isCheckingPermission = false;
@@ -170,110 +164,205 @@ void didChangeAppLifecycleState(AppLifecycleState state) async {
 }
 
 
+
   Future<void> _showLocationServicesDialog() async {
-    return CoolAlert.show(
+    return showDialog(
       context: context,
-      type: CoolAlertType.custom,
-      widget: Column(
-        children: [
-          const SizedBox(height: 16.0),
-          const Text(
-            'Enable Location',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E), // Background color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
           ),
-          const SizedBox(height: 8.0),
-          const Text(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.location_on, color: Colors.red, size: 35),
+                  SizedBox(width: 10),
+                  Expanded( // Add this to prevent the overflow issue
+                    child: Text(
+                      "Enable Location", // The heading text
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis, // Optional: add ellipsis if text overflows
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10),
+              CustomGradientDivider(), // Custom gradient divider
+            ],
+          ),
+          content: Text(
             'Location services are required to use this feature. Please enable location services in your phone settings.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black),
+            style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
           ),
-        ],
-      ),
-      confirmBtnText: 'Settings',
-      showCancelBtn: true,
-      confirmBtnColor: Colors.blue,
-      barrierDismissible: false, // Prevent closing by tapping outside
-      onConfirmBtnTap: () async {
-        await Geolocator.openLocationSettings(); // Open the lo ication settings
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                await Geolocator.openLocationSettings(); // Open the location settings
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Settings",
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+
+          ],
+        );
       },
     );
   }
-  
+
   Future<void> _showPermissionDeniedDialog() async {
-  return CoolAlert.show(
-    context: context,
-    type: CoolAlertType.custom, // Changed to custom
-    widget: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          const Text(
-            'Location Permission Required',
-            style: TextStyle(
-                fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+    return showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E), // Background color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
           ),
-          const SizedBox(height: 8.0),
-          const Text(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.location_on, color: Colors.red, size: 35),
+                  SizedBox(width: 10),
+                  Expanded( // Prevent text overflow
+                    child: Text(
+                      "Permission Denied",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis, // Optional: add ellipsis if text overflows
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10),
+              CustomGradientDivider(), // Custom gradient divider
+            ],
+          ),
+          content: Text(
             'This app requires location permissions to function correctly. Please grant location permissions in settings.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black),
+            style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
           ),
-        ],
-      ),
-    ),
-    confirmBtnText: 'Settings',
-    cancelBtnText: 'Cancel',
-    showCancelBtn: true,
-    confirmBtnColor: Colors.blue,
-    barrierDismissible: false,
-    onConfirmBtnTap: () {
-      openAppSettings();
-    },
-  );
-}
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                openAppSettings(); // Open app settings
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Settings",
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> _showPermanentlyDeniedDialog() async {
-  return CoolAlert.show(
-    context: context,
-    type: CoolAlertType.custom, // Changed to custom
-    widget: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          const Text(
-            'Location Permission Required',
-            style: TextStyle(
-                fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+    return showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E), // Background color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
           ),
-          const SizedBox(height: 8.0),
-          const Text(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.warning, color: Colors.red, size: 35),
+                  SizedBox(width: 10),
+                  Expanded( // Prevent text overflow
+                    child: Text(
+                      "Permission Denied",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis, // Optional: add ellipsis if text overflows
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10),
+              CustomGradientDivider(), // Custom gradient divider
+            ],
+          ),
+          content: Text(
             'Location permissions are permanently denied. Please enable them in the app settings.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black),
+            style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
           ),
-        ],
-      ),
-    ),
-    confirmBtnText: 'Settings',
-    cancelBtnText: 'Cancel',
-    showCancelBtn: true,
-    confirmBtnColor: Colors.blue,
-    barrierDismissible: false,
-    onConfirmBtnTap: () {
-      openAppSettings();
-    },
-  );
-}
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                openAppSettings(); // Open app settings
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Settings",
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+
+          ],
+        );
+      },
+    );
+  }
+
 
 
 void _reloadPage() {
@@ -285,10 +374,15 @@ void _reloadPage() {
 
 
 
-  void _onMapCreated(GoogleMapController controller) {
+  Future<void> _onMapCreated(GoogleMapController controller) async {
     mapController = controller;
     rootBundle.loadString('assets/Map/map.json').then((String mapStyle) {
       mapController?.setMapStyle(mapStyle);
+    });
+
+    // Ensure map is ready
+    setState(() {
+      _isMapLoading = false; // Hide the loading spinner
     });
 
     if (_currentPosition != null) {
@@ -298,6 +392,13 @@ void _reloadPage() {
       _updateMarkers();
     }
   }
+
+  void _onCameraIdle() {
+    setState(() {
+      _isMapIdle = true; // Set when the map camera stops moving, meaning tiles are loaded
+    });
+  }
+
 Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
   setState(() {
     _selectedPosition = position;
@@ -359,12 +460,10 @@ Future<void> _smoothlyMoveCamera(LatLng newPosition) async {
     }
   }
 }
-
-
 Future<void> _smoothlyMoveCameraForChargerMarker(LatLng startPosition, LatLng endPosition) async {
   if (mapController != null) {
-    double totalSteps = 50; // Number of animation steps for smooth movement
-    double stepDuration = 100; // Duration between steps in milliseconds
+    double totalSteps = 25; // Number of animation steps for smooth movement
+    double stepDuration = 80; // Duration between steps in milliseconds
 
     for (int i = 1; i <= totalSteps; i++) {
       double latitude = startPosition.latitude +
@@ -379,40 +478,37 @@ Future<void> _smoothlyMoveCameraForChargerMarker(LatLng startPosition, LatLng en
 
       await Future.delayed(Duration(milliseconds: stepDuration.toInt()));
     }
-  }
-}
 
-Future<void> _onNavigateButtonPressed() async {
-  if (_currentPosition != null && _selectedPosition != null) {
-    // Animate the camera to show the route
-    LatLngBounds bounds = LatLngBounds(
-      southwest: LatLng(
-        min(_currentPosition!.latitude, _selectedPosition!.latitude),
-        min(_currentPosition!.longitude, _selectedPosition!.longitude),
-      ),
-      northeast: LatLng(
-        max(_currentPosition!.latitude, _selectedPosition!.latitude),
-        max(_currentPosition!.longitude, _selectedPosition!.longitude),
+    // Once the camera reaches the destination, rotate the camera first
+    await mapController!.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: endPosition,
+          zoom: 16.0, // Set an initial zoom level before zooming in further
+          bearing: 90.0, // Rotate the camera to 90 degrees
+          tilt: 0, // Keep the tilt at 0 initially
+        ),
       ),
     );
 
-    CameraUpdate cameraUpdate = CameraUpdate.newLatLngBounds(bounds, 100);
-    await mapController?.animateCamera(cameraUpdate);
+    // Small delay to simulate the effect of rotating the camera
+    await Future.delayed(const Duration(milliseconds: 300));
 
-    // Optionally, you can add a further zoom effect to the destination
-    await Future.delayed(const Duration(seconds: 1)); // Wait for the first animation to finish
-    await mapController?.animateCamera(
+    // After rotating the camera, now zoom in and tilt for the final effect
+    await mapController!.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
-          target: _selectedPosition!,
-          zoom: 18.0,
-          bearing: _previousBearing ?? 0,
-          tilt: 45.0,
+          target: endPosition,
+          zoom: 18.0, // Final zoom level
+          tilt: 45.0, // Tilt for a 3D effect
+          bearing: 90.0, // Keep the same bearing after rotation
         ),
       ),
     );
   }
 }
+
+
 
 void _onMapTapped(LatLng position) async {
   setState(() {
@@ -891,36 +987,59 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
         });
       }
     } else {
-      // Show CoolAlert if permission is not granted
-      CoolAlert.show(
+      // Show a custom dialog if permission is not granted
+      showDialog(
         context: context,
-        type: CoolAlertType.custom,
-        widget: Column(
-          children: [
-            const SizedBox(height: 16.0),
-            const Text(
-              'Permission Denied',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+        barrierDismissible: false, // Prevent closing by tapping outside
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1E1E1E), // Dark theme background
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.camera_alt, color: Colors.blue, size: 35),
+                    SizedBox(width: 10),
+                    Text(
+                      "Permission Denied",
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                CustomGradientDivider(), // Inserted Custom Gradient Divider
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'To Scan QR codes, allow this app access to your camera. Tap Settings > Permissions, and turn Camera on.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ],
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  openAppSettings(); // Open app settings
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                child: const Text("Settings", style: TextStyle(color: Colors.blue)),
               ),
-            ),
-            const SizedBox(height: 8.0),
-            const Text(
-              'To Scan QR codes, allow this app access to your camera. Tap Settings > Permissions, and turn Camera on.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black),
-            ),
-          ],
-        ),
-        confirmBtnText: 'Settings',
-        cancelBtnText: 'Cancel',
-        showCancelBtn: true,
-        confirmBtnColor: Colors.blue,
-        barrierDismissible: false,
-        onConfirmBtnTap: () {
-          openAppSettings();
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                child: const Text("Cancel", style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
         },
       );
     }
@@ -1216,6 +1335,14 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
               onTap: _onMapTapped,
             ),
           ),
+
+          // Loading indicator while the map is loading
+          if (_isMapLoading || !_isMapIdle)
+            Center(
+              child: CircularProgressIndicator(), // Show spinner
+            ),
+
+          if (!_isMapLoading && _isMapIdle) ...[
           Positioned(
             bottom: 250,
             right: 10,
@@ -1337,48 +1464,49 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                 ),
               ),
               const Spacer(),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: <Widget>[
-                    const SizedBox(width: 15),
-                    if (isLoading)
-                      for (var i = 0; i < 3; i++) _buildShimmerCard(),
-                    if (!isLoading && activeFilter == 'Previously Used')
-                      for (var session in recentSessions)
-                        _buildChargerCard(
-                          context,
-                          session['details']['charger_id'] ?? 'Unknown ID',
-                          session['details']['model'] ?? 'Unknown Model',
-                          session['status']['charger_status'] ??
-                              'Unknown Status',
-                          "1.3 Km",
-                          session['unit_price']?.toString() ?? 'Unknown Price',
-                          session['status']['connector_id'] ?? 0,
-                          session['details']['charger_accessibility']
-                                  ?.toString() ??
-                              'Unknown',
-                        ),
-                    if (!isLoading && activeFilter == 'All Chargers')
-                    for (var charger in availableChargers)
-                      for (var status in charger['status'] ?? [null])  // If status is null, use [null]
-                        _buildChargerCard(
-                          context,
-                          charger['charger_id'] ?? 'Unknown ID',
-                          charger['model'] ?? 'Unknown Model',
-                          status == null
-                              ? "Not yet received"  // When status is null
-                              : status['charger_status'] ?? 'Unknown Status',
-                          "1.3 Km",
-                          charger['unit_price']?.toString() ?? 'Unknown Price',
-                          status == null
-                              ? 0  // Default connector ID when status is null
-                              : status['connector_id'] ?? 'Unknown Last Updated',
-                          charger['charger_accessibility']?.toString() ?? 'Unknown',
-                        )
-                  ],
-                ),
-              ),
+              _buildChargerList(),
+              // SingleChildScrollView(
+              //   scrollDirection: Axis.horizontal,
+              //   child: Row(
+              //     children: <Widget>[
+              //       const SizedBox(width: 15),
+              //       if (isLoading)
+              //         for (var i = 0; i < 3; i++) _buildShimmerCard(),
+              //       if (!isLoading && activeFilter == 'Previously Used')
+              //         for (var session in recentSessions)
+              //           _buildChargerCard(
+              //             context,
+              //             session['details']['charger_id'] ?? 'Unknown ID',
+              //             session['details']['model'] ?? 'Unknown Model',
+              //             session['status']['charger_status'] ??
+              //                 'Unknown Status',
+              //             "1.3 Km",
+              //             session['unit_price']?.toString() ?? 'Unknown Price',
+              //             session['status']['connector_id'] ?? 0,
+              //             session['details']['charger_accessibility']
+              //                     ?.toString() ??
+              //                 'Unknown',
+              //           ),
+              //       if (!isLoading && activeFilter == 'All Chargers')
+              //       for (var charger in availableChargers)
+              //         for (var status in charger['status'] ?? [null])  // If status is null, use [null]
+              //           _buildChargerCard(
+              //             context,
+              //             charger['charger_id'] ?? 'Unknown ID',
+              //             charger['model'] ?? 'Unknown Model',
+              //             status == null
+              //                 ? "Not yet received"  // When status is null
+              //                 : status['charger_status'] ?? 'Unknown Status',
+              //             "1.3 Km",
+              //             charger['unit_price']?.toString() ?? 'Unknown Price',
+              //             status == null
+              //                 ? 0  // Default connector ID when status is null
+              //                 : status['connector_id'] ?? 'Unknown Last Updated',
+              //             charger['charger_accessibility']?.toString() ?? 'Unknown',
+              //           )
+              //     ],
+              //   ),
+              // ),
               const SizedBox(height: 28),
             ],
           ),
@@ -1419,8 +1547,54 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
             ),
           ),
         ],
+        ]
       ),
     );
+  }
+
+  Widget _buildChargerList() {
+    return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: <Widget>[
+            const SizedBox(width: 15),
+            if (isLoading)
+              for (var i = 0; i < 3; i++) _buildShimmerCard(),
+            if (!isLoading && activeFilter == 'Previously Used')
+              for (var session in recentSessions)
+                _buildChargerCard(
+                  context,
+                  session['details']['charger_id'] ?? 'Unknown ID',
+                  session['details']['model'] ?? 'Unknown Model',
+                  session['status']['charger_status'] ??
+                      'Unknown Status',
+                  "1.3 Km",
+                  session['unit_price']?.toString() ?? 'Unknown Price',
+                  session['status']['connector_id'] ?? 0,
+                  session['details']['charger_accessibility']
+                          ?.toString() ??
+                      'Unknown',
+                ),
+            if (!isLoading && activeFilter == 'All Chargers')
+            for (var charger in availableChargers)
+              for (var status in charger['status'] ?? [null])  // If status is null, use [null]
+                _buildChargerCard(
+                  context,
+                  charger['charger_id'] ?? 'Unknown ID',
+                  charger['model'] ?? 'Unknown Model',
+                  status == null
+                      ? "Not yet received"  // When status is null
+                      : status['charger_status'] ?? 'Unknown Status',
+                  "1.3 Km",
+                  charger['unit_price']?.toString() ?? 'Unknown Price',
+                  status == null
+                      ? 0  // Default connector ID when status is null
+                      : status['connector_id'] ?? 'Unknown Last Updated',
+                  charger['charger_accessibility']?.toString() ?? 'Unknown',
+                )
+          ],
+        ),
+      );
   }
 
   Widget _buildChargerCard(
@@ -1465,26 +1639,20 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
           final lat = double.tryParse(charger['lat']);
           final lng = double.tryParse(charger['long']);
           if (lat != null && lng != null) {
-            final position = LatLng(lat, lng);
-            mapController?.animateCamera(
-              CameraUpdate.newLatLng(position),
-            );
-       // Ensure that we only use the previous marker's position if available
-        if (_previousPosition != null) {
-          // Smoothly move the camera from the previous marker to the selected position
-          await _smoothlyMoveCameraForChargerMarker(_previousPosition!, position);
-        } else {
-          // Optionally, if no previous marker exists, you can directly animate to the selected position
-          await mapController?.animateCamera(
-            CameraUpdate.newLatLng(position),
-          );
-        }
+            final destinationPosition = LatLng(lat, lng);
+
+            // Use the current charger position as the start position
+            LatLng startPosition = _selectedPosition ?? _currentPosition ?? _center;
+
+            // Smoothly move the camera from the current position to the destination charger position
+            await _smoothlyMoveCameraForChargerMarker(startPosition, destinationPosition);
 
             // Set the new selected position and enable map buttons
             setState(() {
-              _selectedPosition = position;
+              _selectedPosition = destinationPosition;
               areMapButtonsEnabled = true;
             });
+
 
             // Change the marker icon to the selected icon
             BitmapDescriptor newIcon =
@@ -1656,7 +1824,6 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.directions, color: Colors.red),
-                                  // onPressed: areMapButtonsEnabled ? _onNavigateButtonPressed : null,
                                   onPressed: areMapButtonsEnabled
                                   ? () async {
                                       if (_selectedPosition != null) {

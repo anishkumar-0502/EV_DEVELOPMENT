@@ -4,7 +4,7 @@ import SuperAdminApp from './adminApps/SuperAdminApp';
 import ResellerAdminApp from './adminApps/ResellerAdminApp';
 import ClientAdminApp from './adminApps/ClientAdminApp';
 import AssociationAdminApp from './adminApps/AssociationAdminApp';
-import Log from './log/Log';
+import Log from './log/Logs';
 const App = () => {
   
   return (

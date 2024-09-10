@@ -3054,10 +3054,8 @@ class _AnimatedChargingIcon extends StatefulWidget {
 class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _rotationAnimation;
+  late Animation<double> _slideAnimation;
   late Animation<double> _opacityAnimation;
-  late Animation<double> _circleScaleAnimation;
 
   @override
   void initState() {
@@ -3065,39 +3063,18 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
-    )..repeat();
+    )..repeat(reverse: true);
 
-    _scaleAnimation = TweenSequence([
-      TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.2), weight: 70),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.2, end: 0.0), weight: 30),
-    ]).animate(
+    // Slide animation for moving the bolt icon vertically
+    _slideAnimation = Tween<double>(begin: -100.0, end: 100.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: Curves.easeInOut,
       ),
     );
 
-    _rotationAnimation = Tween<double>(begin: 0.0, end: 2 * 3.14159).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.linear,
-      ),
-    );
-
-    _opacityAnimation = TweenSequence([
-      TweenSequenceItem(tween: Tween<double>(begin: 0.5, end: 1.0), weight: 70),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0), weight: 30),
-    ]).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    _circleScaleAnimation = TweenSequence([
-      TweenSequenceItem(tween: Tween<double>(begin: 0.9, end: 1.1), weight: 70),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.1, end: 0.0), weight: 30),
-    ]).animate(
+    // Opacity animation for smooth fading in and out
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: Curves.easeInOut,
@@ -3116,34 +3093,12 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            Transform.scale(
-              scale: _circleScaleAnimation.value,
-              child: Container(
-                width: 250, // Adjust the circle size as needed
-                height: 250,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.green.withOpacity(0.7),
-                    width: 4.0, // Border thickness
-                  ),
-                ),
-              ),
-            ),
-            Transform.rotate(
-              angle: _rotationAnimation.value,
-              child: Transform.scale(
-                scale: _scaleAnimation.value,
-                child: Opacity(
-                  opacity: _opacityAnimation.value,
-                  child: child,
-                ),
-              ),
-            ),
-          ],
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value), // Move vertically
+          child: Opacity(
+            opacity: _opacityAnimation.value,
+            child: child,
+          ),
         );
       },
       child: Icon(

@@ -281,7 +281,7 @@ class _StopChargerState extends State<StopCharger> {
                 if (label == 'Unit')
                   FilteringTextInputFormatter.allow(RegExp(r'^\d{0,4}(\.\d{0,2})?$')), // Decimal with up to 4 digits before and 2 digits after the decimal
                 if (label == 'Price')
-                  FilteringTextInputFormatter.digitsOnly, // Only digits for Price
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d{0,4}(\.\d{0,2})?$')), // Decimal with up to 4 digits before and 2 digits after the decimal
               ],
               onChanged: (val) {
                 onChanged(val);

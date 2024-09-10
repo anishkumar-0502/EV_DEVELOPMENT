@@ -204,8 +204,7 @@ async function getRecentSessionDetails(req, res) {
     try {
         const { user_id } = req.body;
         if (!user_id) {
-            const errorMessage = 'User ID is undefined!';
-            return res.status(401).json({ message: errorMessage });
+            return res.status(401).json({ message: 'User ID is undefined!' });
         }
 
         const db = await database.connectToDatabase();
@@ -218,8 +217,7 @@ async function getRecentSessionDetails(req, res) {
         // Fetch the user details to get the username
         const userRecord = await usersCollection.findOne({ user_id: user_id });
         if (!userRecord) {
-            const errorMessage = 'User not found';
-            return res.status(404).json({ message: errorMessage });
+            return res.status(404).json({ message: 'User not found' });
         }
 
         const username = userRecord.username;
@@ -228,8 +226,7 @@ async function getRecentSessionDetails(req, res) {
         const sessions = await collection.find({ user: username, stop_time: { $ne: null } }).sort({ stop_time: -1 }).toArray();
 
         if (!sessions || sessions.length === 0) {
-            const errorMessage = 'No Charger entries';
-            return res.status(404).json({ message: errorMessage });
+            return res.status(404).json({ message: 'No Charger entries' });
         }
 
         // Filter to get the most recent session per charger_id, connector_id, and connector_type
@@ -249,15 +246,19 @@ async function getRecentSessionDetails(req, res) {
             const details = await chargerDetailsCollection.findOne({ charger_id: session.charger_id });
             const status = await chargerStatusCollection.findOne({ charger_id: session.charger_id, connector_id: session.connector_id });
 
+            // Exclude sessions where the charger status is not true
+            if (details?.status !== true) {
+                return null; // Skip this session if the status is not true
+            }
+
             // Find the finance ID related to the charger
             const financeId = details?.finance_id;
-            // Fetch t  he unit price using the finance ID
             let unitPrice = null;
 
             if (financeId) {
                 // Fetch the finance record using the finance ID
                 const financeRecord = await financeDetailsCollection.findOne({ finance_id: financeId });
-        
+
                 if (financeRecord) {
                     // Calculate the total percentage from finance details
                     const totalPercentage = [
@@ -268,11 +269,11 @@ async function getRecentSessionDetails(req, res) {
                         financeRecord.open_a_eb_charges,
                         financeRecord.open_other_charges
                     ].reduce((sum, charge) => sum + parseFloat(charge || 0), 0);
-        
+
                     // Calculate the unit price based on the finance record
                     const pricePerUnit = parseFloat(financeRecord.eb_charges || 0);
                     const totalPrice = pricePerUnit + (pricePerUnit * totalPercentage / 100);
-        
+
                     // Format the total price to 2 decimal places
                     unitPrice = totalPrice.toFixed(2);
                 }
@@ -285,8 +286,12 @@ async function getRecentSessionDetails(req, res) {
                 unit_price: unitPrice // Append the unit price to the session details
             };
         }));
-        // Return the most recent session data for each charger and connector
-        return res.status(200).json({ data: detailedSessions });
+
+        // Filter out any null values resulting from the status check
+        const filteredSessions = detailedSessions.filter(session => session !== null);
+
+        // Return the filtered session data
+        return res.status(200).json({ data: filteredSessions });
     } catch (error) {
         console.error(error);
         return res.status(500).send({ message: 'Internal Server Error' });

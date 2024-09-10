@@ -824,7 +824,8 @@ const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, Cli
                             const processMeterValues = async (firstMeter, lastMeter, settings, identifier, connector) => {
                                 if (settings.isUnitChecked) {
                                     await autostop_unit(firstMeter, lastMeter, settings, identifier, connector);
-                                } else if (settings.isPriceChecked) {
+                                } 
+                                if (settings.isPriceChecked) {
                                     await autostop_price(firstMeter, lastMeter, settings, identifier, connector);
                                 }
                             };
