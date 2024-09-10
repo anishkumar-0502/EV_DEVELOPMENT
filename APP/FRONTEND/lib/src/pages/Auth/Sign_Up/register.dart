@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +6,8 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:http/http.dart' as http;
 import '../Log_In/login.dart';
 import '../../../utilities/Alert/alert_banner.dart'; // Import the alert banner
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -22,11 +25,13 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isButtonEnabled = false;
   bool _isUsernameInteracted = false;
   bool _isEmailInteracted = false;
-  bool _isPhoneInteracted = false;
   bool _isPasswordInteracted = false;
   bool _isPasswordVisible = false;
   String? _alertMessage;
   String? SussessMsg;
+  late Connectivity _connectivity;
+  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
+  bool _isDialogOpen = false;
 
   @override
   void initState() {
@@ -35,14 +40,115 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.addListener(_validateAndUpdate);
     _phoneController.addListener(_validateAndUpdate);
     _passwordController.addListener(_validateAndUpdate);
+    _connectivity = Connectivity();
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+    _checkInitialConnection();
   }
 
+
+  Future<void> _checkInitialConnection() async {
+    var result = await _connectivity.checkConnectivity();
+    _updateConnectionStatus(result);
+  }
+  void _updateConnectionStatus(ConnectivityResult result) {
+
+    // Check for specific connection types (Wi-Fi or Mobile Data)
+    if (result == ConnectivityResult.mobile) {
+      // Connected to mobile data
+      _dismissConnectionDialog(); // Close any dialog if mobile data is connected
+    } else if (result == ConnectivityResult.wifi) {
+      // Connected to Wi-Fi
+      _dismissConnectionDialog(); // Close any dialog if Wi-Fi is connected
+    } else if (result == ConnectivityResult.none) {
+      // No internet connection
+      if (!_isDialogOpen) {
+        _showNoConnectionDialog(result); // Show dialog with specific message
+      }
+    }
+  }
+
+  void _showNoConnectionDialog(ConnectivityResult result) {
+    String message;
+
+    if (result == ConnectivityResult.none) {
+      message = 'Mobile data is off. Please turn it on or connect to Wi-Fi.';
+    } else {
+      message = 'No Internet Connection. Please check your connection.';
+    }
+
+    setState(() {
+      _isDialogOpen = true;
+    });
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E), // Background color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 35),
+                  SizedBox(width: 10),
+                  Text(
+                    "Connection Error",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10),
+              CustomGradientDivider(), // Custom gradient divider
+            ],
+          ),
+          content: Text(
+            message,
+            style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                _checkInitialConnection(); // Retry connection check
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text("Retry", style: TextStyle(color: Colors.white)),
+            ),
+            TextButton(
+              onPressed: () async {
+                SystemNavigator.pop(); // Close the app
+              },
+              child: const Text("Close App", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    ).then((_) {
+      setState(() {
+        _isDialogOpen = false; // Update state when dialog is dismissed
+      });
+    });
+  }
+
+
+
+  void _dismissConnectionDialog() {
+    if (_isDialogOpen) {
+      Navigator.of(context, rootNavigator: true).pop(); // Dismiss the alert
+      _isDialogOpen = false;
+    }
+  }
   @override
   void dispose() {
     _usernameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -243,7 +349,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           _isEmailInteracted = true;
                         });
                       },
-                    ),                   
+                    ),            
                     const SizedBox(height: 20),
                     TextFormField(
                       controller: _passwordController,
@@ -300,7 +406,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       controller: _phoneController,
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: const Color.fromARGB(200, 58, 58, 60), // Dark gray color
+                        fillColor: const Color.fromARGB(200, 58, 58, 60),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
                           borderSide: BorderSide.none,
@@ -309,28 +415,16 @@ class _RegisterPageState extends State<RegisterPage> {
                         hintStyle: const TextStyle(color: Colors.grey),
                       ),
                       style: const TextStyle(color: Colors.white),
-                      cursorColor: const Color(0xFF1ED760), // Cursor color
-                      initialCountryCode: 'IN', // Set initial country code to India
-                      keyboardType: TextInputType.number, // Set the keyboard to numbers only
-                      inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.digitsOnly, // Allow only digits
-                      ],
-                      validator: (value) {
-                        if (!_isPhoneInteracted) return null; // Show error only if interacted
-                        if (value == null || value.number.isEmpty) {
-                          return 'Enter your phone number';
-                        }
-                        return null;
-                      },
-                      onChanged: (value) {
-                        _validateAndUpdate();
+                      cursorColor: const Color(0xFF1ED760),
+                      initialCountryCode: 'IN',
+                      onChanged: (phone) {
+                        print(phone.completeNumber);  // Print complete number to check
                       },
                       onTap: () {
-                        setState(() {
-                          _isPhoneInteracted = true;
-                        });
+                        // Handle tap if necessary
                       },
                     ),
+
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _isButtonEnabled ? _handleRegister : null,
@@ -345,9 +439,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         elevation: 0,
                       ).copyWith(
-                        backgroundColor: WidgetStateProperty.resolveWith<Color?>(
-                              (Set<WidgetState> states) {
-                            if (states.contains(WidgetState.disabled)) {
+                        backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+                              (Set<MaterialState> states) {
+                            if (states.contains(MaterialState.disabled)) {
                               return Colors.green.withOpacity(0.2); // Light green gradient
                             }
                             return const Color(0xFF1C8B40); // Dark green color
@@ -388,5 +482,48 @@ class _RegisterPageState extends State<RegisterPage> {
         ],
       ),
     );
+  }
+}
+
+class CustomGradientDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1.2,
+      child: CustomPaint(
+        painter: GradientPainter(),
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+}
+
+class GradientPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        colors: [
+          Color.fromRGBO(0, 0, 0, 0.75),
+          Color.fromRGBO(0, 128, 0, 0.75),
+          Colors.green,
+        ],
+        end: Alignment.center,
+      ).createShader(Rect.fromLTRB(0, 0, size.width, size.height));
+
+    final path = Path()
+      ..moveTo(0, size.height * 0.0)
+      ..quadraticBezierTo(size.width / 3, 0, size.width, size.height * 0.99)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }

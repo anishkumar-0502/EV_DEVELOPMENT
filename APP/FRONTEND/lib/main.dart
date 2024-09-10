@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:cool_alert/cool_alert.dart';
 import 'src/pages/Auth/Log_In/login.dart';
 import 'src/pages/home.dart';
 import 'src/utilities/User_Model/user.dart';
@@ -34,24 +33,16 @@ class SessionHandler extends StatefulWidget {
 }
 
 class _SessionHandlerState extends State<SessionHandler> {
-  late Connectivity _connectivity;
   late StreamSubscription<ConnectivityResult> _connectivitySubscription;
-  bool _alertIsVisible = false;
 
   @override
   void initState() {
     super.initState();
-    _connectivity = Connectivity();
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
     _retrieveUserData();
-    _checkInitialConnection();
+
   }
 
-  Future<void> _checkInitialConnection() async {
-    var result = await _connectivity.checkConnectivity();
-    _updateConnectionStatus(result);
-  }
-
+  
   @override
   void dispose() {
     _connectivitySubscription.cancel();
@@ -68,63 +59,14 @@ class _SessionHandlerState extends State<SessionHandler> {
     }
   }
 
-  void _updateConnectionStatus(ConnectivityResult result) {
-    bool isConnected = result != ConnectivityResult.none;
-
-    if (!isConnected && !_alertIsVisible) {
-      _showNoConnectionDialog();
-    } else if (isConnected && _alertIsVisible) {
-      if (Navigator.canPop(context)) {
-        Navigator.of(context).pop();
-        _alertIsVisible = false;
-      }
-    }
-  }
-
-  Future _showNoConnectionDialog() {
-    _alertIsVisible = true;
-    return CoolAlert.show(
-    context: context,
-    type: CoolAlertType.custom, // Changed to custom
-    widget: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          const Text(
-            'Mobile data required',
-            style: TextStyle(
-                fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8.0),
-          const Text(
-            'This app requires internet connection  to function correctly. Please turn on Mobile data',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black),
-          ),
-        ],
-      ),
-    ),
-    confirmBtnText: 'Settings',
-    cancelBtnText: 'Cancel',
-    showCancelBtn: false,
-    confirmBtnColor: Colors.blue,
-    barrierDismissible: false,
-    onConfirmBtnTap: () {
-      _alertIsVisible = false;
-        SystemNavigator.pop();
-    },
-  ); }
-
+  
 
   @override
   Widget build(BuildContext context) {
     final userData = Provider.of<UserData>(context);
 
     return userData.username != null
-        ? HomePage(username: userData.username ?? '', userId: userData.userId ?? 0, email: userData.email ?? '')
+        ? HomePage(username: userData.username ?? '', userId: userData.userId ?? 0, email: userData.email ??'',)
         : const LoginPage();
   }
 }
@@ -162,10 +104,7 @@ class MyApp extends StatelessWidget {
           final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
           return WalletPage(username: args['username'], userId: args['userId']);
         },
-        '/transaction_details': (context) => TransactionDetailsWidget(
-          transactionDetails: ModalRoute.of(context)?.settings.arguments as List<Map<String, dynamic>>,
-          username: AutofillHints.username,
-        ),
+        '/transaction_details': (context) => TransactionDetailsWidget(transactionDetails: ModalRoute.of(context)?.settings.arguments as List<Map<String, dynamic>>, username: AutofillHints.username,),
       },
     );
   }

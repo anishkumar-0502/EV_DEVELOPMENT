@@ -1038,7 +1038,7 @@ Widget _buildAnimatedTempColorCircle() {
           borderRadius: BorderRadius.circular(15),
         ),
         child: Container(
-          width: 200,
+          width: 225,
           height: 102, // Adjusted to make the card background more visible
           padding: const EdgeInsets.all(16.0), // Add padding inside the card
           decoration: BoxDecoration(
@@ -1058,12 +1058,13 @@ Widget _buildAnimatedTempColorCircle() {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${_currentTemperature.toInt()} °C',
+                    // '${_currentTemperature.toInt()} °C' ,
+                    '33.5 °C',
                     style: const TextStyle(color: Colors.white, fontSize: 24),
                   ),
                 ],
               ),
-              const SizedBox(width: 16), // Add some space between the circle and the text
+              const SizedBox(width: 20), // Add some space between the circle and the text
               Container(
                 width: 90,
                 height: 90, // Adjusted to fit the card
@@ -1090,8 +1091,9 @@ Widget _buildAnimatedTempColorCircle() {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            '${_currentTemperature.toInt()}',
-                            style: TextStyle(color: _getTemperatureColor(), fontSize: 20),
+                            // '${_currentTemperature.toInt()}',
+                            '33.5 ',
+                            style: TextStyle(color: _getTemperatureColor(), fontSize: 15),
                           ),
                           Text(
                             '°C',

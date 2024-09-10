@@ -15,6 +15,7 @@ import 'dart:ui' as ui;
 import 'dart:async';
 import 'package:cool_alert/cool_alert.dart';
 import '../../service/location.dart';
+import 'package:share_plus/share_plus.dart';
 class HomeContent extends StatefulWidget {
   final String username;
   final int? userId;
@@ -40,6 +41,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   LatLng? _selectedPosition; // To store the selected marker's position
   final LatLng _center = const LatLng(12.909746, 77.606360);
   Set<Marker> _markers = {};
+  Set<Polyline> _polylines = {}; // To store the route polylines
   bool isSearching = false;
   bool areMapButtonsEnabled = false;
   MarkerId? _previousMarkerId; // To track the previously selected marker
@@ -48,6 +50,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   LatLng? _previousPosition;
   double? _previousBearing;
   bool _isCheckingPermission = false; // Flag to prevent repeated permission checks
+  static const String apiKey = 'AIzaSyDezbZNhVuBMXMGUWqZTOtjegyNexKWosA';
 
  @override
   void initState() {
@@ -154,21 +157,18 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     }
   }
 
-@override
-void didChangeAppLifecycleState(AppLifecycleState state) async {
-  if (state == AppLifecycleState.resumed && !_isCheckingPermission) {
-    bool isLocationEnabled = await Geolocator.isLocationServiceEnabled();
-    if (isLocationEnabled) {
-      // Only reload the map if the current position has changed
-      if (_currentPosition != null && _hasSignificantChange(_currentPosition!, _previousBearing ?? 0)) {
-        _reloadPage(); // Reload your content or update the UI only if position changed
+
+  @override void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.resumed && !_isCheckingPermission) {
+      // Check if location services are enabled when returning to the app
+      bool isLocationEnabled = await Geolocator.isLocationServiceEnabled();
+      if (isLocationEnabled) {
+        _reloadPage(); // Reload your content or update the UI
+      } else {
+        _showLocationServicesDialog();
       }
-    } else {
-      _showLocationServicesDialog();
     }
   }
-}
-
 
   Future<void> _showLocationServicesDialog() async {
     return CoolAlert.show(
@@ -198,7 +198,7 @@ void didChangeAppLifecycleState(AppLifecycleState state) async {
       confirmBtnColor: Colors.blue,
       barrierDismissible: false, // Prevent closing by tapping outside
       onConfirmBtnTap: () async {
-        await Geolocator.openLocationSettings(); // Open the lo ication settings
+        await Geolocator.openLocationSettings(); // Open the location settings
       },
     );
   }
@@ -298,14 +298,83 @@ void _reloadPage() {
       _updateMarkers();
     }
   }
+
+Future<String> _getPlaceName(LatLng position) async {
+  final String url =
+      'https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=$apiKey';
+
+  final response = await http.get(Uri.parse(url));
+
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> data = json.decode(response.body);
+    if (data['results'].isNotEmpty) {
+      return data['results'][0]['formatted_address'];
+    } else {
+      return "Unknown Location";
+    }
+  } else {
+    throw Exception('Failed to fetch place name');
+  }
+}
+
+Future<String> _getAddress(LatLng position) async {
+  final String url =
+      'https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=$apiKey';
+
+  final response = await http.get(Uri.parse(url));
+
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> data = json.decode(response.body);
+    if (data['results'].isNotEmpty) {
+      return data['results'][0]['formatted_address'];
+    } else {
+      return "Unknown Address";
+    }
+  } else {
+    throw Exception('Failed to fetch address');
+  }
+}
+
+Future<String> _calculateDistance(LatLng start, LatLng end) async {
+  double distanceInMeters = Geolocator.distanceBetween(
+    start.latitude,
+    start.longitude,
+    end.latitude,
+    end.longitude,
+  );
+  double distanceInKm = distanceInMeters / 1000.0;
+  return "${distanceInKm.toStringAsFixed(1)} Km";
+}
+
+
+Future<Map<String, String>> _calculateDurationAndDistance(LatLng start, LatLng end) async {
+  final String url =
+      'https://maps.googleapis.com/maps/api/directions/json?origin=${start.latitude},${start.longitude}&destination=${end.latitude},${end.longitude}&key=$apiKey';
+
+  final response = await http.get(Uri.parse(url));
+
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> data = json.decode(response.body);
+    if (data['routes'].isNotEmpty) {
+      final String duration = data['routes'][0]['legs'][0]['duration']['text'];
+      final String distance = data['routes'][0]['legs'][0]['distance']['text'];
+      return {'duration': duration, 'distance': distance};
+    } else {
+      return {'duration': "Duration not available", 'distance': "Distance not available"};
+    }
+  } else {
+    throw Exception('Failed to fetch duration and distance');
+  }
+}
+
 Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
   setState(() {
     _selectedPosition = position;
     areMapButtonsEnabled = true;
   });
 
-  // Smoothly animate the camera to the selected marker
-  await _smoothlyMoveCamera(position);
+  // Extract the chargerId from the MarkerId
+  String chargerId = markerId.value;
 
   // Change the marker icon to the selected icon
   BitmapDescriptor newIcon =
@@ -314,6 +383,9 @@ Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
       await _getIconFromAssetred('assets/icons/EV_location_red.png');
 
   setState(() {
+    // Clear existing polylines when a new marker is selected
+    _polylines.clear();
+
     // Revert the previous marker icon to default if it exists
     if (_previousMarkerId != null) {
       _markers = _markers.map((marker) {
@@ -333,52 +405,21 @@ Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
       return marker;
     }).toSet();
   });
-}
 
-/// Function to move the camera smoothly to a new position
-Future<void> _smoothlyMoveCamera(LatLng newPosition) async {
-  if (mapController != null && _currentPosition != null) {
-    LatLng startPosition = _currentPosition!;
-    LatLng endPosition = newPosition;
+  // Fetch place name, address, and duration and distance if both current and selected positions are available
+  if (_currentPosition != null && _selectedPosition != null) {
+    final placeName = await _getPlaceName(position);
+    final address = await _getAddress(position);
+    final durationAndDistance = await _calculateDurationAndDistance(_currentPosition!, _selectedPosition!);
 
-    double totalSteps = 50; // The number of steps for smooth movement
-    double stepDuration = 100; // Duration in milliseconds between each step
-
-    for (int i = 1; i <= totalSteps; i++) {
-      double latitude = startPosition.latitude +
-          (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
-      double longitude = startPosition.longitude +
-          (endPosition.longitude - startPosition.longitude) * (i / totalSteps);
-      LatLng intermediatePosition = LatLng(latitude, longitude);
-
-      await mapController!.animateCamera(
-        CameraUpdate.newLatLng(intermediatePosition),
-      );
-
-      await Future.delayed(Duration(milliseconds: stepDuration.toInt()));
-    }
-  }
-}
-
-
-Future<void> _smoothlyMoveCameraForChargerMarker(LatLng startPosition, LatLng endPosition) async {
-  if (mapController != null) {
-    double totalSteps = 50; // Number of animation steps for smooth movement
-    double stepDuration = 100; // Duration between steps in milliseconds
-
-    for (int i = 1; i <= totalSteps; i++) {
-      double latitude = startPosition.latitude +
-          (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
-      double longitude = startPosition.longitude +
-          (endPosition.longitude - startPosition.longitude) * (i / totalSteps);
-      LatLng intermediatePosition = LatLng(latitude, longitude);
-
-      await mapController!.animateCamera(
-        CameraUpdate.newLatLng(intermediatePosition),
-      );
-
-      await Future.delayed(Duration(milliseconds: stepDuration.toInt()));
-    }
+    // Pass the chargerId to _showCustomRouteDialog
+    _showCustomRouteDialog(
+      placeName,
+      address,
+      durationAndDistance['duration']!,
+      durationAndDistance['distance']!,
+      chargerId, // Pass the extracted chargerId
+    );
   }
 }
 
@@ -414,9 +455,29 @@ Future<void> _onNavigateButtonPressed() async {
   }
 }
 
+void _showCustomRouteDialog(String placeName, String address, String duration, String distance, String chargerId) { // Add chargerId
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: false,
+    builder: (BuildContext context) {
+      return Container(
+        height: MediaQuery.of(context).size.height * 0.38,
+        child: CustomRouteDialog(        
+          placeName: placeName,
+          duration: duration,
+          distance: distance,
+          chargerId: chargerId, // Pass the chargerId here
+        ),
+      );
+    },
+  );
+}
+
+
 void _onMapTapped(LatLng position) async {
   setState(() {
     areMapButtonsEnabled = false;
+    _polylines.clear(); // Clear the route when the map is tapped elsewhere
   });
 
   if (_previousMarkerId != null) {
@@ -624,39 +685,114 @@ void _onMapTapped(LatLng position) async {
       });
     }
 
+    // Add markers for all available chargers (existing logic)
+    for (var charger in availableChargers) {
+      final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
+      final lat = charger['lat'] != null ? double.tryParse(charger['lat']) : null;
+      final lng = charger['long'] != null ? double.tryParse(charger['long']) : null;
 
-  // Continue updating charger markers only if the position has changed
-  for (var charger in availableChargers) {
-    final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
-    final lat = charger['lat'] != null ? double.tryParse(charger['lat']) : null;
-    final lng = charger['long'] != null ? double.tryParse(charger['long']) : null;
+      if (lat != null && lng != null) {
+        if (_currentPosition != null &&
+            lat == _currentPosition!.latitude &&
+            lng == _currentPosition!.longitude) {
+          continue;
+        }
 
-    if (lat != null && lng != null) {
-      // Check if the charger location has changed
-      if (_previousPosition != null && lat == _previousPosition!.latitude && lng == _previousPosition!.longitude) {
-        continue; // Skip if position hasn't changed
-      }
+        BitmapDescriptor Charger_icon =
+            await _getIconFromAssetred('assets/icons/EV_location_red.png');
 
-      BitmapDescriptor chargerIcon = await _getIconFromAssetred('assets/icons/EV_location_red.png');
-      setState(() {
-        _markers.add(
-          Marker(
-            markerId: MarkerId(chargerId),
-            position: LatLng(lat, lng),
-            icon: chargerIcon,
-            infoWindow: InfoWindow(
-              title: charger['model'] ?? 'Unknown Model',
-              snippet: chargerId,
+        setState(() {
+          _markers.add(
+            Marker(
+              markerId: MarkerId(chargerId),
+              position: LatLng(lat, lng),
+              icon: Charger_icon, // Use the custom icon for chargers
+              infoWindow: InfoWindow(
+                title: charger['model'] ?? 'Unknown Model',
+                snippet: chargerId,
+              ),
+              onTap: () {
+                _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
+              },
             ),
-            onTap: () {
-              _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
-            },
+          );
+        });
+      }
+    }
+  }
+
+
+
+Future<void> _getPolyline(LatLng start, LatLng end) async {
+  print('Fetching polyline from $start to $end');
+  final response = await http.get(Uri.parse(
+        'https://maps.googleapis.com/maps/api/directions/json?origin=${start.latitude},${start.longitude}&destination=${end.latitude},${end.longitude}&key=AIzaSyDezbZNhVuBMXMGUWqZTOtjegyNexKWosA'));
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    print('Response received: $data');
+
+    if (data['routes'].isNotEmpty) {
+      final route = data['routes'][0];
+      final polyline = route['overview_polyline']['points'];
+      final polylineCoordinates = _decodePolyline(polyline);
+
+      print('Decoded polyline points: $polylineCoordinates');
+
+      setState(() {
+        _polylines.clear(); // Clear existing polylines
+        _polylines.add(
+          Polyline(
+            polylineId: PolylineId('route'),
+            points: polylineCoordinates,
+            color: Colors.blue, // Ensure this is visible on the map
+            width: 6, // Adjust for better visibility
           ),
         );
       });
+    } else {
+      print('No routes found.');
     }
+  } else {
+    print('Failed to fetch polyline: ${response.statusCode}');
   }
 }
+
+  List<LatLng> _decodePolyline(String encoded) {
+    List<LatLng> polylineCoordinates = [];
+    int index = 0;
+    int len = encoded.length;
+    int lat = 0;
+    int lng = 0;
+
+    while (index < len) {
+      int b;
+      int shift = 0;
+      int result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1F) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1F) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+
+      LatLng p = LatLng(lat / 1E5, lng / 1E5);
+      polylineCoordinates.add(p);
+    }
+
+    return polylineCoordinates;
+  }
 
   void _showCustomInfoWindow(String title, String snippet, LatLng position) {
     showModalBottomSheet(
@@ -1192,7 +1328,6 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
     );
   });
 }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1208,6 +1343,7 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                 zoom: 16.0,
               ),
               markers: _markers,
+              polylines: _polylines, // Add polylines to the map
               zoomControlsEnabled: false,
               myLocationEnabled: false,
               myLocationButtonEnabled: false,
@@ -1223,6 +1359,54 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
               backgroundColor: const Color.fromARGB(227, 76, 175, 79),
               onPressed: _getCurrentLocation,
               child: const Icon(Icons.my_location, color: Colors.white),
+            ),
+          ),
+          Positioned(
+            top: 305,
+            right: 10,
+            child: Column(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    FloatingActionButton(
+                      heroTag: 'Navigation in google map',
+                      backgroundColor: Colors.black,
+                      onPressed: areMapButtonsEnabled
+                          ? () async {
+                              if (_selectedPosition != null) {
+                                final googleMapsUrl =
+                                    "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
+                                if (await canLaunch(googleMapsUrl)) {
+                                  await launch(googleMapsUrl);
+                                } else {
+                                  showErrorDialog(context,
+                                      'Could not open the map. Please check your internet connection or try again later.');
+                                }
+                              }
+                            }
+                          : null,
+                      child: SizedBox(
+                        width: 30, // Adjust width as needed
+                        height: 30, // Adjust height as needed
+                        child: Image.asset(
+                          'assets/icons/Google_map.png', // Replace with your image path
+                          fit: BoxFit
+                              .contain, // Ensure the image fits within the button
+                        ),
+                      ),
+                    ),
+                    if (!areMapButtonsEnabled)
+                      Container(
+                        width: 56, // Match the size of the FloatingActionButton
+                        height: 56,
+                        child: CustomPaint(
+                          painter: CrossPainter(),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
           Column(
@@ -1376,6 +1560,36 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                               : status['connector_id'] ?? 'Unknown Last Updated',
                           charger['charger_accessibility']?.toString() ?? 'Unknown',
                         )
+
+                      // for (var charger in availableChargers)
+                      //   if (charger['status'] == null)
+                      //     _buildChargerCard(
+                      //       context,
+                      //       charger['charger_id'] ?? 'Unknown ID',
+                      //       charger['model'] ?? 'Unknown Model',
+                      //       "Not yet received",
+                      //       "1.3 Km",
+                      //       charger['unit_price']?.toString() ??
+                      //           'Unknown Price',
+                      //       0,
+                      //       charger['charger_accessibility']?.toString() ??
+                      //           'Unknown',
+                      //     ),
+                    // for (var charger in availableChargers)
+                    //   if (charger['status'] != null)
+                    //     for (var status in charger['status'] ?? [])
+                    //       _buildChargerCard(
+                    //         context,
+                    //         charger['charger_id'] ?? 'Unknown ID',
+                    //         charger['model'] ?? 'Unknown Model',
+                    //         status['charger_status'] ?? 'Unknown Status',
+                    //         "1.3 Km",
+                    //         charger['unit_price']?.toString() ??
+                    //             'Unknown Price',
+                    //         status['connector_id'] ?? 'Unknown Last Updated',
+                    //         charger['charger_accessibility']?.toString() ??
+                    //             'Unknown',
+                    //      ),
                   ],
                 ),
               ),
@@ -1469,16 +1683,6 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
             mapController?.animateCamera(
               CameraUpdate.newLatLng(position),
             );
-       // Ensure that we only use the previous marker's position if available
-        if (_previousPosition != null) {
-          // Smoothly move the camera from the previous marker to the selected position
-          await _smoothlyMoveCameraForChargerMarker(_previousPosition!, position);
-        } else {
-          // Optionally, if no previous marker exists, you can directly animate to the selected position
-          await mapController?.animateCamera(
-            CameraUpdate.newLatLng(position),
-          );
-        }
 
             // Set the new selected position and enable map buttons
             setState(() {
@@ -1633,20 +1837,39 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                     children: [
                       Expanded(
                         child: GestureDetector(
-                        onTap: areMapButtonsEnabled
-                                  ? () async {
-                                      if (_selectedPosition != null) {
-                                        final googleMapsUrl =
-                                            "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
-                                        if (await canLaunch(googleMapsUrl)) {
-                                          await launch(googleMapsUrl);
-                                        } else {
-                                          showErrorDialog(context,
-                                              'Could not open the map. Please check your internet connection or try again later.');
-                                        }
-                                      }
-                                    }
-                                  : null,
+                          onTap: areMapButtonsEnabled
+                                ? () async {
+                                if (_selectedPosition != null) {
+                                  if (_currentPosition != null) {
+                                    await _getPolyline(_currentPosition!, _selectedPosition!);
+                                    
+                                    // Fetch place name and duration dynamically
+                                    final placeName = await _getPlaceName(_selectedPosition!);
+                                    final durationAndDistance = await _calculateDurationAndDistance(_currentPosition!, _selectedPosition!);
+
+                                    await _onNavigateButtonPressed(); // Trigger zoom animation
+                                    // Show the modal bottom sheet with the dynamic data
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: false,
+                                      builder: (BuildContext context) {
+                                        return Container(
+                                          height: MediaQuery.of(context).size.height * 0.38,
+                                          child: CustomRouteDialog(
+                                            chargerId: chargerId, // Pass the chargerId here
+                                            placeName: placeName, // Use the fetched place name
+                                            duration: durationAndDistance['duration']!, // Use the fetched duration
+                                            distance: durationAndDistance['distance']!, // Use the fetched distance
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  } else {
+                                    print('Current position is not available.');
+                                  }
+                                }
+                              }
+                            : null,
                           child: Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFF1E1E1E),
@@ -1656,21 +1879,7 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.directions, color: Colors.red),
-                                  // onPressed: areMapButtonsEnabled ? _onNavigateButtonPressed : null,
-                                  onPressed: areMapButtonsEnabled
-                                  ? () async {
-                                      if (_selectedPosition != null) {
-                                        final googleMapsUrl =
-                                            "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
-                                        if (await canLaunch(googleMapsUrl)) {
-                                          await launch(googleMapsUrl);
-                                        } else {
-                                          showErrorDialog(context,
-                                              'Could not open the map. Please check your internet connection or try again later.');
-                                        }
-                                      }
-                                    }
-                                  : null,
+                                  onPressed: areMapButtonsEnabled ? _onNavigateButtonPressed : null,
                                 ),
                                 const Padding(
                                   padding: EdgeInsets.all(8.0),
@@ -2139,3 +2348,248 @@ class _CurrentLocationMarkerState extends State<CurrentLocationMarker> with Sing
   }
 }
 
+
+class CustomRouteDialog extends StatefulWidget {
+  final String placeName;
+  final String duration;
+  final String distance;
+  final String chargerId; // Add this line
+
+  const CustomRouteDialog({
+    Key? key,
+    required this.placeName,
+    required this.duration,
+    required this.distance,
+    required this.chargerId, // Add this line
+  }) : super(key: key);
+
+  @override
+  _CustomRouteDialogState createState() => _CustomRouteDialogState();
+}
+
+class _CustomRouteDialogState extends State<CustomRouteDialog> {
+  bool _showFullText = false;
+
+  @override
+  Widget build(BuildContext context) {
+    String displayText = _showFullText
+        ? widget.placeName
+        : _truncateText(widget.placeName, 13); // Show first 13 words
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Grey background for the scroll indicator area
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 7), // Add some spacing above and below the scroll indicator
+          decoration: const BoxDecoration(
+            color: Color.fromARGB(255, 48, 48, 48), // Black background for the container wrapping the scroll view
+            borderRadius: BorderRadius.vertical(top: Radius.circular(27)),
+          ),
+          child: Center(
+            child: Container(
+              width: 60,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade600,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Color.fromARGB(255, 48, 48, 48), // Black background for the container wrapping the scroll view
+            ),
+            child: SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
+                decoration: BoxDecoration(
+                  color: Colors.black, // Black background for the main content container
+                  border: Border.all(
+                    color: Colors.transparent, // Border color
+                    width: 1, // Border width
+                  ),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Charger ID
+                    Text(
+                      widget.chargerId,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    // Place Name and Address with Location Icon at the start
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.location_on, color: Colors.red, size: 25),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            displayText,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(left: 35),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _showFullText = !_showFullText;
+                          });
+                        },
+                        child: Text(
+                          _showFullText ? 'Show Less' : 'Show More',
+                          style: const TextStyle(color: Colors.blue, fontSize: 14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Duration and Distance
+                    Row(
+                      children: [
+                        const Icon(Icons.directions_bike, color: Colors.green, size: 20),
+                        const SizedBox(width: 13),
+                        Text(
+                          "${widget.duration} - ",
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.distance,
+                          style: const TextStyle(
+                            color: Colors.yellowAccent,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Horizontal Scrolling Button Row
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(Icons.directions, color: Colors.white),
+                            label: const Text('Directions', style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              backgroundColor: Colors.blue,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 3,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(Icons.navigation, color: Colors.grey),
+                            label: const Text('Start', style: TextStyle(color: Colors.grey)),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.grey,
+                              backgroundColor: const Color(0xFF1E1E1E),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 3,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              final String textToShare =
+                                  'Here is the Charger ID: ${widget.chargerId}. Check out this charger location: ${widget.placeName}. It\'s just ${widget.distance} away and will take ${widget.duration} to reach from my current location.';
+
+                              Share.share(textToShare, subject: 'EV Charger Location');
+                            },
+                            icon: const Icon(Icons.share, color: Colors.grey),
+                            label: const Text('Share', style: TextStyle(color: Colors.grey)),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.grey,
+                              backgroundColor: const Color(0xFF1E1E1E),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 3,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final googleMapsUrl =
+                                  "https://www.google.com/maps/dir/?api=1&destination=${widget.placeName}&travelmode=driving";
+                              if (await canLaunch(googleMapsUrl)) {
+                                await launch(googleMapsUrl);
+                              } else {
+                                // Handle error when URL can't be launched
+                                print('Could not launch Google Maps.');
+                              }
+                            },
+                            icon: SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: Image.asset(
+                                'assets/icons/Google_map.png', // Replace with your image path
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            label: const Text('Open in Google map', style: TextStyle(color: Colors.grey)),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.grey,
+                              backgroundColor: const Color(0xFF1E1E1E),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _truncateText(String text, int wordLimit) {
+    List<String> words = text.split(' ');
+    if (words.length > wordLimit) {
+      return words.sublist(0, wordLimit).join(' ') + '...';
+    }
+    return text;
+  }
+}

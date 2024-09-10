@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +11,8 @@ import '../../../utilities/User_Model/user.dart';
 import '../../home.dart';
 import '../Sign_Up/register.dart';
 import '../../../utilities/Alert/alert_banner.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,6 +24,11 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  late Connectivity _connectivity;
+
+  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
+  bool _isDialogOpen = false; // Track if the dialog is open
+
 
   final _formKey = GlobalKey<FormState>();
 
@@ -36,15 +44,112 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _emailController.addListener(_emailListener);
     _passwordController.addListener(_updateButtonState);
+    _connectivity = Connectivity();
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+    _checkInitialConnection();
     _retrieveUserData();
   }
 
+  Future<void> _checkInitialConnection() async {
+    var result = await _connectivity.checkConnectivity();
+    _updateConnectionStatus(result);
+  }
+  void _updateConnectionStatus(ConnectivityResult result) {
+
+    // Check for specific connection types (Wi-Fi or Mobile Data)
+    if (result == ConnectivityResult.mobile) {
+      // Connected to mobile data
+      _dismissConnectionDialog(); // Close any dialog if mobile data is connected
+    } else if (result == ConnectivityResult.wifi) {
+      // Connected to Wi-Fi
+      _dismissConnectionDialog(); // Close any dialog if Wi-Fi is connected
+    } else if (result == ConnectivityResult.none) {
+      // No internet connection
+      if (!_isDialogOpen) {
+        _showNoConnectionDialog(result); // Show dialog with specific message
+      }
+    }
+  }
+
+  void _showNoConnectionDialog(ConnectivityResult result) {
+    String message;
+
+    if (result == ConnectivityResult.none) {
+      message = 'Mobile data is off. Please turn it on or connect to Wi-Fi.';
+    } else {
+      message = 'No Internet Connection. Please check your connection.';
+    }
+
+    setState(() {
+      _isDialogOpen = true;
+    });
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E), // Background color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 35),
+                  SizedBox(width: 10),
+                  Text(
+                    "Connection Error",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10),
+              CustomGradientDivider(), // Custom gradient divider
+            ],
+          ),
+          content: Text(
+            message,
+            style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                _checkInitialConnection(); // Retry connection check
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text("Retry", style: TextStyle(color: Colors.white)),
+            ),
+            TextButton(
+              onPressed: () async {
+                SystemNavigator.pop(); // Close the app
+              },
+              child: const Text("Close App", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    ).then((_) {
+      setState(() {
+        _isDialogOpen = false; // Update state when dialog is dismissed
+      });
+    });
+  }
+  void _dismissConnectionDialog() {
+    if (_isDialogOpen) {
+      Navigator.of(context, rootNavigator: true).pop(); // Dismiss the alert
+      _isDialogOpen = false;
+    }
+  }
   @override
   void dispose() {
     _emailController.removeListener(_emailListener);
     _passwordController.removeListener(_updateButtonState);
     _emailController.dispose();
     _passwordController.dispose();
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -161,6 +266,7 @@ class _LoginPageState extends State<LoginPage> {
             child: ListView(
               shrinkWrap: true,
               children: [
+                const SizedBox(height: 50), // Margin at the top
                 const Text(
                   'Welcome Back! Sign In to dive in?',
                   style: TextStyle(
@@ -214,7 +320,7 @@ class _LoginPageState extends State<LoginPage> {
                     });
                   },
               ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 20),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
@@ -264,7 +370,7 @@ class _LoginPageState extends State<LoginPage> {
                     });
                   },
                 ),
-                const SizedBox(height:15),
+                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _isFormValid() ? _login : null,
                   style: ElevatedButton.styleFrom(
@@ -344,5 +450,49 @@ class _LoginPageState extends State<LoginPage> {
       )
           : null,
     );
+  }
+}
+
+
+class CustomGradientDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1.2,
+      child: CustomPaint(
+        painter: GradientPainter(),
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+}
+
+class GradientPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        colors: [
+          Color.fromRGBO(0, 0, 0, 0.75),
+          Color.fromRGBO(0, 128, 0, 0.75),
+          Colors.green,
+        ],
+        end: Alignment.center,
+      ).createShader(Rect.fromLTRB(0, 0, size.width, size.height));
+
+    final path = Path()
+      ..moveTo(0, size.height * 0.0)
+      ..quadraticBezierTo(size.width / 3, 0, size.width, size.height * 0.99)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }

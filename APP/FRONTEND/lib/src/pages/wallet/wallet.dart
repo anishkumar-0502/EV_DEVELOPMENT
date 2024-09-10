@@ -10,7 +10,6 @@ import '../../utilities/Seperater/gradientPainter.dart';
 class WalletPage extends StatefulWidget {
   final String username;
   final int? userId;
-
   const WalletPage({super.key, required this.username, this.userId});
 
   @override
