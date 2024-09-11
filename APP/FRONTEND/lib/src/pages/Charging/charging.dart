@@ -2383,7 +2383,6 @@ class _BatteryChargeScreenState extends State<BatteryChargeScreen> with SingleTi
   @override
   void dispose() {
     _animationController.dispose();
-   
     super.dispose();
   }
 
@@ -3028,7 +3027,8 @@ class LoadingOverlay extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: Colors.black.withOpacity(0.75), // Transparent black background
+      // color: Colors.black.withOpacity(0.75), // Transparent black background
+      color: Colors.black.withOpacity(0.90), // Transparent black background
       child: Center(
         child: _AnimatedChargingIcon(), // Use the animated charging icon
       ),
@@ -3046,6 +3046,7 @@ class LoadingOverlay extends StatelessWidget {
     );
   }
 }
+
 class _AnimatedChargingIcon extends StatefulWidget {
   @override
   __AnimatedChargingIconState createState() => __AnimatedChargingIconState();
@@ -3063,10 +3064,10 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
-    )..repeat(reverse: true);
+    )..forward(); // Start the animation
 
-    // Slide animation for moving the bolt icon vertically
-    _slideAnimation = Tween<double>(begin: -100.0, end: 100.0).animate(
+    // Slide animation for moving the bolt icon vertically downwards
+    _slideAnimation = Tween<double>(begin: -130.0, end: 60.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: Curves.easeInOut,
@@ -3080,6 +3081,14 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
         curve: Curves.easeInOut,
       ),
     );
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        // Reset the animation to start from the top when it reaches the bottom
+        _controller.reset();
+        _controller.forward();
+      }
+    });
   }
 
   @override
@@ -3102,9 +3111,9 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
         );
       },
       child: Icon(
-        Icons.bolt, // Charging icon
+        Icons.bolt_sharp, // Charging icon
         color: Colors.green, // Set the icon color
-        size: 170, // Adjust the size as needed
+        size: 200, // Adjust the size as needed
       ),
     );
   }

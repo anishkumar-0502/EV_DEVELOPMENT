@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:shimmer/shimmer.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -46,13 +47,11 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   LatLng? _previousPosition;
   double? _previousBearing;
   bool _isCheckingPermission = false; // Flag to prevent repeated permission checks
-  bool _isMapLoading = true; // Track if map is still loading
-  bool _isMapIdle = false;  // Track if the map is idle (tiles loaded)
-
+  bool LocationEnabled = false;
+  
  @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _checkLocationPermission(); // Check permissions on initialization
     _updateMarkers();
     activeFilter = 'All Chargers';
@@ -63,24 +62,37 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _positionStreamSubscription?.cancel(); // Cancel the subscription
     super.dispose();
   }
 
 
-  Future<void> _checkLocationPermission() async {
-    if (_isCheckingPermission) return; // Prevent multiple permission checks
+// Define the method to check and request location permissions
+Future<void> _checkLocationPermission() async {
+  if (_isCheckingPermission) return; // Prevent multiple permission checks
 
-    _isCheckingPermission = true;
+  _isCheckingPermission = true;
 
+  // Load the saved LocationEnabled value from SharedPreferences
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool locationEnabled = prefs.getBool('LocationEnabled') ?? false;
+
+  // If location services have not been enabled in a previous session
+  if (!locationEnabled) {
+    // Check if location services are enabled
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // Prompt user to enable location services
-      // await _showLocationServicesDialog();
+      // Prompt the user to enable location services if disabled
+      await _showLocationServicesDialog();
+
       _isCheckingPermission = false;
       return;
+    } else {
+      // Save that location services have been enabled in SharedPreferences
+      await prefs.setBool('LocationEnabled', true);
     }
+  }
+
 
     PermissionStatus permission = await Permission.location.request();
     if (permission.isGranted) {
@@ -90,78 +102,81 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     _isCheckingPermission = false;
   }
 
-// This method is already present, but you should keep this logic to handle camera animation
-  Future<void> _getCurrentLocation() async {
-    // Check if the location permission is granted before attempting to fetch the location
+
+Future<void> _getCurrentLocation() async {
+  // If a location fetch is already in progress, don't start a new one
+  if (_isFetchingLocation) return;
+
+  setState(() {
+    _isFetchingLocation = true;
+  });
+
+  try {
+    // Ensure location services are enabled and permission is granted before fetching location
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await _showLocationServicesDialog();
+      return;
+    }
+
     PermissionStatus permission = await Permission.location.status;
     if (permission.isDenied) {
-      // If permission is denied, show the permission denied dialog
       await _showPermissionDeniedDialog();
       return;
     } else if (permission.isPermanentlyDenied) {
-      // If permission is permanently denied, show the permanently denied dialog
       await _showPermanentlyDeniedDialog();
       return;
     }
 
-    // If the permission is granted, proceed to fetch the location
-    if (_isFetchingLocation) return;
+    // Fetch the current location if permission is granted
+    LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
 
-    setState(() {
-      _isFetchingLocation = true;
-    });
-
-    try {
-      LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
-
-      if (currentLocation != null) {
-        // Update the current position
-        setState(() {
-          _currentPosition = currentLocation;
-        });
-
-        if (mapController != null) {
-          // Smoothly animate the camera to the new position
-          await mapController!.animateCamera(
-            CameraUpdate.newCameraPosition(
-              CameraPosition(
-                target: _currentPosition!,
-                zoom: 18.0,
-                tilt: 45.0,
-                bearing: _previousBearing ?? 0,
-              ),
-            ),
-          );
-        }
-
-        // Update the map markers with the new position
-        await _updateCurrentLocationMarker(_previousBearing ?? 0);
-      } else {
-        print('Current location could not be determined.');
-      }
-    } catch (e) {
-      print('Error occurred while fetching the current location: $e');
-    } finally {
+    if (currentLocation != null) {
+      // Update the current position
       setState(() {
-        _isFetchingLocation = false;
+        _currentPosition = currentLocation;
       });
+
+      // Smoothly animate the camera to the new position if the mapController is available
+      if (mapController != null) {
+        await mapController!.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: _currentPosition!,
+              zoom: 18.0, // Adjust zoom level as needed
+              tilt: 45.0, // Add a tilt for a 3D effect
+              bearing: _previousBearing ?? 0, // Use previous bearing if available
+            ),
+          ),
+        );
+      }
+
+      // Update the current location marker on the map
+      await _updateCurrentLocationMarker(_previousBearing ?? 0);
+    } else {
+      print('Current location could not be determined.');
     }
+  } catch (e) {
+    print('Error occurred while fetching the current location: $e');
+  } finally {
+    setState(() {
+      _isFetchingLocation = false;
+    });
   }
+}
 
 @override
 void didChangeAppLifecycleState(AppLifecycleState state) async {
   if (state == AppLifecycleState.resumed && !_isCheckingPermission) {
     bool isLocationEnabled = await Geolocator.isLocationServiceEnabled();
     if (isLocationEnabled) {
-      // Only reload the map if the current position has changed
-      if (_currentPosition != null && _hasSignificantChange(_currentPosition!, _previousBearing ?? 0)) {
-        _reloadPage(); // Reload your content or update the UI only if position changed
-      }
+      _checkLocationPermission(); // Ensure permission is checked again
     } else {
       _showLocationServicesDialog();
     }
   }
 }
+
 
 
 
@@ -380,10 +395,6 @@ void _reloadPage() {
       mapController?.setMapStyle(mapStyle);
     });
 
-    // Ensure map is ready
-    setState(() {
-      _isMapLoading = false; // Hide the loading spinner
-    });
 
     if (_currentPosition != null) {
       mapController?.animateCamera(
@@ -391,12 +402,6 @@ void _reloadPage() {
       );
       _updateMarkers();
     }
-  }
-
-  void _onCameraIdle() {
-    setState(() {
-      _isMapIdle = true; // Set when the map camera stops moving, meaning tiles are loaded
-    });
   }
 
 Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
@@ -708,13 +713,6 @@ void _onMapTapped(LatLng position) async {
             position: _currentPosition!,
             icon: currentLocationIcon,
             infoWindow: const InfoWindow(title: 'Your Location'),
-            onTap: () {
-              _showCustomInfoWindow(
-                'Your Location',
-                '',
-                _currentPosition!,
-              );
-            },
           ),
         );
       });
@@ -753,89 +751,6 @@ void _onMapTapped(LatLng position) async {
     }
   }
 }
-
-  void _showCustomInfoWindow(String title, String snippet, LatLng position) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.grey.shade800, Colors.black],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight:
-                  Radius.circular(20), // Adjust the radius value as needed
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.4),
-                blurRadius: 8,
-                spreadRadius: 4,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.ev_station, color: Colors.white, size: 28),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                snippet,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context); // Close the modal
-                      // Add your action here, like navigating to the location
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Navigate',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   Future<BitmapDescriptor> _getIconFromFlutterIcon(
       IconData iconData, Color color, double size) async {
@@ -1250,26 +1165,12 @@ void _startLiveTracking() {
       _previousBearing = newBearing;
 
       await _updateCurrentLocationMarker(newBearing);
-
-      // **Remove the automatic camera update** here
-      // if (mapController != null) {
-      //   mapController!.animateCamera(
-      //     CameraUpdate.newCameraPosition(
-      //       CameraPosition(
-      //         target: _currentPosition!,
-      //         zoom: 18.0,
-      //         bearing: newBearing,
-      //         tilt: 45.0,
-      //       ),
-      //     ),
-      //   );
-      // }
+      
     }
   }, onError: (error) {
     print('Error in live tracking: $error');
   });
 }
-
 
 // Function to check if there's a significant change
 bool _hasSignificantChange(LatLng newPosition, double newBearing) {
@@ -1336,13 +1237,8 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
             ),
           ),
 
-          // Loading indicator while the map is loading
-          if (_isMapLoading || !_isMapIdle)
-            Center(
-              child: CircularProgressIndicator(), // Show spinner
-            ),
+  
 
-          if (!_isMapLoading && _isMapIdle) ...[
           Positioned(
             bottom: 250,
             right: 10,
@@ -1465,48 +1361,6 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
               ),
               const Spacer(),
               _buildChargerList(),
-              // SingleChildScrollView(
-              //   scrollDirection: Axis.horizontal,
-              //   child: Row(
-              //     children: <Widget>[
-              //       const SizedBox(width: 15),
-              //       if (isLoading)
-              //         for (var i = 0; i < 3; i++) _buildShimmerCard(),
-              //       if (!isLoading && activeFilter == 'Previously Used')
-              //         for (var session in recentSessions)
-              //           _buildChargerCard(
-              //             context,
-              //             session['details']['charger_id'] ?? 'Unknown ID',
-              //             session['details']['model'] ?? 'Unknown Model',
-              //             session['status']['charger_status'] ??
-              //                 'Unknown Status',
-              //             "1.3 Km",
-              //             session['unit_price']?.toString() ?? 'Unknown Price',
-              //             session['status']['connector_id'] ?? 0,
-              //             session['details']['charger_accessibility']
-              //                     ?.toString() ??
-              //                 'Unknown',
-              //           ),
-              //       if (!isLoading && activeFilter == 'All Chargers')
-              //       for (var charger in availableChargers)
-              //         for (var status in charger['status'] ?? [null])  // If status is null, use [null]
-              //           _buildChargerCard(
-              //             context,
-              //             charger['charger_id'] ?? 'Unknown ID',
-              //             charger['model'] ?? 'Unknown Model',
-              //             status == null
-              //                 ? "Not yet received"  // When status is null
-              //                 : status['charger_status'] ?? 'Unknown Status',
-              //             "1.3 Km",
-              //             charger['unit_price']?.toString() ?? 'Unknown Price',
-              //             status == null
-              //                 ? 0  // Default connector ID when status is null
-              //                 : status['connector_id'] ?? 'Unknown Last Updated',
-              //             charger['charger_accessibility']?.toString() ?? 'Unknown',
-              //           )
-              //     ],
-              //   ),
-              // ),
               const SizedBox(height: 28),
             ],
           ),
@@ -1514,7 +1368,7 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
             bottom: 250,
             right: 10,
             child: FloatingActionButton(
-              backgroundColor: const Color.fromARGB(227, 76, 175, 79),
+              backgroundColor:  const Color.fromARGB(227, 76, 175, 79),
               onPressed: _getCurrentLocation,
               child: const Icon(Icons.my_location, color: Colors.white),
             ),
@@ -1547,7 +1401,6 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
             ),
           ),
         ],
-        ]
       ),
     );
   }

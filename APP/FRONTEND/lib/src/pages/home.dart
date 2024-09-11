@@ -93,8 +93,8 @@ class _HomePageState extends State<HomePage> {
                   Icon(Icons.error_outline, color: Colors.red, size: 35),
                   SizedBox(width: 10),
                   Text(
-                    "Connection Error",
-                    style: TextStyle(color: Colors.white),
+                    "Mobile data required",
+                    style: TextStyle(color: Colors.white,fontSize: 18),
                   ),
                 ],
               ),
@@ -112,7 +112,7 @@ class _HomePageState extends State<HomePage> {
                 _checkInitialConnection(); // Retry connection check
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: const Text("Retry", style: TextStyle(color: Colors.white)),
+              child: const Text("Retry", style: TextStyle(color: Colors.blue)),
             ),
             TextButton(
               onPressed: () async {
@@ -198,7 +198,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final _pageOptions = [
       HomeContent(username: widget.username, userId: widget.userId, email: widget.email,),
-      WalletPage(username: widget.username, userId: widget.userId),
+      WalletPage(username: widget.username, userId: widget.userId, ),
       HistoryPage(username: widget.username, userId: widget.userId),
       ProfilePage(username: widget.username, userId: widget.userId, email: widget.email),
     ];

@@ -22,6 +22,7 @@ class _WalletPageState extends State<WalletPage> {
   double? _lastPaymentAmount; // Store the last payment amount
   final TextEditingController _amountController = TextEditingController(text: '500');
   String? _alertMessage; // Variable to hold the alert message
+  String? _errorMessage;
 
   List<Map<String, dynamic>> transactionDetails = []; // Define transactionDetails
 
@@ -35,14 +36,32 @@ class _WalletPageState extends State<WalletPage> {
     fetchWallet(); // Fetch wallet balance when the page is initialized
     fetchTransactionDetails(); // Fetch transaction details
     _amountController.addListener(() {
-      setState(() {}); // Update the UI whenever the text changes
+      _validateAmount(); // Validate the amount and update the error message
+    });
+  }
+
+  void _validateAmount() {
+    setState(() {
+      // Trigger the custom formatter to handle validation
+      final formatter = CustomTextInputFormatter(
+        _calculateRemainingBalance(),
+            (String? error) {
+          setState(() {
+            _errorMessage = error;
+          });
+        },
+      );
+      formatter.formatEditUpdate(
+        _amountController.value,
+        TextEditingValue(text: _amountController.text),
+      );
     });
   }
 
   @override
   void dispose() {
     _razorpay.clear();
-    _amountController.dispose();
+    _amountController.removeListener(_validateAmount);
     super.dispose();
   }
 
@@ -170,7 +189,7 @@ class _WalletPageState extends State<WalletPage> {
       if (responseData == 1) {
         print('Payment successful!');
         _showPaymentSuccessModal(result);
-        
+
         setState(() {
           fetchWallet(); // Fetch wallet balance after successful payment
           fetchTransactionDetails(); // Fetch transaction details after successful payment
@@ -287,6 +306,14 @@ void _showAlertBanner(String message) {
     );
   }
 
+  double _calculateRemainingBalance() {
+    const double maxLimit = 10000.0; // Maximum wallet balance
+    if (walletBalance != null) {
+      return maxLimit - walletBalance!; // Remaining balance that can be added
+    }
+    return maxLimit;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -351,12 +378,12 @@ void _showAlertBanner(String message) {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Max ₹10,000', // Updated max limit text
+                    'Max ₹10,000',
                     style: TextStyle(fontSize: 14, color: Colors.white70),
                   ),
                   const SizedBox(height: 16),
                   LinearProgressIndicator(
-                    value: _calculateProgress(),
+                    value: walletBalance != null ? _calculateProgress() : 0,
                     color: Colors.orange,
                     backgroundColor: Colors.white12,
                   ),
@@ -375,7 +402,7 @@ void _showAlertBanner(String message) {
                 color: const Color(0xFF1E1E1E),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Column( // Change from Row to Column to stack the TextField and AlertBanner vertically
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -384,17 +411,25 @@ void _showAlertBanner(String message) {
                         child: TextField(
                           controller: _amountController,
                           style: const TextStyle(color: Colors.white, fontSize: 18),
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: 'Enter amount',
                             hintStyle: TextStyle(color: Colors.white54),
+                            errorText: _errorMessage,
                           ),
-                          keyboardType: TextInputType.number,
+                          keyboardType: TextInputType.numberWithOptions(decimal: true),
                           inputFormatters: <TextInputFormatter>[
-                            FilteringTextInputFormatter.digitsOnly,
-                            LimitRangeTextInputFormatter(min: 0, max: 10000), // Restricting the value between 0 and 10000
+                            CustomTextInputFormatter(
+                              _calculateRemainingBalance(),
+                                  (String? error) {
+                                setState(() {
+                                  _errorMessage = error;
+                                });
+                              },
+                            ),
                           ],
                         ),
+
                       ),
                       IconButton(
                         icon: const Icon(Icons.clear, color: Colors.white54),
@@ -405,81 +440,132 @@ void _showAlertBanner(String message) {
                     ],
                   ),
                   if (_alertMessage != null)
-                    AlertBanner(message: _alertMessage!), // Display the alert banner if there's a message
+                    AlertBanner(message: _alertMessage!),
                 ],
               ),
             ),
-
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                     backgroundColor: Colors.white12,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () {
                     _amountController.text = '100';
                   },
-                  child: const Text('₹100', style: TextStyle(color: Colors.white)),
+                  child: const Text('₹ 100', style: TextStyle(color: Colors.white)),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                     backgroundColor: Colors.white12,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () {
                     _amountController.text = '500';
                   },
-                  child: const Text('₹500', style: TextStyle(color: Colors.white)),
+                  child: const Text('₹ 500', style: TextStyle(color: Colors.white)),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                     backgroundColor: Colors.white12,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () {
                     _amountController.text = '1000';
                   },
-                  child: const Text('₹1,000', style: TextStyle(color: Colors.white)),
+                  child: const Text('₹ 1000', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                 backgroundColor: Colors.white12,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () {
-                _amountController.text = '2000';
+                double remainingBalance = _calculateRemainingBalance(); // Calculate remaining balance
+                _amountController.text = remainingBalance.toStringAsFixed(2); // Set the text to the remaining balance
               },
               child: const Text('Maximum', style: TextStyle(color: Colors.white)),
             ),
+
             const SizedBox(height: 24),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: const Color(0xFF1C8B40),
+                backgroundColor: walletBalance != null && walletBalance! >= 10000
+                    ? Colors.grey
+                    : const Color(0xFF1C8B40),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              onPressed: () {
+              onPressed: walletBalance != null && walletBalance! >= 10000
+                  ? null
+                  : () {
                 double amount = double.tryParse(_amountController.text) ?? 0.0;
-                if (amount <= 0) {
-                _showAlertBanner('Amount should not be empty');
+                double totalBalance = (walletBalance ?? 0.0) + amount;
+                double remainingBalance = 10000 - (walletBalance ?? 0.0);
+
+                if (amount <= 0 || totalBalance > 10000) {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false, // Prevent dismissing by tapping outside
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        backgroundColor: const Color(0xFF1E1E1E), // Background color
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.error_outline, color: Colors.red, size: 35),
+                                const SizedBox(width: 10),
+                                const Text(
+                                  "Max Limit Breached",
+                                  style: TextStyle(color: Colors.white,fontSize: 23),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            CustomGradientDivider(), // Custom gradient divider
+                          ],
+                        ),
+                        content: Text(
+                          'The total balance after adding this amount exceeds the maximum limit of ₹10,000. You can only add up to ₹${remainingBalance.toStringAsFixed(2)}.',
+                          style: const TextStyle(color: Colors.white70), // Adjusted text color for contrast
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the dialog
+                            },
+                            child: const Text("OK", style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 } else {
-                  handlePayment(amount);
+                  handlePayment(amount); // Proceed with payment
                 }
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Add ₹${_amountController.text}', style: const TextStyle(color: Colors.white, fontSize: 18)),
+                  Text(
+                    'Add ₹${_amountController.text}',
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                  ),
                 ],
               ),
             ),
@@ -490,6 +576,8 @@ void _showAlertBanner(String message) {
       ),
     );
   }
+
+
 }
 
 class PaymentSuccessModal extends StatelessWidget {
@@ -761,24 +849,73 @@ class HelpModal extends StatelessWidget {
     );
   }
 }
+
+
 class LimitRangeTextInputFormatter extends TextInputFormatter {
-  final int min;
-  final int max;
+  final double min;
+  final double max;
 
   LimitRangeTextInputFormatter({required this.min, required this.max});
 
   @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    if (newValue.text.isEmpty) {
-      return newValue;
-    }
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    String newText = newValue.text;
+    // Remove any commas
+    newText = newText.replaceAll(',', '');
 
-    final int value = int.parse(newValue.text);
-    if (value < min || value > max) {
+    // Check if the input is a valid double
+    double? newValueAsDouble = double.tryParse(newText);
+
+    if (newValueAsDouble == null) {
+      // Return oldValue if the new value is not a valid double
       return oldValue;
     }
 
-    return newValue;
+    // Check if the new value is within the specified range
+    if (newValueAsDouble < min || newValueAsDouble > max) {
+      return oldValue;
+    }
+
+    // Return the new value if it's within the range
+    return newValue.copyWith(text: newText);
+  }
+}
+
+
+class CustomTextInputFormatter extends TextInputFormatter {
+  final double remainingBalance;
+  final void Function(String?) onValidationError;
+
+  CustomTextInputFormatter(this.remainingBalance, this.onValidationError);
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    String newText = newValue.text;
+
+    // Allow empty input
+    if (newText.isEmpty) {
+      onValidationError(null);
+      return newValue;
+    }
+
+    // Allow only valid input with up to two decimal places
+    final RegExp regex = RegExp(r'^\d*\.?\d{0,2}$');
+    if (!regex.hasMatch(newText)) {
+      return oldValue; // Revert to old value if the input is invalid
+    }
+
+    // Parse the new value as double
+    double? newValueDouble = double.tryParse(newText);
+
+    // If new value exceeds the remaining balance, show error and revert to old value
+    if (newValueDouble != null && newValueDouble > remainingBalance) {
+      onValidationError("Enter a value up to ₹${remainingBalance.toStringAsFixed(2)}. Total limit is ₹10000.");
+      return oldValue;
+    } else {
+      // Clear error if valid
+      onValidationError(null);
+    }
+
+    return newValue; // Return the new value if all validations pass
   }
 }
