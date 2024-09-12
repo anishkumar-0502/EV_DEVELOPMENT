@@ -14,6 +14,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui' as ui;
 import 'dart:async';
 import '../../service/location.dart';
+import 'package:intl/intl.dart' as intl;
+
 class HomeContent extends StatefulWidget {
   final String username;
   final int? userId;
@@ -790,7 +792,7 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
 
   try {
     final response = await http.post(
-      Uri.parse('http://122.166.210.142:4444/searchCharger'),
+      Uri.parse('http://122.166.210.142:9098/searchCharger'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'searchChargerID': searchChargerID,
@@ -845,7 +847,7 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
       String searchChargerID, int connectorId, int connectorType) async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
+        Uri.parse('http://122.166.210.142:9098/updateConnectorUser'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -985,7 +987,7 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/getRecentSessionDetails'),
+        Uri.parse('http://122.166.210.142:9098/getRecentSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
@@ -1029,7 +1031,7 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
     try {
       final response = await http.post(
         Uri.parse(
-            'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
+            'http://122.166.210.142:9098/getAllChargersWithStatusAndPrice'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
@@ -1405,6 +1407,14 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
     );
   }
 
+
+
+  String formatTimestamp(String? timestamp) {
+    if (timestamp == null) return 'N/A';
+    return intl.DateFormat('MM/dd/yyyy, hh:mm:ss a').format(DateTime.parse(timestamp).toLocal());
+  }
+
+
   Widget _buildChargerList() {
     return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -1421,7 +1431,8 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                   session['details']['model'] ?? 'Unknown Model',
                   session['status']['charger_status'] ??
                       'Unknown Status',
-                  "1.3 Km",
+                  session['status']['timestamp'] ??
+                      'Unknown time',
                   session['unit_price']?.toString() ?? 'Unknown Price',
                   session['status']['connector_id'] ?? 0,
                   session['details']['charger_accessibility']
@@ -1438,7 +1449,9 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                   status == null
                       ? "Not yet received"  // When status is null
                       : status['charger_status'] ?? 'Unknown Status',
-                  "1.3 Km",
+                  status == null
+                      ? "Not yet received"  // When status is null
+                      : status['timestamp'] ?? 'Unknown time',
                   charger['unit_price']?.toString() ?? 'Unknown Price',
                   status == null
                       ? 0  // Default connector ID when status is null
@@ -1450,16 +1463,19 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
       );
   }
 
+  
   Widget _buildChargerCard(
     BuildContext context,
     String chargerId,
     String model,
     String status,
-    String meter,
+    String time,
     String price,
     int connectorId,
     String accessType,
   ) {
+      String formattedTimestamp = formatTimestamp(time);
+
     Color statusColor;
     IconData statusIcon;
 
@@ -1619,9 +1635,9 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  meter,
+                                  formattedTimestamp,
                                   style: const TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 12,
                                     color: Colors.grey,
                                   ),
                                 ),
