@@ -1437,7 +1437,7 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                   session['status']['connector_id'] ?? 0,
                   session['details']['charger_accessibility']
                           ?.toString() ??
-                      'Unknown',
+                      'Unknown', 
                 ),
             if (!isLoading && activeFilter == 'All Chargers')
             for (var charger in availableChargers)
@@ -1460,8 +1460,8 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                 )
           ],
         ),
-      );
-  }
+      );        
+  }   
 
   
   Widget _buildChargerCard(
@@ -1831,6 +1831,7 @@ class ConnectorSelectionDialog extends StatefulWidget {
   _ConnectorSelectionDialogState createState() =>
       _ConnectorSelectionDialogState();
 }
+
 
 class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
   int? selectedConnector;
