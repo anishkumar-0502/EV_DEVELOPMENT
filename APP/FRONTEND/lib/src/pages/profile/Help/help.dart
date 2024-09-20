@@ -151,7 +151,7 @@ class _HelpPageState extends State<HelpPage> {
 
                       const SizedBox(height: 50),
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 100.0),
+                        padding: const EdgeInsets.only(bottom: 0),
                         child: Center(
                           child: Image.asset(
                             'assets/Image/car-2.png',

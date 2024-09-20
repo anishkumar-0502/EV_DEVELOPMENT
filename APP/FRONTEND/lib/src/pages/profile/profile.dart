@@ -32,7 +32,6 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     // fetchUserDetails();
     email = widget.email;
-    print(email);
     final userImageProvider = Provider.of<UserImageProvider>(context, listen: false);
     userImageProvider.loadImage(); // Load user image when the profile page is initialized
   }
@@ -174,7 +173,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 200, // Increase the width of the container
                             decoration: BoxDecoration(
                               border: Border.all(
-                                width: 2,
+                                width: 0,
 
                               ),
                               borderRadius: BorderRadius.circular(20),

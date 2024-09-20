@@ -19,7 +19,8 @@ import 'package:intl/intl.dart' as intl;
 class HomeContent extends StatefulWidget {
   final String username;
   final int? userId;
-    final String email;
+  final String email;
+
 
 
   const HomeContent({super.key, required this.username, required this.userId, required this.email});
@@ -50,8 +51,9 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   double? _previousBearing;
   bool _isCheckingPermission = false; // Flag to prevent repeated permission checks
   bool LocationEnabled = false;
-  
- @override
+
+
+  @override
   void initState() {
     super.initState();
     _checkLocationPermission(); // Check permissions on initialization
@@ -59,7 +61,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     activeFilter = 'All Chargers';
     fetchAllChargers();
     _startLiveTracking(); // Start live tracking
-}
+  }
 
 
   @override
@@ -70,114 +72,114 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
 
 // Define the method to check and request location permissions
-Future<void> _checkLocationPermission() async {
-  if (_isCheckingPermission) return; // Prevent multiple permission checks
+  Future<void> _checkLocationPermission() async {
+    if (_isCheckingPermission) return; // Prevent multiple permission checks
 
-  _isCheckingPermission = true;
+    _isCheckingPermission = true;
 
-  // Load the saved LocationEnabled value from SharedPreferences
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool locationEnabled = prefs.getBool('LocationEnabled') ?? false;
+    // Load the saved flag from SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool locationPromptClosed = prefs.getBool('LocationPromptClosed') ?? false;
 
-  // If location services have not been enabled in a previous session
-  if (!locationEnabled) {
-    // Check if location services are enabled
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      // Prompt the user to enable location services if disabled
-      await _showLocationServicesDialog();
-
+    // If the user has closed the dialog before, don't show it again
+    if (locationPromptClosed) {
       _isCheckingPermission = false;
       return;
-    } else {
-      // Save that location services have been enabled in SharedPreferences
-      await prefs.setBool('LocationEnabled', true);
     }
-  }
 
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Show the location services dialog
+      await _showLocationServicesDialog();
+      _isCheckingPermission = false;
+      return;
+    }
 
+    // Request location permission
     PermissionStatus permission = await Permission.location.request();
     if (permission.isGranted) {
       await _getCurrentLocation();
+      // Reset the flag, because location is now enabled
+      await prefs.setBool('LocationPromptClosed', false);
     }
 
+    // Do nothing if permission is denied; no alert is shown
     _isCheckingPermission = false;
   }
 
+  Future<void> _getCurrentLocation() async {
+    // If a location fetch is already in progress, don't start a new one
+    if (_isFetchingLocation) return;
 
-Future<void> _getCurrentLocation() async {
-  // If a location fetch is already in progress, don't start a new one
-  if (_isFetchingLocation) return;
+    setState(() {
+      _isFetchingLocation = true;
+    });
 
-  setState(() {
-    _isFetchingLocation = true;
-  });
-
-  try {
-    // Ensure location services are enabled and permission is granted before fetching location
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await _showLocationServicesDialog();
-      return;
-    }
-
-    PermissionStatus permission = await Permission.location.status;
-    if (permission.isDenied) {
-      await _showPermissionDeniedDialog();
-      return;
-    } else if (permission.isPermanentlyDenied) {
-      await _showPermanentlyDeniedDialog();
-      return;
-    }
-
-    // Fetch the current location if permission is granted
-    LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
-
-    if (currentLocation != null) {
-      // Update the current position
-      setState(() {
-        _currentPosition = currentLocation;
-      });
-
-      // Smoothly animate the camera to the new position if the mapController is available
-      if (mapController != null) {
-        await mapController!.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: _currentPosition!,
-              zoom: 18.0, // Adjust zoom level as needed
-              tilt: 45.0, // Add a tilt for a 3D effect
-              bearing: _previousBearing ?? 0, // Use previous bearing if available
-            ),
-          ),
-        );
+    try {
+      // Ensure location services are enabled and permission is granted before fetching location
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await _showLocationServicesDialog();
+        return;
       }
 
-      // Update the current location marker on the map
-      await _updateCurrentLocationMarker(_previousBearing ?? 0);
-    } else {
-      print('Current location could not be determined.');
-    }
-  } catch (e) {
-    print('Error occurred while fetching the current location: $e');
-  } finally {
-    setState(() {
-      _isFetchingLocation = false;
-    });
-  }
-}
+      PermissionStatus permission = await Permission.location.status;
+      if (permission.isDenied) {
+        await _showPermissionDeniedDialog();
+        return;
+      } else if (permission.isPermanentlyDenied) {
+        await _showPermanentlyDeniedDialog();
+        return;
+      }
 
-@override
-void didChangeAppLifecycleState(AppLifecycleState state) async {
-  if (state == AppLifecycleState.resumed && !_isCheckingPermission) {
-    bool isLocationEnabled = await Geolocator.isLocationServiceEnabled();
-    if (isLocationEnabled) {
-      _checkLocationPermission(); // Ensure permission is checked again
-    } else {
-      _showLocationServicesDialog();
+      // Fetch the current location if permission is granted
+      LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
+
+      if (currentLocation != null) {
+        // Update the current position
+        setState(() {
+          _currentPosition = currentLocation;
+        });
+
+        // Smoothly animate the camera to the new position if the mapController is available
+        if (mapController != null) {
+          await mapController!.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: _currentPosition!,
+                zoom: 18.0, // Adjust zoom level as needed
+                tilt: 45.0, // Add a tilt for a 3D effect
+                bearing: _previousBearing ?? 0, // Use previous bearing if available
+              ),
+            ),
+          );
+        }
+
+        // Update the current location marker on the map
+        await _updateCurrentLocationMarker(_previousBearing ?? 0);
+      } else {
+        print('Current location could not be determined.');
+      }
+    } catch (e) {
+      print('Error occurred while fetching the current location: $e');
+    } finally {
+      setState(() {
+        _isFetchingLocation = false;
+      });
     }
   }
-}
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.resumed && !_isCheckingPermission) {
+      bool isLocationEnabled = await Geolocator.isLocationServiceEnabled();
+      if (isLocationEnabled) {
+        _checkLocationPermission(); // Ensure permission is checked again
+      } else {
+        _showLocationServicesDialog();
+      }
+    }
+  }
 
 
 
@@ -195,7 +197,7 @@ void didChangeAppLifecycleState(AppLifecycleState state) async {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(Icons.location_on, color: Colors.red, size: 35),
                   SizedBox(width: 10),
@@ -212,22 +214,26 @@ void didChangeAppLifecycleState(AppLifecycleState state) async {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               CustomGradientDivider(), // Custom gradient divider
             ],
           ),
-          content: Text(
+          content: const Text(
             'Location services are required to use this feature. Please enable location services in your phone settings.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
           ),
           actions: <Widget>[
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                // Save the flag to not show the dialog again
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('LocationPromptClosed', true);
+
                 Navigator.of(context).pop(); // Close the dialog
               },
               child: const Text(
-                "Cancel",
+                "Close",
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -241,12 +247,12 @@ void didChangeAppLifecycleState(AppLifecycleState state) async {
                 style: TextStyle(color: Colors.blue),
               ),
             ),
-
           ],
         );
       },
     );
   }
+
 
   Future<void> _showPermissionDeniedDialog() async {
     return showDialog(
@@ -261,7 +267,7 @@ void didChangeAppLifecycleState(AppLifecycleState state) async {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(Icons.location_on, color: Colors.red, size: 35),
                   SizedBox(width: 10),
@@ -278,11 +284,11 @@ void didChangeAppLifecycleState(AppLifecycleState state) async {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               CustomGradientDivider(), // Custom gradient divider
             ],
           ),
-          content: Text(
+          content: const Text(
             'This app requires location permissions to function correctly. Please grant location permissions in settings.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
@@ -327,7 +333,7 @@ void didChangeAppLifecycleState(AppLifecycleState state) async {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(Icons.warning, color: Colors.red, size: 35),
                   SizedBox(width: 10),
@@ -344,11 +350,11 @@ void didChangeAppLifecycleState(AppLifecycleState state) async {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               CustomGradientDivider(), // Custom gradient divider
             ],
           ),
-          content: Text(
+          content: const Text(
             'Location permissions are permanently denied. Please enable them in the app settings.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
@@ -382,14 +388,6 @@ void didChangeAppLifecycleState(AppLifecycleState state) async {
 
 
 
-void _reloadPage() {
-  setState(() {
-    // Update the state to trigger a reload of the HomeContent
-    initState(); // Fetch chargers again if necessary
-  });
-}
-
-
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
     mapController = controller;
@@ -406,142 +404,142 @@ void _reloadPage() {
     }
   }
 
-Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
-  setState(() {
-    _selectedPosition = position;
-    areMapButtonsEnabled = true;
-  });
+  Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
+    setState(() {
+      _selectedPosition = position;
+      areMapButtonsEnabled = true;
+    });
 
-  // Smoothly animate the camera to the selected marker
-  await _smoothlyMoveCamera(position);
+    // Smoothly animate the camera to the selected marker
+    await _smoothlyMoveCamera(position);
 
-  // Change the marker icon to the selected icon
-  BitmapDescriptor newIcon =
-      await _getIconFromAsset('assets/icons/EV_location_green.png');
-  BitmapDescriptor defaultIcon =
-      await _getIconFromAssetred('assets/icons/EV_location_red.png');
-
-  setState(() {
-    // Revert the previous marker icon to default if it exists
-    if (_previousMarkerId != null) {
-      _markers = _markers.map((marker) {
-        if (marker.markerId == _previousMarkerId) {
-          return marker.copyWith(iconParam: defaultIcon);
-        }
-        return marker;
-      }).toSet();
-    }
-
-    // Update the icon for the newly selected marker
-    _markers = _markers.map((marker) {
-      if (marker.markerId == markerId) {
-        _previousMarkerId = marker.markerId;
-        return marker.copyWith(iconParam: newIcon);
-      }
-      return marker;
-    }).toSet();
-  });
-}
-
-/// Function to move the camera smoothly to a new position
-Future<void> _smoothlyMoveCamera(LatLng newPosition) async {
-  if (mapController != null && _currentPosition != null) {
-    LatLng startPosition = _currentPosition!;
-    LatLng endPosition = newPosition;
-
-    double totalSteps = 50; // The number of steps for smooth movement
-    double stepDuration = 100; // Duration in milliseconds between each step
-
-    for (int i = 1; i <= totalSteps; i++) {
-      double latitude = startPosition.latitude +
-          (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
-      double longitude = startPosition.longitude +
-          (endPosition.longitude - startPosition.longitude) * (i / totalSteps);
-      LatLng intermediatePosition = LatLng(latitude, longitude);
-
-      await mapController!.animateCamera(
-        CameraUpdate.newLatLng(intermediatePosition),
-      );
-
-      await Future.delayed(Duration(milliseconds: stepDuration.toInt()));
-    }
-  }
-}
-Future<void> _smoothlyMoveCameraForChargerMarker(LatLng startPosition, LatLng endPosition) async {
-  if (mapController != null) {
-    double totalSteps = 25; // Number of animation steps for smooth movement
-    double stepDuration = 80; // Duration between steps in milliseconds
-
-    for (int i = 1; i <= totalSteps; i++) {
-      double latitude = startPosition.latitude +
-          (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
-      double longitude = startPosition.longitude +
-          (endPosition.longitude - startPosition.longitude) * (i / totalSteps);
-      LatLng intermediatePosition = LatLng(latitude, longitude);
-
-      await mapController!.animateCamera(
-        CameraUpdate.newLatLng(intermediatePosition),
-      );
-
-      await Future.delayed(Duration(milliseconds: stepDuration.toInt()));
-    }
-
-    // Once the camera reaches the destination, rotate the camera first
-    await mapController!.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: endPosition,
-          zoom: 16.0, // Set an initial zoom level before zooming in further
-          bearing: 90.0, // Rotate the camera to 90 degrees
-          tilt: 0, // Keep the tilt at 0 initially
-        ),
-      ),
-    );
-
-    // Small delay to simulate the effect of rotating the camera
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    // After rotating the camera, now zoom in and tilt for the final effect
-    await mapController!.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: endPosition,
-          zoom: 18.0, // Final zoom level
-          tilt: 45.0, // Tilt for a 3D effect
-          bearing: 90.0, // Keep the same bearing after rotation
-        ),
-      ),
-    );
-  }
-}
-
-
-
-void _onMapTapped(LatLng position) async {
-  setState(() {
-    areMapButtonsEnabled = false;
-  });
-
-  if (_previousMarkerId != null) {
-    // Load the custom red icon
-    BitmapDescriptor defaultIcon = await _getIconFromAssetred('assets/icons/EV_location_red.png');
+    // Change the marker icon to the selected icon
+    BitmapDescriptor newIcon =
+    await _getIconFromAsset('assets/icons/EV_location_green.png');
+    BitmapDescriptor defaultIcon =
+    await _getIconFromAssetred('assets/icons/EV_location_red.png');
 
     setState(() {
-      // Update the marker with the red icon
+      // Revert the previous marker icon to default if it exists
+      if (_previousMarkerId != null) {
+        _markers = _markers.map((marker) {
+          if (marker.markerId == _previousMarkerId) {
+            return marker.copyWith(iconParam: defaultIcon);
+          }
+          return marker;
+        }).toSet();
+      }
+
+      // Update the icon for the newly selected marker
       _markers = _markers.map((marker) {
-        if (marker.markerId == _previousMarkerId) {
-          return marker.copyWith(
-            iconParam: defaultIcon,
-          );
+        if (marker.markerId == markerId) {
+          _previousMarkerId = marker.markerId;
+          return marker.copyWith(iconParam: newIcon);
         }
         return marker;
       }).toSet();
-
-      // Reset the previous marker ID
-      _previousMarkerId = null;
     });
   }
-}
+
+  /// Function to move the camera smoothly to a new position
+  Future<void> _smoothlyMoveCamera(LatLng newPosition) async {
+    if (mapController != null && _currentPosition != null) {
+      LatLng startPosition = _currentPosition!;
+      LatLng endPosition = newPosition;
+
+      double totalSteps = 50; // The number of steps for smooth movement
+      double stepDuration = 100; // Duration in milliseconds between each step
+
+      for (int i = 1; i <= totalSteps; i++) {
+        double latitude = startPosition.latitude +
+            (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
+        double longitude = startPosition.longitude +
+            (endPosition.longitude - startPosition.longitude) * (i / totalSteps);
+        LatLng intermediatePosition = LatLng(latitude, longitude);
+
+        await mapController!.animateCamera(
+          CameraUpdate.newLatLng(intermediatePosition),
+        );
+
+        await Future.delayed(Duration(milliseconds: stepDuration.toInt()));
+      }
+    }
+  }
+  Future<void> _smoothlyMoveCameraForChargerMarker(LatLng startPosition, LatLng endPosition) async {
+    if (mapController != null) {
+      double totalSteps = 25; // Number of animation steps for smooth movement
+      double stepDuration = 80; // Duration between steps in milliseconds
+
+      for (int i = 1; i <= totalSteps; i++) {
+        double latitude = startPosition.latitude +
+            (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
+        double longitude = startPosition.longitude +
+            (endPosition.longitude - startPosition.longitude) * (i / totalSteps);
+        LatLng intermediatePosition = LatLng(latitude, longitude);
+
+        await mapController!.animateCamera(
+          CameraUpdate.newLatLng(intermediatePosition),
+        );
+
+        await Future.delayed(Duration(milliseconds: stepDuration.toInt()));
+      }
+
+      // Once the camera reaches the destination, rotate the camera first
+      await mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: endPosition,
+            zoom: 16.0, // Set an initial zoom level before zooming in further
+            bearing: 90.0, // Rotate the camera to 90 degrees
+            tilt: 0, // Keep the tilt at 0 initially
+          ),
+        ),
+      );
+
+      // Small delay to simulate the effect of rotating the camera
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // After rotating the camera, now zoom in and tilt for the final effect
+      await mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: endPosition,
+            zoom: 18.0, // Final zoom level
+            tilt: 45.0, // Tilt for a 3D effect
+            bearing: 90.0, // Keep the same bearing after rotation
+          ),
+        ),
+      );
+    }
+  }
+
+
+
+  void _onMapTapped(LatLng position) async {
+    setState(() {
+      areMapButtonsEnabled = false;
+    });
+
+    if (_previousMarkerId != null) {
+      // Load the custom red icon
+      BitmapDescriptor defaultIcon = await _getIconFromAssetred('assets/icons/EV_location_red.png');
+
+      setState(() {
+        // Update the marker with the red icon
+        _markers = _markers.map((marker) {
+          if (marker.markerId == _previousMarkerId) {
+            return marker.copyWith(
+              iconParam: defaultIcon,
+            );
+          }
+          return marker;
+        }).toSet();
+
+        // Reset the previous marker ID
+        _previousMarkerId = null;
+      });
+    }
+  }
 
 
   Future<BitmapDescriptor> _getIconWithOutline(
@@ -607,7 +605,7 @@ void _onMapTapped(LatLng position) async {
 
     // Convert the image to bytes
     final ByteData? resizedByteData =
-        await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
+    await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
     final Uint8List resizedBytes = resizedByteData!.buffer.asUint8List();
 
     return BitmapDescriptor.fromBytes(resizedBytes);
@@ -628,7 +626,7 @@ void _onMapTapped(LatLng position) async {
 
     // Convert the image to bytes
     final ByteData? resizedByteData =
-        await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
+    await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
     final Uint8List resizedBytes = resizedByteData!.buffer.asUint8List();
 
     return BitmapDescriptor.fromBytes(resizedBytes);
@@ -646,8 +644,8 @@ void _onMapTapped(LatLng position) async {
       ..strokeWidth = 4.0;
 
     // Draw the circle for location
-    canvas.drawCircle(Offset(radius, radius), radius, fillPaint);
-    canvas.drawCircle(Offset(radius, radius), radius, strokePaint);
+    canvas.drawCircle(const Offset(radius, radius), radius, fillPaint);
+    canvas.drawCircle(const Offset(radius, radius), radius, strokePaint);
 
     // Draw the directional pointer
     final Path arrowPath = Path()
@@ -666,35 +664,35 @@ void _onMapTapped(LatLng position) async {
 
     final picture = pictureRecorder.endRecording();
     final img =
-        await picture.toImage((radius * 2).toInt(), (radius * 2).toInt());
+    await picture.toImage((radius * 2).toInt(), (radius * 2).toInt());
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
     final buffer = byteData!.buffer.asUint8List();
 
     return BitmapDescriptor.fromBytes(buffer);
   }
-  
+
   Future<BitmapDescriptor> _createCurrentLocationMarkerIcon(double bearing) async {
-  final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
-  final Canvas canvas = Canvas(pictureRecorder);
-  const double size = 150.0; // Adjust size as needed
-  print("_createCurrentLocationMarkerIcon: $bearing");
-  // Create the custom marker using CurrentLocationMarkerPainter
-  final CurrentLocationMarkerPainter painter = CurrentLocationMarkerPainter(
-    bearing: bearing,
-    animatedRadius: 80.0 , // Provide a fixed value for animatedRadius
-  );
-  
-  painter.paint(canvas, Size(size, size));
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(pictureRecorder);
+    const double size = 150.0; // Adjust size as needed
+    print("_createCurrentLocationMarkerIcon: $bearing");
+    // Create the custom marker using CurrentLocationMarkerPainter
+    final CurrentLocationMarkerPainter painter = CurrentLocationMarkerPainter(
+      bearing: bearing,
+      animatedRadius: 80.0 , // Provide a fixed value for animatedRadius
+    );
 
-  final ui.Image image = await pictureRecorder
-      .endRecording()
-      .toImage(size.toInt(), size.toInt());
-  final ByteData? byteData =
-      await image.toByteData(format: ui.ImageByteFormat.png);
-  final Uint8List imageData = byteData!.buffer.asUint8List();
+    painter.paint(canvas, const Size(size, size));
 
-  return BitmapDescriptor.fromBytes(imageData);
-}
+    final ui.Image image = await pictureRecorder
+        .endRecording()
+        .toImage(size.toInt(), size.toInt());
+    final ByteData? byteData =
+    await image.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List imageData = byteData!.buffer.asUint8List();
+
+    return BitmapDescriptor.fromBytes(imageData);
+  }
 
   // Update the markers function
   void _updateMarkers() async {
@@ -721,38 +719,38 @@ void _onMapTapped(LatLng position) async {
     }
 
 
-  // Continue updating charger markers only if the position has changed
-  for (var charger in availableChargers) {
-    final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
-    final lat = charger['lat'] != null ? double.tryParse(charger['lat']) : null;
-    final lng = charger['long'] != null ? double.tryParse(charger['long']) : null;
+    // Continue updating charger markers only if the position has changed
+    for (var charger in availableChargers) {
+      final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
+      final lat = charger['lat'] != null ? double.tryParse(charger['lat']) : null;
+      final lng = charger['long'] != null ? double.tryParse(charger['long']) : null;
 
-    if (lat != null && lng != null) {
-      // Check if the charger location has changed
-      if (_previousPosition != null && lat == _previousPosition!.latitude && lng == _previousPosition!.longitude) {
-        continue; // Skip if position hasn't changed
-      }
+      if (lat != null && lng != null) {
+        // Check if the charger location has changed
+        if (_previousPosition != null && lat == _previousPosition!.latitude && lng == _previousPosition!.longitude) {
+          continue; // Skip if position hasn't changed
+        }
 
-      BitmapDescriptor chargerIcon = await _getIconFromAssetred('assets/icons/EV_location_red.png');
-      setState(() {
-        _markers.add(
-          Marker(
-            markerId: MarkerId(chargerId),
-            position: LatLng(lat, lng),
-            icon: chargerIcon,
-            infoWindow: InfoWindow(
-              title: charger['model'] ?? 'Unknown Model',
-              snippet: chargerId,
+        BitmapDescriptor chargerIcon = await _getIconFromAssetred('assets/icons/EV_location_red.png');
+        setState(() {
+          _markers.add(
+            Marker(
+              markerId: MarkerId(chargerId),
+              position: LatLng(lat, lng),
+              icon: chargerIcon,
+              infoWindow: InfoWindow(
+                title: charger['model'] ?? 'Unknown Model',
+                snippet: chargerId,
+              ),
+              onTap: () {
+                _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
+              },
             ),
-            onTap: () {
-              _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
-            },
-          ),
-        );
-      });
+          );
+        });
+      }
     }
   }
-}
 
   Future<BitmapDescriptor> _getIconFromFlutterIcon(
       IconData iconData, Color color, double size) async {
@@ -770,7 +768,7 @@ void _onMapTapped(LatLng position) async {
       )
       ..layout();
 
-    textPainter.paint(canvas, Offset(0, 0));
+    textPainter.paint(canvas, const Offset(0, 0));
     final picture = pictureRecorder.endRecording();
     final img = await picture.toImage(size.toInt(), size.toInt());
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
@@ -778,76 +776,89 @@ void _onMapTapped(LatLng position) async {
 
     return BitmapDescriptor.fromBytes(buffer);
   }
+  Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async {
+    if (isSearching) return null;
+    print("response: handleSearchRequest");
 
-Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async {
-  if (isSearching) return null;
-  if (searchChargerID.isEmpty) {
-    showErrorDialog(context, 'Please enter a charger ID.');
-    return {'error': true, 'message': 'Charger ID is empty'};
+    if (searchChargerID.isEmpty) {
+      showErrorDialog(context, 'Please enter a charger ID.');
+      return {'error': true, 'message': 'Charger ID is empty'};
+    }
+
+    setState(() {
+      isSearching = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://122.166.210.142:4444/searchCharger'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'searchChargerID': searchChargerID,
+          'Username': widget.username,
+          'user_id': widget.userId,
+        }),
+      );
+
+      // Delay to keep the loading indicator visible
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          this.searchChargerID = searchChargerID;
+          isSearching = false;
+        });
+
+        await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          isDismissible: false,
+          enableDrag: false,
+          backgroundColor: Colors.black,
+          builder: (BuildContext context) {
+            return Padding(
+              padding: MediaQuery.of(context).viewInsets,
+              child: ConnectorSelectionDialog(
+                chargerData: data['socketGunConfig'] ?? {},
+                onConnectorSelected: (connectorId, connectorType) {
+                  updateConnectorUser(searchChargerID, connectorId, connectorType);
+                },
+              ),
+            );
+          },
+        );
+        return data; // Return the successful response data
+      } else {
+        final errorData = json.decode(response.body);
+        showErrorDialog(context, errorData['message']);
+        setState(() {
+          isSearching = false;
+        });
+        return {'error': true, 'message': errorData['message']};
+      }
+    } catch (error) {
+      showErrorDialog(context, 'Internal server error');
+      return {'error': true, 'message': 'Internal server error'};
+    } finally {
+      setState(() {
+        isSearching = false;
+      });
+    }
   }
 
-  setState(() {
-    isSearching = true;
-  });
 
-  try {
-    final response = await http.post(
-      Uri.parse('http://122.166.210.142:9098/searchCharger'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'searchChargerID': searchChargerID,
-        'Username': widget.username,
-        'user_id': widget.userId,
-      }),
-    );
+  Future<void> updateConnectorUser(
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        this.searchChargerID = searchChargerID;
-      });
+      String searchChargerID, int connectorId, int connectorType) async {
 
-      await showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        isDismissible: false,
-        enableDrag: false,
-        backgroundColor: Colors.black,
-        builder: (BuildContext context) {
-          return Padding(
-            padding: MediaQuery.of(context).viewInsets,
-            child: ConnectorSelectionDialog(
-              chargerData: data['socketGunConfig'] ?? {},
-              onConnectorSelected: (connectorId, connectorType) {
-                updateConnectorUser(
-                    searchChargerID, connectorId, connectorType);
-              },
-            ),
-          );
-        },
-      );
-      return data; // Return the successful response data
-    } else {
-      final errorData = json.decode(response.body);
-      showErrorDialog(context, errorData['message']);
-      print(errorData['message'] );
-      return {'error': true, 'message': errorData['message']};
-    }
-  } catch (error) {
-    showErrorDialog(context, 'Internal server error ');
-    return {'error': true, 'message': 'Internal server error'};
-  } finally {
     setState(() {
       isSearching = false;
     });
-  }
-}
 
-  Future<void> updateConnectorUser(
-      String searchChargerID, int connectorId, int connectorType) async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/updateConnectorUser'),
+        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -867,7 +878,7 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
               username: widget.username,
               userId: widget.userId,
               connector_id: connectorId,
-              connector_type: connectorType, 
+              connector_type: connectorType,
               email: widget.email,
             ),
           ),
@@ -881,7 +892,10 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
     }
   }
 
+
   void navigateToQRViewExample() async {
+
+
     // Check camera permission
     bool hasPermission = await Permission.camera.isGranted;
 
@@ -894,30 +908,35 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
             handleSearchRequestCallback: handleSearchRequest,
             username: widget.username,
             userId: widget.userId,
+
           ),
         ),
       );
 
+
+
       if (scannedCode != null) {
         setState(() {
           searchChargerID = scannedCode;
+          isSearching = false;
         });
       }
     } else {
+
       // Show a custom dialog if permission is not granted
       showDialog(
         context: context,
-        barrierDismissible: false, // Prevent closing by tapping outside
+        barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: const Color(0xFF1E1E1E), // Dark theme background
+            backgroundColor: const Color(0xFF1E1E1E),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
             ),
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                const Row(
                   children: [
                     Icon(Icons.camera_alt, color: Colors.blue, size: 35),
                     SizedBox(width: 10),
@@ -927,11 +946,11 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
                     ),
                   ],
                 ),
-                SizedBox(height: 10),
-                CustomGradientDivider(), // Inserted Custom Gradient Divider
+                const SizedBox(height: 10),
+                CustomGradientDivider(),
               ],
             ),
-            content: Column(
+            content: const Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
@@ -944,14 +963,14 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
             actions: <Widget>[
               TextButton(
                 onPressed: () {
-                  openAppSettings(); // Open app settings
-                  Navigator.of(context).pop(); // Close the dialog
+                  openAppSettings();
+                  Navigator.of(context).pop();
                 },
                 child: const Text("Settings", style: TextStyle(color: Colors.blue)),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
+                  Navigator.of(context).pop();
                 },
                 child: const Text("Cancel", style: TextStyle(color: Colors.white)),
               ),
@@ -987,14 +1006,14 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/getRecentSessionDetails'),
+        Uri.parse('http://122.166.210.142:4444/getRecentSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
         }),
       );
-        final data = json.decode(response.body);
-        print("Prev: $data");
+      final data = json.decode(response.body);
+      print("Prev: $data");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -1031,14 +1050,14 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
     try {
       final response = await http.post(
         Uri.parse(
-            'http://122.166.210.142:9098/getAllChargersWithStatusAndPrice'),
+            'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
         }),
       );
-        final data = json.decode(response.body);
-        print("datas: $data");
+      final data = json.decode(response.body);
+      print("datas: $data");
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -1089,7 +1108,7 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
         rotation * 3.1415927 / 180); // Rotate the canvas to the given bearing
     canvas.translate(-size / 2, -size / 2); // Move back the origin
 
-    textPainter.paint(canvas, Offset(0, 0));
+    textPainter.paint(canvas, const Offset(0, 0));
     canvas.restore();
 
     final picture = pictureRecorder.endRecording();
@@ -1100,385 +1119,381 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
     return BitmapDescriptor.fromBytes(buffer);
   }
   Future<BitmapDescriptor> _getDirectionMarker(double bearing) async {
-  const double size = 100.0; // Size of the icon
-  final pictureRecorder = ui.PictureRecorder();
-  final canvas = Canvas(pictureRecorder);
+    const double size = 100.0; // Size of the icon
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
 
-  // Load the image from assets
-  final ByteData imageData = await rootBundle.load('assets/arrow.png');
-  final ui.Image image = await loadImageFromBytes(imageData.buffer.asUint8List());
+    // Load the image from assets
+    final ByteData imageData = await rootBundle.load('assets/arrow.png');
+    final ui.Image image = await loadImageFromBytes(imageData.buffer.asUint8List());
 
-  // Adjust the center point based on the arrow's orientation
-  final double offsetX = size * 0.25; // 25% from the left
-  final double offsetY = size * 0.75; // 75% from the top
+    // Adjust the center point based on the arrow's orientation
+    final double offsetX = size * 0.25; // 25% from the left
+    final double offsetY = size * 0.75; // 75% from the top
 
-  // Draw the image on the canvas
-  canvas.save();
-  canvas.translate(offsetX, offsetY); // Move origin to the adjusted center
-  canvas.rotate(bearing * 3.1415927 / 180); // Rotate according to bearing
-  canvas.translate(-offsetX, -offsetY); // Move back origin
+    // Draw the image on the canvas
+    canvas.save();
+    canvas.translate(offsetX, offsetY); // Move origin to the adjusted center
+    canvas.rotate(bearing * 3.1415927 / 180); // Rotate according to bearing
+    canvas.translate(-offsetX, -offsetY); // Move back origin
 
-  // Draw the image with the same size as the canvas
-  canvas.drawImageRect(
-    image,
-    Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-    Rect.fromLTWH(0, 0, size, size),
-    Paint(),
-  );
+    // Draw the image with the same size as the canvas
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+      const Rect.fromLTWH(0, 0, size, size),
+      Paint(),
+    );
 
-  canvas.restore();
+    canvas.restore();
 
-  final picture = pictureRecorder.endRecording();
-  final img = await picture.toImage(size.toInt(), size.toInt());
-  final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-  final buffer = byteData!.buffer.asUint8List();
+    final picture = pictureRecorder.endRecording();
+    final img = await picture.toImage(size.toInt(), size.toInt());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final buffer = byteData!.buffer.asUint8List();
 
-  return BitmapDescriptor.fromBytes(buffer);
-}
+    return BitmapDescriptor.fromBytes(buffer);
+  }
 
 
 // Helper function to load an image from bytes
-Future<ui.Image> loadImageFromBytes(Uint8List imgBytes) async {
-  final Completer<ui.Image> completer = Completer();
-  ui.decodeImageFromList(imgBytes, (ui.Image img) {
-    return completer.complete(img);
-  });
-  return completer.future;
-}
+  Future<ui.Image> loadImageFromBytes(Uint8List imgBytes) async {
+    final Completer<ui.Image> completer = Completer();
+    ui.decodeImageFromList(imgBytes, (ui.Image img) {
+      return completer.complete(img);
+    });
+    return completer.future;
+  }
 
-void _startLiveTracking() {
-  // Cancel any existing subscription to prevent memory leaks
-  _positionStreamSubscription?.cancel();
+  void _startLiveTracking() {
+    // Cancel any existing subscription to prevent memory leaks
+    _positionStreamSubscription?.cancel();
 
-  // Set up the position stream subscription
-  _positionStreamSubscription = Geolocator.getPositionStream(
-    locationSettings: const LocationSettings(
-      accuracy: LocationAccuracy.bestForNavigation,
-      distanceFilter: 0, // Receive updates for any movement
-    ),
-  ).listen((Position position) async {
-    final LatLng newPosition = LatLng(position.latitude, position.longitude);
-    final double newBearing = position.heading;
+    // Set up the position stream subscription
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        distanceFilter: 0, // Receive updates for any movement
+      ),
+    ).listen((Position position) async {
+      final LatLng newPosition = LatLng(position.latitude, position.longitude);
+      final double newBearing = position.heading;
 
-    // Update the current position and marker if there's a significant change
-    if (_hasSignificantChange(newPosition, newBearing)) {
-      _currentPosition = newPosition;
-      _previousPosition = newPosition;
-      _previousBearing = newBearing;
+      // Update the current position and marker if there's a significant change
+      if (_hasSignificantChange(newPosition, newBearing)) {
+        _currentPosition = newPosition;
+        _previousPosition = newPosition;
+        _previousBearing = newBearing;
 
-      await _updateCurrentLocationMarker(newBearing);
-      
-    }
-  }, onError: (error) {
-    print('Error in live tracking: $error');
-  });
-}
+        await _updateCurrentLocationMarker(newBearing);
+
+      }
+    }, onError: (error) {
+      print('Error in live tracking: $error');
+    });
+  }
 
 // Function to check if there's a significant change
-bool _hasSignificantChange(LatLng newPosition, double newBearing) {
-  const double bearingThreshold = 5.0; // Minimum change in degrees to update
-  const double distanceThreshold = 0.0001; // Minimum change in distance (in degrees) to update
+  bool _hasSignificantChange(LatLng newPosition, double newBearing) {
+    const double bearingThreshold = 5.0; // Minimum change in degrees to update
+    const double distanceThreshold = 0.0001; // Minimum change in distance (in degrees) to update
 
-  final double bearingChange = (_previousBearing != null)
-      ? (newBearing - _previousBearing!).abs()
-      : double.infinity;
-  final double distanceChange = (_previousPosition != null)
-      ? Geolocator.distanceBetween(
-              _previousPosition!.latitude,
-              _previousPosition!.longitude,
-              newPosition.latitude,
-              newPosition.longitude) /
-          1000
-      : double.infinity;
+    final double bearingChange = (_previousBearing != null)
+        ? (newBearing - _previousBearing!).abs()
+        : double.infinity;
+    final double distanceChange = (_previousPosition != null)
+        ? Geolocator.distanceBetween(
+        _previousPosition!.latitude,
+        _previousPosition!.longitude,
+        newPosition.latitude,
+        newPosition.longitude) /
+        1000
+        : double.infinity;
 
-  return bearingChange > bearingThreshold || distanceChange > distanceThreshold;
-}
+    return bearingChange > bearingThreshold || distanceChange > distanceThreshold;
+  }
 
-Future<void> _updateCurrentLocationMarker(double bearing) async {
-  // Create a custom icon that reflects the current bearing
-  final currentLocationIcon = await _createCurrentLocationMarkerIcon(bearing);
-  print("_updateCurrentLocationMarker: $currentLocationIcon ");
-  setState(() {
-    // Remove any previous marker for the current location
-    _markers.removeWhere((marker) => marker.markerId.value == 'current_location');
+  Future<void> _updateCurrentLocationMarker(double bearing) async {
+    // Create a custom icon that reflects the current bearing
+    final currentLocationIcon = await _createCurrentLocationMarkerIcon(bearing);
+    print("_updateCurrentLocationMarker: $currentLocationIcon ");
+    setState(() {
+      // Remove any previous marker for the current location
+      _markers.removeWhere((marker) => marker.markerId.value == 'current_location');
 
-    // Add a new marker with the updated location and rotation
-    _markers.add(
-      Marker(
-        markerId: const MarkerId('current_location'),
-        position: _currentPosition!,
-        icon: currentLocationIcon,
-        rotation: bearing,
-        anchor: const Offset(0.5, 0.5), // Center the icon
-      ),
-    );
-  });
-}
+      // Add a new marker with the updated location and rotation
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('current_location'),
+          position: _currentPosition!,
+          icon: currentLocationIcon,
+          rotation: bearing,
+          anchor: const Offset(0.5, 0.5), // Center the icon
+        ),
+      );
+    });
+  }
 
   @override
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: GoogleMap(
-              key: _mapKey, // Assign GlobalKey to GoogleMap
-              onMapCreated: _onMapCreated,
-              initialCameraPosition: CameraPosition(
-                target: _currentPosition ?? _center,
-                zoom: 16.0,
-              ),
-              markers: _markers,
-              zoomControlsEnabled: false,
-              myLocationEnabled: false,
-              myLocationButtonEnabled: false,
-              mapToolbarEnabled: false,
-              compassEnabled: false,
-              onTap: _onMapTapped,
-            ),
-          ),
-
-  
-
-          Positioned(
-            bottom: 250,
-            right: 10,
-            child: FloatingActionButton(
-              backgroundColor: const Color.fromARGB(227, 76, 175, 79),
-              onPressed: _getCurrentLocation,
-              child: const Icon(Icons.my_location, color: Colors.white),
-            ),
-          ),
-          Column(
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.only(top: 40.0, left: 16.0, right: 16.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onSubmitted: (value) {
-                          handleSearchRequest(value);
-                        },
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: const Color(0xFF0E0E0E),
-                          hintText: 'Search ChargerId...',
-                          hintStyle: const TextStyle(color: Colors.white70),
-                          prefixIcon: const Icon(Icons.search, color: Colors.white),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30.0),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'[a-zA-Z0-9]'), // Allow only alphabets and numbers
-                        ),
-                        FilteringTextInputFormatter.deny(
-                          RegExp(r'\s'), // Disallow spaces
-                        ),
-                      ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0E0E0E),
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.qr_code,
-                            color: Colors.white, size: 30),
-                        onPressed: () {
-                          navigateToQRViewExample();
-                        },
-                      ),
-                    ),
-                  ],
+    return LoadingOverlay(
+      showAlertLoading: isSearching,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: GoogleMap(
+                key: _mapKey,
+                onMapCreated: _onMapCreated,
+                initialCameraPosition: CameraPosition(
+                  target: _currentPosition ?? _center,
+                  zoom: 16.0,
                 ),
+                markers: _markers,
+                zoomControlsEnabled: false,
+                myLocationEnabled: false,
+                myLocationButtonEnabled: false,
+                mapToolbarEnabled: false,
+                compassEnabled: false,
+                onTap: _onMapTapped,
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 10.0),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+            ),
+            Positioned(
+              bottom: 250,
+              right: 10,
+              child: FloatingActionButton(
+                backgroundColor: const Color.fromARGB(227, 76, 175, 79),
+                onPressed: _getCurrentLocation,
+                child: const Icon(Icons.my_location, color: Colors.white),
+              ),
+            ),
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 40.0, left: 16.0, right: 16.0),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: activeFilter == 'All Chargers'
-                              ? Colors.blue
-                              : const Color(0xFF0E0E0E),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          onSubmitted: (value) {
+                            handleSearchRequest(value);
+                          },
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFF0E0E0E),
+                            hintText: 'Search ChargerId...',
+                            hintStyle: const TextStyle(color: Colors.white70),
+                            prefixIcon: const Icon(Icons.search, color: Colors.white),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30.0),
+                              borderSide: BorderSide.none,
+                            ),
                           ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[a-zA-Z0-9]'), // Allow only alphabets and numbers
+                            ),
+                            FilteringTextInputFormatter.deny(
+                              RegExp(r'\s'), // Disallow spaces
+                            ),
+                          ],
                         ),
-                        onPressed: () {
-                          setState(() {
-                            activeFilter = 'All Chargers';
-                          });
-                          fetchAllChargers();
-                        },
-                        icon: const Icon(Icons.ev_station, color: Colors.white),
-                        label: const Text('All Chargers',
-                            style: TextStyle(color: Colors.white)),
                       ),
                       const SizedBox(width: 10),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: activeFilter == 'Previously Used'
-                              ? Colors.blue
-                              : const Color(0xFF0E0E0E),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0E0E0E),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        onPressed: () {
-                          setState(() {
-                            activeFilter = 'Previously Used';
-                          });
-                          fetchRecentSessionDetails();
-                        },
-                        icon: const Icon(Icons.history, color: Colors.white),
-                        label: const Text('Previously Used',
-                            style: TextStyle(color: Colors.white)),
+                        child: IconButton(
+                          icon: const Icon(Icons.qr_code, color: Colors.white, size: 30),
+                          onPressed: () {
+                            navigateToQRViewExample();
+                          },
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              const Spacer(),
-              _buildChargerList(),
-              const SizedBox(height: 28),
-            ],
-          ),
-          Positioned(
-            bottom: 250,
-            right: 10,
-            child: FloatingActionButton(
-              backgroundColor:  const Color.fromARGB(227, 76, 175, 79),
-              onPressed: _getCurrentLocation,
-              child: const Icon(Icons.my_location, color: Colors.white),
-            ),
-          ),
-          Positioned(
-            top: 170,
-            right: 10,
-            child: Column(
-              children: [
-                FloatingActionButton(
-                  heroTag: 'zoom_in',
-                  backgroundColor: Colors.black,
-                  onPressed: () {
-                    mapController?.animateCamera(CameraUpdate.zoomIn());
-                  },
-                  child: const Icon(Icons.zoom_in_map_rounded,
-                      color: Colors.white),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: activeFilter == 'All Chargers'
+                                ? Colors.blue
+                                : const Color(0xFF0E0E0E),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              activeFilter = 'All Chargers';
+                            });
+                            fetchAllChargers();
+                          },
+                          icon: const Icon(Icons.ev_station, color: Colors.white),
+                          label: const Text('All Chargers', style: TextStyle(color: Colors.white)),
+                        ),
+                        const SizedBox(width: 10),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: activeFilter == 'Previously Used'
+                                ? Colors.blue
+                                : const Color(0xFF0E0E0E),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              activeFilter = 'Previously Used';
+                            });
+                            fetchRecentSessionDetails();
+                          },
+                          icon: const Icon(Icons.history, color: Colors.white),
+                          label: const Text('Previously Used', style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 10),
-                FloatingActionButton(
-                  heroTag: 'zoom_out',
-                  backgroundColor: Colors.black,
-                  onPressed: () {
-                    mapController?.animateCamera(CameraUpdate.zoomOut());
-                  },
-                  child:
-                      const Icon(Icons.zoom_out_map_rounded, color: Colors.red),
-                ),
+                const Spacer(),
+                _buildChargerList(),
+                const SizedBox(height: 28),
               ],
             ),
-          ),
-        ],
+            Positioned(
+              top: 170,
+              right: 10,
+              child: Column(
+                children: [
+                  FloatingActionButton(
+                    heroTag: 'zoom_in',
+                    backgroundColor: Colors.black,
+                    onPressed: () {
+                      mapController?.animateCamera(CameraUpdate.zoomIn());
+                    },
+                    child: const Icon(Icons.zoom_in_map_rounded, color: Colors.white),
+                  ),
+                  const SizedBox(height: 10),
+                  FloatingActionButton(
+                    heroTag: 'zoom_out',
+                    backgroundColor: Colors.black,
+                    onPressed: () {
+                      mapController?.animateCamera(CameraUpdate.zoomOut());
+                    },
+                    child: const Icon(Icons.zoom_out_map_rounded, color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-
-
   String formatTimestamp(String? timestamp) {
-    if (timestamp == null) return 'N/A';
-    return intl.DateFormat('MM/dd/yyyy, hh:mm:ss a').format(DateTime.parse(timestamp).toLocal());
-  }
+    if (timestamp == null) return 'N/A'; // Handle null case
 
+    // Define date format patterns
+    final rawFormat = DateTime.tryParse(timestamp);
+    final formatter = intl.DateFormat('MM/dd/yyyy, hh:mm:ss a');
+
+    if (rawFormat != null) {
+      // If the timestamp is in ISO format, parse and format
+      final parsedDate = rawFormat.toLocal();
+      return formatter.format(parsedDate);
+    } else {
+      // Otherwise, assume it's already in the desired format and return it
+      return timestamp; // Or 'Invalid date' if you want to handle improperly formatted strings
+    }
+  }
 
   Widget _buildChargerList() {
     return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: <Widget>[
-            const SizedBox(width: 15),
-            if (isLoading)
-              for (var i = 0; i < 3; i++) _buildShimmerCard(),
-            if (!isLoading && activeFilter == 'Previously Used')
-              for (var session in recentSessions)
-                _buildChargerCard(
-                  context,
-                  session['details']['charger_id'] ?? 'Unknown ID',
-                  session['details']['model'] ?? 'Unknown Model',
-                  session['status']['charger_status'] ??
-                      'Unknown Status',
-                  session['status']['timestamp'] ??
-                      'Unknown time',
-                  session['unit_price']?.toString() ?? 'Unknown Price',
-                  session['status']['connector_id'] ?? 0,
-                  session['details']['charger_accessibility']
-                          ?.toString() ??
-                      'Unknown', 
-                ),
-            if (!isLoading && activeFilter == 'All Chargers')
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: <Widget>[
+          const SizedBox(width: 15),
+          if (isLoading)
+            for (var i = 0; i < 3; i++) _buildShimmerCard(),
+
+          if (!isLoading && activeFilter == 'Previously Used')
+            for (var session in recentSessions)
+              _buildChargerCard(
+                context,
+                session['details']['charger_id'] ?? 'Unknown ID',
+                session['details']['model'] ?? 'Unknown Model',
+                session['status']['charger_status'] ?? 'Unknown Status',
+                formatTimestamp(session['status']['timestamp']),  // Use formatted timestamp
+                session['unit_price']?.toString() ?? 'Unknown Price',
+                session['status']['connector_id'] ?? 0,
+                session['details']['charger_accessibility']?.toString() ?? 'Unknown',
+                session['details']['charger_type'] ?? 'Unknown Type',  // Fetch charger_type
+              ),
+
+          if (!isLoading && activeFilter == 'All Chargers')
             for (var charger in availableChargers)
-              for (var status in charger['status'] ?? [null])  // If status is null, use [null]
+              for (var status in charger['status'] ?? [null])
                 _buildChargerCard(
                   context,
                   charger['charger_id'] ?? 'Unknown ID',
                   charger['model'] ?? 'Unknown Model',
                   status == null
-                      ? "Not yet received"  // When status is null
+                      ? "Not yet received"  // Handle null status
                       : status['charger_status'] ?? 'Unknown Status',
                   status == null
-                      ? "Not yet received"  // When status is null
-                      : status['timestamp'] ?? 'Unknown time',
+                      ? "Not yet received"  // Handle null timestamp
+                      : formatTimestamp(status['timestamp']),
                   charger['unit_price']?.toString() ?? 'Unknown Price',
                   status == null
                       ? 0  // Default connector ID when status is null
                       : status['connector_id'] ?? 'Unknown Last Updated',
                   charger['charger_accessibility']?.toString() ?? 'Unknown',
+                  charger['charger_type'] ?? 'Unknown Type',  // Fetch charger_type
                 )
-          ],
-        ),
-      );        
-  }   
+        ],
+      ),
+    );
+  }
 
-  
   Widget _buildChargerCard(
-    BuildContext context,
-    String chargerId,
-    String model,
-    String status,
-    String time,
-    String price,
-    int connectorId,
-    String accessType,
-  ) {
-      String formattedTimestamp = formatTimestamp(time);
+      BuildContext context,
+      String chargerId,
+      String model,
+      String status,
+      String time,
+      String price,
+      int connectorId,
+      String accessType,
+      String chargerType, // Add chargerType parameter
+      ) {
+    String formattedTimestamp = formatTimestamp(time);
 
     Color statusColor;
     IconData statusIcon;
+    Color chargerTypeColor;
 
+    // Determine status color and icon
     switch (status) {
       case "Available":
         statusColor = Colors.green;
@@ -1497,8 +1512,11 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
         statusIcon = Icons.help;
     }
 
+    // Determine charger type color
+    chargerTypeColor = chargerType == 'AC' ? Colors.redAccent : Colors.greenAccent;
+
     final charger = availableChargers.firstWhere(
-      (c) => c['charger_id'] == chargerId,
+          (c) => c['charger_id'] == chargerId,
       orElse: () => null,
     );
 
@@ -1509,28 +1527,20 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
           final lng = double.tryParse(charger['long']);
           if (lat != null && lng != null) {
             final destinationPosition = LatLng(lat, lng);
-
-            // Use the current charger position as the start position
             LatLng startPosition = _selectedPosition ?? _currentPosition ?? _center;
 
             // Smoothly move the camera from the current position to the destination charger position
             await _smoothlyMoveCameraForChargerMarker(startPosition, destinationPosition);
 
-            // Set the new selected position and enable map buttons
             setState(() {
               _selectedPosition = destinationPosition;
               areMapButtonsEnabled = true;
             });
 
-
-            // Change the marker icon to the selected icon
-            BitmapDescriptor newIcon =
-                await _getIconFromAsset('assets/icons/EV_location_green.png');
-            BitmapDescriptor defaultIcon =
-                await _getIconFromAssetred('assets/icons/EV_location_red.png');
+            BitmapDescriptor newIcon = await _getIconFromAsset('assets/icons/EV_location_green.png');
+            BitmapDescriptor defaultIcon = await _getIconFromAsset('assets/icons/EV_location_red.png');
 
             setState(() {
-              // Revert the previous marker icon to default if it exists
               if (_previousMarkerId != null) {
                 _markers = _markers.map((marker) {
                   if (marker.markerId == _previousMarkerId) {
@@ -1540,7 +1550,6 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                 }).toSet();
               }
 
-              // Update the icon for the newly selected marker
               _markers = _markers.map((marker) {
                 if (marker.markerId.value == chargerId) {
                   _previousMarkerId = marker.markerId;
@@ -1549,7 +1558,6 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                 return marker;
               }).toSet();
             });
-            
           }
         }
       },
@@ -1582,27 +1590,42 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: "$chargerId - ",
-                                    style: const TextStyle(
-                                      fontSize: 16,
+                            Row(
+                              children: [
+                                Text(
+                                  "$chargerId - ",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  "[$connectorId] ",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1E1E1E),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    "($chargerType)",
+                                    style: TextStyle(
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: chargerTypeColor, // Use the determined color
+                                      letterSpacing: 1.2,
                                     ),
                                   ),
-                                  TextSpan(
-                                    text: "[$connectorId]",
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 5),
                             Text(
@@ -1670,20 +1693,20 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                     children: [
                       Expanded(
                         child: GestureDetector(
-                        onTap: areMapButtonsEnabled
-                                  ? () async {
-                                      if (_selectedPosition != null) {
-                                        final googleMapsUrl =
-                                            "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
-                                        if (await canLaunch(googleMapsUrl)) {
-                                          await launch(googleMapsUrl);
-                                        } else {
-                                          showErrorDialog(context,
-                                              'Could not open the map. Please check your internet connection or try again later.');
-                                        }
-                                      }
-                                    }
-                                  : null,
+                          onTap: areMapButtonsEnabled
+                              ? () async {
+                            if (_selectedPosition != null) {
+                              final googleMapsUrl =
+                                  "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
+                              if (await canLaunch(googleMapsUrl)) {
+                                await launch(googleMapsUrl);
+                              } else {
+                                showErrorDialog(context,
+                                    'Could not open the map. Please check your internet connection or try again later.');
+                              }
+                            }
+                          }
+                              : null,
                           child: Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFF1E1E1E),
@@ -1694,19 +1717,19 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                                 IconButton(
                                   icon: const Icon(Icons.directions, color: Colors.red),
                                   onPressed: areMapButtonsEnabled
-                                  ? () async {
-                                      if (_selectedPosition != null) {
-                                        final googleMapsUrl =
-                                            "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
-                                        if (await canLaunch(googleMapsUrl)) {
-                                          await launch(googleMapsUrl);
-                                        } else {
-                                          showErrorDialog(context,
-                                              'Could not open the map. Please check your internet connection or try again later.');
-                                        }
+                                      ? () async {
+                                    if (_selectedPosition != null) {
+                                      final googleMapsUrl =
+                                          "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
+                                      if (await canLaunch(googleMapsUrl)) {
+                                        await launch(googleMapsUrl);
+                                      } else {
+                                        showErrorDialog(context,
+                                            'Could not open the map. Please check your internet connection or try again later.');
                                       }
                                     }
-                                  : null,
+                                  }
+                                      : null,
                                 ),
                                 const Padding(
                                   padding: EdgeInsets.all(8.0),
@@ -1731,13 +1754,13 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
                               color: const Color(0xFF1E1E1E),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Row(
+                            child: const Row(
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.bolt, color: Colors.yellow),
-                                  onPressed: null, // Remove the redundant onPressed
+                                  icon: Icon(Icons.bolt, color: Colors.yellow),
+                                  onPressed: null,
                                 ),
-                                const Text(
+                                Text(
                                   ' Use Charger',
                                   style: TextStyle(color: Colors.white70),
                                 ),
@@ -1757,6 +1780,7 @@ Future<void> _updateCurrentLocationMarker(double bearing) async {
       ),
     );
   }
+
 
   Widget _buildShimmerCard() {
     return Shimmer.fromColors(
@@ -1832,13 +1856,21 @@ class ConnectorSelectionDialog extends StatefulWidget {
       _ConnectorSelectionDialogState();
 }
 
-
 class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
   int? selectedConnector;
   int? selectedConnectorType;
 
   bool _isFormValid() {
     return selectedConnector != null && selectedConnectorType != null;
+  }
+
+  String _getConnectorTypeName(int connectorType) {
+    if (connectorType == 1) {
+      return 'Socket';
+    } else if (connectorType == 2) {
+      return 'Gun';
+    }
+    return 'Unknown';
   }
 
   @override
@@ -1853,21 +1885,23 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'Select Connector',
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  Navigator.of(context).popUntil((route) => route.isFirst); // Close the QR code scanner page and return to the Home Page
+                  Navigator.of(context).popUntil((route) => route.isFirst);
                 },
               ),
             ],
@@ -1875,6 +1909,8 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
           const SizedBox(height: 10),
           CustomGradientDivider(),
           const SizedBox(height: 20),
+
+          // Connector Grid
           GridView.builder(
             shrinkWrap: true,
             itemCount: widget.chargerData.keys
@@ -1912,30 +1948,52 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
-                    child: Text(
-                      'Connector $connectorId',
-                      style: const TextStyle(color: Colors.white),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          connectorType == 1
+                              ? Icons.power // socket icon
+                              : Icons.ev_station, // gun connector icon
+                          color: connectorType == 1
+                              ? Colors.green // Socket icon color
+                              : Colors.red,  // Gun connector icon color
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _getConnectorTypeName(connectorType),
+                          style: const TextStyle(color: Colors.white,fontWeight: FontWeight.bold,),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          ' - [ $connectorId ]',
+                          style: const TextStyle(color: Colors.blue,fontWeight: FontWeight.bold,),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               );
             },
           ),
+
           const SizedBox(height: 20),
+
+          // Continue Button
           ElevatedButton(
             onPressed: _isFormValid()
                 ? () {
-                    if (selectedConnector != null &&
-                        selectedConnectorType != null) {
-                      widget.onConnectorSelected(
-                          selectedConnector!, selectedConnectorType!);
-                      Navigator.of(context).pop();
-                    }
-                  }
+              if (selectedConnector != null &&
+                  selectedConnectorType != null) {
+                widget.onConnectorSelected(
+                    selectedConnector!, selectedConnectorType!);
+                Navigator.of(context).pop();
+              }
+            }
                 : null,
             style: ButtonStyle(
               backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                (Set<MaterialState> states) {
+                    (Set<MaterialState> states) {
                   if (states.contains(MaterialState.disabled)) {
                     return Colors.green.withOpacity(0.2);
                   }
@@ -1943,31 +2001,21 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
                 },
               ),
               minimumSize:
-                  MaterialStateProperty.all(const Size(double.infinity, 50)),
+              MaterialStateProperty.all(const Size(double.infinity, 50)),
               shape: MaterialStateProperty.all(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               elevation: MaterialStateProperty.all(0),
-              side: MaterialStateProperty.resolveWith<BorderSide>(
-                (Set<MaterialState> states) {
-                  if (states.contains(MaterialState.disabled)) {
-                    return const BorderSide(color: Colors.transparent);
-                  }
-                  return const BorderSide(color: Colors.transparent);
-                },
-              ),
             ),
-            child:
-                const Text('Continue', style: TextStyle(color: Colors.white)),
+            child: const Text('Continue', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 }
-
 class SlantedLabel extends StatelessWidget {
   final String accessType;
 
@@ -2099,7 +2147,7 @@ class CurrentLocationMarkerPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = borderThickness;
 
-    canvas.drawCircle(Offset(0, 0), dotRadius, borderPaint);
+    canvas.drawCircle(const Offset(0, 0), dotRadius, borderPaint);
 
     // Draw the arrow pointing in the bearing direction
     final Path arrowPath = Path()
@@ -2176,3 +2224,104 @@ class _CurrentLocationMarkerState extends State<CurrentLocationMarker> with Sing
   }
 }
 
+class LoadingOverlay extends StatelessWidget {
+  final bool showAlertLoading;
+  final Widget child;
+
+  LoadingOverlay({required this.showAlertLoading, required this.child});
+
+  Widget _buildLoadingIndicator() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      // color: Colors.black.withOpacity(0.75), // Transparent black background
+      color: Colors.black.withOpacity(0.90), // Transparent black background
+      child: Center(
+        child: _AnimatedChargingIcon(), // Use the animated charging icon
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        child, // The main content
+        if (showAlertLoading)
+          _buildLoadingIndicator(), // Use the animated loading indicator
+      ],
+    );
+  }
+}
+
+class _AnimatedChargingIcon extends StatefulWidget {
+  @override
+  __AnimatedChargingIconState createState() => __AnimatedChargingIconState();
+}
+
+class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _slideAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..forward(); // Start the animation
+
+    // Slide animation for moving the bolt icon vertically downwards
+    _slideAnimation = Tween<double>(begin: -130.0, end: 60.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Opacity animation for smooth fading in and out
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        // Reset the animation to start from the top when it reaches the bottom
+        _controller.reset();
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value), // Move vertically
+          child: Opacity(
+            opacity: _opacityAnimation.value,
+            child: child,
+          ),
+        );
+      },
+      child: const Icon(
+        Icons.bolt_sharp, // Charging icon
+        color: Colors.green, // Set the icon color
+        size: 200, // Adjust the size as needed
+      ),
+    );
+  }
+}

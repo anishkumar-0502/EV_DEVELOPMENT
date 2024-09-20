@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'transaction_details.dart'; // Adjust the path as necessary
+import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';  // Import shimmer package
 
 class TransactionHistoryPage extends StatefulWidget {
   final String username;
@@ -15,6 +16,7 @@ class TransactionHistoryPage extends StatefulWidget {
 
 class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   List<Map<String, dynamic>> transactionDetails = [];
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -25,7 +27,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   void setTransactionDetails(List<Map<String, dynamic>> value) {
     setState(() {
       transactionDetails = value;
-      print(transactionDetails);
+      isLoading = false; // Stop loading once data is set
     });
   }
 
@@ -43,7 +45,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/wallet/getTransactionDetails'),
+        Uri.parse('http://122.166.210.142:4444/wallet/getTransactionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username}),
       );
@@ -57,9 +59,9 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           List<dynamic> transactionData = data['value'];
           List<Map<String, dynamic>> transactions = transactionData.map((transaction) {
             return {
-              'status': transaction['status'] ?? 'Unknown', // Default to 'Unknown' if null
-              'amount': transaction['amount'] ?? '0.00',   // Default to '0.00' if null
-              'time': transaction['time'] ?? 'N/A',        // Default to 'N/A' if null
+              'status': transaction['status'] ?? 'Unknown',
+              'amount': transaction['amount'] ?? '0.00',
+              'time': transaction['time'] ?? 'N/A',
             };
           }).toList();
           setTransactionDetails(transactions);
@@ -81,7 +83,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       appBar: AppBar(
         title: const Text('Transaction History', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black,
-        automaticallyImplyLeading: false, // Hides the default back arrow
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.close, color: Colors.white),
@@ -99,7 +101,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               const SizedBox(height: 15),
               TransactionDetailsWidget(
                 transactionDetails: transactionDetails,
-                username: widget.username,
+                isLoading: isLoading, // Pass loading state
               ),
               const SizedBox(height: 15),
             ],
@@ -150,5 +152,156 @@ class GradientPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
+  }
+}
+
+class TransactionDetailsWidget extends StatelessWidget {
+  final List<Map<String, dynamic>> transactionDetails;
+  final bool isLoading;
+
+  const TransactionDetailsWidget({
+    Key? key,
+    required this.transactionDetails,
+    required this.isLoading,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return isLoading
+        ? _buildShimmer()
+        : transactionDetails.isEmpty
+        ? Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(20.0),
+      child: const Center(
+        child: Text(
+          'No transaction history found.',
+          style: TextStyle(fontSize: 18, color: Colors.red),
+        ),
+      ),
+    )
+        : Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        children: [
+          for (int index = 0; index < transactionDetails.length; index++)
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              transactionDetails[index]['status'] ?? 'Unknown',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              (() {
+                                final timeString = transactionDetails[index]['time'];
+                                if (timeString != null && timeString.isNotEmpty) {
+                                  try {
+                                    final dateTime = DateTime.parse(timeString).toLocal();
+                                    return DateFormat('MM/dd/yyyy, hh:mm:ss a').format(dateTime);
+                                  } catch (e) {
+                                    print('Error parsing date: $e');
+                                  }
+                                }
+                                return 'N/A';
+                              })(),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.white60,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '${transactionDetails[index]['status'] == 'Credited'
+                            ? '+ ₹'
+                            : '- ₹'}${transactionDetails[index]['amount']}',
+                        style: TextStyle(
+                          fontSize: 19,
+                          color: transactionDetails[index]['status'] == 'Credited' ? Colors.green : Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (index != transactionDetails.length - 1) CustomGradientDivider(),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade700,
+      highlightColor: Colors.grey.shade500,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: List.generate(3, (index) => _buildShimmerItem()),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerItem() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 20,
+                  width: double.infinity,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 5),
+                Container(
+                  height: 15,
+                  width: 100,
+                  color: Colors.grey,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            height: 20,
+            width: 80,
+            color: Colors.grey,
+          ),
+        ],
+      ),
+    );
   }
 }

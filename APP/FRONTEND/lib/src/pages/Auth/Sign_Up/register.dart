@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:http/http.dart' as http;
 import '../Log_In/login.dart';
+import '../../../utilities/Seperater/gradientPainter.dart';
 import '../../../utilities/Alert/alert_banner.dart'; // Import the alert banner
 import 'package:connectivity_plus/connectivity_plus.dart';
-
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -28,7 +28,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isPasswordInteracted = false;
   bool _isPasswordVisible = false;
   String? _alertMessage;
-  String? SussessMsg;
+  bool _isLoading = false;
+  String? successMsg;
   late Connectivity _connectivity;
   late StreamSubscription<ConnectivityResult> _connectivitySubscription;
   bool _isDialogOpen = false;
@@ -45,36 +46,25 @@ class _RegisterPageState extends State<RegisterPage> {
     _checkInitialConnection();
   }
 
-
   Future<void> _checkInitialConnection() async {
     var result = await _connectivity.checkConnectivity();
     _updateConnectionStatus(result);
   }
-  void _updateConnectionStatus(ConnectivityResult result) {
 
-    // Check for specific connection types (Wi-Fi or Mobile Data)
-    if (result == ConnectivityResult.mobile) {
-      // Connected to mobile data
-      _dismissConnectionDialog(); // Close any dialog if mobile data is connected
-    } else if (result == ConnectivityResult.wifi) {
-      // Connected to Wi-Fi
-      _dismissConnectionDialog(); // Close any dialog if Wi-Fi is connected
+  void _updateConnectionStatus(ConnectivityResult result) {
+    if (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi) {
+      _dismissConnectionDialog();
     } else if (result == ConnectivityResult.none) {
-      // No internet connection
       if (!_isDialogOpen) {
-        _showNoConnectionDialog(result); // Show dialog with specific message
+        _showNoConnectionDialog(result);
       }
     }
   }
 
   void _showNoConnectionDialog(ConnectivityResult result) {
-    String message;
-
-    if (result == ConnectivityResult.none) {
-      message = 'Mobile data is off. Please turn it on or connect to Wi-Fi.';
-    } else {
-      message = 'No Internet Connection. Please check your connection.';
-    }
+    String message = result == ConnectivityResult.none
+        ? 'No Internet Connection. Please check your connection.'
+        : 'Mobile data is off. Please turn it on or connect to Wi-Fi.';
 
     setState(() {
       _isDialogOpen = true;
@@ -97,8 +87,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   Icon(Icons.error_outline, color: Colors.red, size: 35),
                   SizedBox(width: 10),
                   Text(
-                    "Connection Error",
-                    style: TextStyle(color: Colors.white),
+                    "Mobile data required",
+                    style: TextStyle(color: Colors.white,fontSize: 18),
                   ),
                 ],
               ),
@@ -116,7 +106,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 _checkInitialConnection(); // Retry connection check
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: const Text("Retry", style: TextStyle(color: Colors.white)),
+              child: const Text("Retry", style: TextStyle(color: Colors.blue)),
             ),
             TextButton(
               onPressed: () async {
@@ -134,14 +124,13 @@ class _RegisterPageState extends State<RegisterPage> {
     });
   }
 
-
-
   void _dismissConnectionDialog() {
     if (_isDialogOpen) {
-      Navigator.of(context, rootNavigator: true).pop(); // Dismiss the alert
+      Navigator.of(context, rootNavigator: true).pop();
       _isDialogOpen = false;
     }
   }
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -153,7 +142,6 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _validateAndUpdate() {
-    // Truncate email input if it contains anything after `.com`
     final emailValue = _emailController.text;
     if (emailValue.contains('.com')) {
       final index = emailValue.indexOf('.com');
@@ -170,12 +158,12 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   bool _validateEmail(String value) {
-  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
     return emailRegex.hasMatch(value);
   }
 
   bool _validateUsername(String value) {
-    final usernameRegex = RegExp(r'^[a-zA-Z0-9]+$');  // Allows letters and numbers
+    final usernameRegex = RegExp(r'^[a-zA-Z0-9]+$');
     return usernameRegex.hasMatch(value);
   }
 
@@ -187,8 +175,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/profile/RegisterNewUser'),
-        headers: {'Content-Type': 'application/json'}, // Ensure content type is set
+        Uri.parse('http://122.166.210.142:4444/profile/RegisterNewUser'),
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': username,
           'email_id': email,
@@ -197,9 +185,8 @@ class _RegisterPageState extends State<RegisterPage> {
         }),
       );
       if (response.statusCode == 200) {
-        _showAlertBannerSussess("User successfully registered");
-        // Handle successful registration
-        await Future.delayed(const Duration(seconds: 3)); // Wait for 3 seconds
+        _showAlertBannerSuccess("User successfully registered");
+        await Future.delayed(const Duration(seconds: 3));
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -224,13 +211,13 @@ class _RegisterPageState extends State<RegisterPage> {
     });
   }
 
-  void _showAlertBannerSussess(String message) async {
+  void _showAlertBannerSuccess(String message) async {
     setState(() {
-      SussessMsg = message;
+      successMsg = message;
     });
     Future.delayed(const Duration(seconds: 3), () {
       setState(() {
-        SussessMsg = null;
+        successMsg = null;
       });
     });
   }
@@ -242,14 +229,12 @@ class _RegisterPageState extends State<RegisterPage> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        toolbarHeight: 0, // Hide the AppBar
+        toolbarHeight: 0,
       ),
       body: Column(
         children: [
-          if (_alertMessage != null)
-            AlertBanner(message: _alertMessage!),
-          if (SussessMsg != null)
-            SussessBanner(message: SussessMsg!),
+          if (_alertMessage != null) AlertBanner(message: _alertMessage!),
+          if (successMsg != null) SuccessBanner(message: successMsg!),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -277,187 +262,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _usernameController,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: const Color.fromARGB(200, 58, 58, 60), // Dark gray color
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide.none,
-                        ),
-                        hintText: 'Username',
-                        hintStyle: const TextStyle(color: Colors.grey),
-                      ),
-                      style: const TextStyle(color: Colors.white),
-                      cursorColor: const Color(0xFF1ED760), // Cursor color
-                      validator: (value) {
-                        if (!_isUsernameInteracted) return null; // Show error only if interacted
-                        if (value == null || value.isEmpty) {
-                          return 'Enter your username';
-                        }
-                        if (!_validateUsername(value)) {
-                          return 'Username must be alphabets & numbers only';
-                        }
-                        return null;
-                      },
-                      onChanged: (value) {
-                        _validateAndUpdate();
-                      },
-                      onTap: () {
-                        setState(() {
-                          _isUsernameInteracted = true;
-                        });
-                      },
-                    ),
+                    _buildUsernameField(),
                     const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: const Color.fromARGB(200, 58, 58, 60), // Dark gray color
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide.none,
-                        ),
-                        hintText: 'Email',
-                        hintStyle: const TextStyle(color: Colors.grey),
-                      ),
-                      style: const TextStyle(color: Colors.white),
-                      keyboardType: TextInputType.emailAddress,
-                      cursorColor: const Color(0xFF1ED760), // Cursor color
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'[a-zA-Z0-9@._]'), // Allow alphanumeric, @, ., _
-                        ),
-                      ],
-                      validator: (value) {
-                        if (!_isEmailInteracted) return null; // Show error only if interacted
-                        if (value == null || value.isEmpty) {
-                          return 'Enter your email';
-                        }
-                        if (!_validateEmail(value)) {
-                          return 'Enter a valid email address (e.g., username@gmail.com)';
-                        }
-                        return null;
-                      },
-                      onChanged: (value) {
-                        _validateAndUpdate();
-                      },
-                      onTap: () {
-                        setState(() {
-                          _isEmailInteracted = true;
-                        });
-                      },
-                    ),            
+                    _buildEmailField(),
                     const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: !_isPasswordVisible, // Control password visibility
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: const Color.fromARGB(200, 58, 58, 60), // Dark gray color
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide.none,
-                        ),
-                        hintText: 'Password',
-                        hintStyle: const TextStyle(color: Colors.grey),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
-                        ),
-                      ),
-                      style: const TextStyle(color: Colors.white),
-                      cursorColor: const Color(0xFF1ED760), // Cursor color
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        LengthLimitingTextInputFormatter(4), // Limit to 4 digits
-                        FilteringTextInputFormatter.digitsOnly, // Allow only digits
-                      ],
-                      validator: (value) {
-                        if (!_isPasswordInteracted) return null; // Show error only if interacted
-                        if (value == null || value.isEmpty) {
-                          return 'Enter your password';
-                        }
-                        if (value.length != 4) {
-                          return 'Password must be 4 digits';
-                        }
-                        return null;
-                      },
-                      onChanged: (value) {
-                        _validateAndUpdate();
-                      },
-                      onTap: () {
-                        setState(() {
-                          _isPasswordInteracted = true;
-                        });
-                      },
-                    ),
+                    _buildPasswordField(),
                     const SizedBox(height: 20),
-                    IntlPhoneField(
-                      controller: _phoneController,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: const Color.fromARGB(200, 58, 58, 60),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide.none,
-                        ),
-                        hintText: 'Phone Number',
-                        hintStyle: const TextStyle(color: Colors.grey),
-                      ),
-                      style: const TextStyle(color: Colors.white),
-                      cursorColor: const Color(0xFF1ED760),
-                      initialCountryCode: 'IN',
-                      onChanged: (phone) {
-                        print(phone.completeNumber);  // Print complete number to check
-                      },
-                      onTap: () {
-                        // Handle tap if necessary
-                      },
-                    ),
-
+                    _buildPhoneField(),
                     const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _isButtonEnabled ? _handleRegister : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isButtonEnabled ? const Color(0xFF1C8B39) : Colors.transparent, // Dark green when enabled
-                        minimumSize: const Size(double.infinity, 50), // Set the width to be full width
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        side: BorderSide(
-                          color: _isButtonEnabled ? Colors.transparent : Colors.transparent, // No border color when disabled
-                        ),
-                        elevation: 0,
-                      ).copyWith(
-                        backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                              (Set<MaterialState> states) {
-                            if (states.contains(MaterialState.disabled)) {
-                              return Colors.green.withOpacity(0.2); // Light green gradient
-                            }
-                            return const Color(0xFF1C8B40); // Dark green color
-                          },
-                        ),
-                      ),
-                      child: Text(
-                        'Continue',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: _isButtonEnabled ? Colors.white : Colors.green[700], // Text color for button
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20), // Add space between button and text link
+                    _buildSubmitButton(),
+                    const SizedBox(height: 20),
                     Align(
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
@@ -473,9 +287,205 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
-
                   ],
                 ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUsernameField() {
+    return TextFormField(
+      controller: _usernameController,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: const Color.fromARGB(200, 58, 58, 60),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
+        hintText: 'Username',
+        hintStyle: const TextStyle(color: Colors.grey),
+      ),
+      style: const TextStyle(color: Colors.white),
+      cursorColor: const Color(0xFF1ED760),
+      validator: (value) {
+        if (!_isUsernameInteracted) return null;
+        if (value == null || value.isEmpty) return 'Enter your username';
+        if (!_validateUsername(value)) return 'Username must be alphabets & numbers only';
+        return null;
+      },
+      onChanged: (value) => _validateAndUpdate(),
+      onTap: () {
+        setState(() {
+          _isUsernameInteracted = true;
+        });
+      },
+    );
+  }
+
+  Widget _buildEmailField() {
+    return TextFormField(
+      controller: _emailController,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: const Color.fromARGB(200, 58, 58, 60),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
+        hintText: 'Email',
+        hintStyle: const TextStyle(color: Colors.grey),
+      ),
+      style: const TextStyle(color: Colors.white),
+      cursorColor: const Color(0xFF1ED760),
+      keyboardType: TextInputType.emailAddress,
+      validator: (value) {
+        if (!_isEmailInteracted) return null;
+        if (value == null || value.isEmpty) return 'Enter your email';
+        if (!_validateEmail(value)) return 'Enter a valid email';
+        return null;
+      },
+      onChanged: (value) => _validateAndUpdate(),
+      onTap: () {
+        setState(() {
+          _isEmailInteracted = true;
+        });
+      },
+    );
+  }
+
+  Widget _buildPhoneField() {
+    return IntlPhoneField(
+      controller: _phoneController,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: const Color.fromARGB(200, 58, 58, 60),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
+        hintText: 'Phone Number',
+        hintStyle: const TextStyle(color: Colors.grey),
+      ),
+      style: const TextStyle(color: Colors.white),
+      cursorColor: const Color(0xFF1ED760),
+      initialCountryCode: 'IN',
+      validator: (value) {
+        if (value == null || value.number.isEmpty) return 'Enter your phone number';
+        return null;
+      },
+      onChanged: (value) => _validateAndUpdate(),
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return TextFormField(
+      controller: _passwordController,
+      obscureText: !_isPasswordVisible,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: const Color.fromARGB(200, 58, 58, 60),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
+        hintText: 'Password',
+        hintStyle: const TextStyle(color: Colors.grey),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+            color: Colors.grey,
+          ),
+          onPressed: () {
+            setState(() {
+              _isPasswordVisible = !_isPasswordVisible;
+            });
+          },
+        ),
+      ),
+      style: const TextStyle(color: Colors.white),
+      cursorColor: const Color(0xFF1ED760),
+      keyboardType: TextInputType.number,
+      inputFormatters: [LengthLimitingTextInputFormatter(4)],
+      validator: (value) {
+        if (!_isPasswordInteracted) return null;
+        if (value == null || value.isEmpty) return 'Enter your password';
+        if (value.length != 4) return 'Password must be exactly 4 digits long';
+        return null;
+      },
+      onChanged: (value) => _validateAndUpdate(),
+      onTap: () {
+        setState(() {
+          _isPasswordInteracted = true;
+        });
+      },
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return ElevatedButton(
+      onPressed: _isButtonEnabled ? _handleRegister : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _isButtonEnabled ? const Color(0xFF1C8B39) : Colors.transparent, // Dark green when enabled
+        minimumSize: const Size(double.infinity, 50), // Set the width to be full width
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        side: BorderSide(
+          color: _isButtonEnabled ? Colors.transparent : Colors.transparent, // No border color when disabled
+        ),
+        elevation: 0,
+      ).copyWith(
+        backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+              (Set<MaterialState> states) {
+            if (states.contains(MaterialState.disabled)) {
+              return Colors.green.withOpacity(0.2); // Light green gradient
+            }
+            return const Color(0xFF1C8B40); // Dark green color
+          },
+        ),
+      ),
+      child: _isLoading
+          ? const CircularProgressIndicator(color: Colors.white)
+          : const Text(
+        'Continue',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class SuccessBanner extends StatelessWidget {
+  final String message;
+
+  const SuccessBanner({Key? key, required this.message}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.green,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle, color: Colors.white),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),

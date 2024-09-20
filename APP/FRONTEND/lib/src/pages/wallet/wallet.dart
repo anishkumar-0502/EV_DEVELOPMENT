@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../utilities/Seperater/gradientPainter.dart';
 
@@ -19,6 +20,8 @@ class WalletPage extends StatefulWidget {
 class _WalletPageState extends State<WalletPage> {
   late Razorpay _razorpay;
   double? walletBalance;
+  bool isLoading = true;
+
   double? _lastPaymentAmount; // Store the last payment amount
   final TextEditingController _amountController = TextEditingController(text: '500');
   String? _alertMessage; // Variable to hold the alert message
@@ -74,19 +77,22 @@ class _WalletPageState extends State<WalletPage> {
 
   // Function to fetch wallet balance
   void fetchWallet() async {
-    int? user_id = widget.userId;
+    int? userId = widget.userId;
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/wallet/FetchWalletBalance'),
+        Uri.parse('http://122.166.210.142:4444/wallet/FetchWalletBalance'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'user_id': user_id}),
+        body: jsonEncode({'user_id': userId}),
       );
 
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
         if (data['data'] != null) {
-          setWalletBalance(data['data'].toDouble()); // Cast to double
+          setState(() {
+            walletBalance = data['data'].toDouble(); // Set wallet balance
+            isLoading = false; // Data is loaded
+          });
         } else {
           print('Error: balance field is null');
         }
@@ -111,7 +117,7 @@ class _WalletPageState extends State<WalletPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/wallet/getTransactionDetails'),
+        Uri.parse('http://122.166.210.142:4444/wallet/getTransactionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username}),
       );
@@ -144,7 +150,7 @@ class _WalletPageState extends State<WalletPage> {
     const String currency = 'INR';
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/wallet/createOrder'),
+        Uri.parse('http://122.166.210.142:4444/wallet/createOrder'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'amount': amount, 'currency': currency}),
       );
@@ -170,6 +176,10 @@ class _WalletPageState extends State<WalletPage> {
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     String? username = widget.username;
 
+    setState(() {
+      isLoading = true; // Start loading
+    });
+
     try {
       Map<String, dynamic> result = {
         'user': username,
@@ -180,7 +190,7 @@ class _WalletPageState extends State<WalletPage> {
       };
 
       var output = await http.post(
-        Uri.parse('http://122.166.210.142:9098/wallet/savePayments'),
+        Uri.parse('http://122.166.210.142:4444/wallet/savePayments'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(result),
       );
@@ -199,6 +209,10 @@ class _WalletPageState extends State<WalletPage> {
       }
     } catch (error) {
       print('Error saving payment details: $error');
+    } finally {
+      setState(() {
+        isLoading = false; // End loading
+      });
     }
   }
 
@@ -214,7 +228,6 @@ void _showAlertBanner(String message) {
     });
   });
 }
-
   void _handlePaymentError(PaymentFailureResponse response) {
     String? username = widget.username;
     Map<String, dynamic> paymentError = {
@@ -224,7 +237,17 @@ void _showAlertBanner(String message) {
       'date_time': DateTime.now().toString(),
     };
 
-    _showPaymentFailureModal(paymentError);
+    setState(() {
+      isLoading = true; // Start loading
+    });
+
+    // Simulate a delay or asynchronous operation if needed
+    Future.delayed(Duration(milliseconds: 500), () {
+      setState(() {
+        isLoading = false; // End loading
+      });
+      _showPaymentFailureModal(paymentError);
+    });
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {
@@ -240,9 +263,56 @@ void _showAlertBanner(String message) {
       builder: (BuildContext context) {
         return Padding(
           padding: MediaQuery.of(context).viewInsets,
-          child: PaymentSuccessModal(paymentResult: paymentResult),
+          child: isLoading
+              ? _buildShimmer() // Show shimmer effect while loading
+              : PaymentSuccessModal(paymentResult: paymentResult),
         );
       },
+    );
+  }
+
+  Widget _buildShimmer() {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Shimmer.fromColors(
+            baseColor: Colors.grey.shade700,
+            highlightColor: Colors.grey.shade500,
+            child: Container(
+              height: 48,
+              width: double.infinity,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Shimmer.fromColors(
+            baseColor: Colors.grey.shade700,
+            highlightColor: Colors.grey.shade500,
+            child: Container(
+              height: 48,
+              width: double.infinity,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Shimmer.fromColors(
+            baseColor: Colors.grey.shade700,
+            highlightColor: Colors.grey.shade500,
+            child: Container(
+              height: 48,
+              width: double.infinity,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -255,7 +325,9 @@ void _showAlertBanner(String message) {
       builder: (BuildContext context) {
         return Padding(
           padding: MediaQuery.of(context).viewInsets,
-          child: PaymentFailureModal(paymentError: paymentError),
+          child: isLoading
+              ? _buildShimmer() // Show shimmer effect while loading
+              : PaymentFailureModal(paymentError: paymentError),
         );
       },
     );
@@ -342,7 +414,37 @@ void _showAlertBanner(String message) {
               style: TextStyle(fontSize: 16, color: Colors.white70),
             ),
             const SizedBox(height: 16),
-            Container(
+            isLoading
+                ? Shimmer.fromColors(
+              baseColor: Colors.grey[700]!,
+              highlightColor: Colors.grey[500]!,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(height: 18, width: 100, color: Colors.white),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Container(height: 32, width: 150, color: Colors.white),
+                        const Spacer(),
+                        Container(height: 20, width: 50, color: Colors.white),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(height: 14, width: 80, color: Colors.white),
+                    const SizedBox(height: 16),
+                    Container(height: 8, color: Colors.white),
+                  ],
+                ),
+              ),
+            )
+                : Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: const Color(0xFF1E1E1E),
@@ -359,7 +461,7 @@ void _showAlertBanner(String message) {
                   Row(
                     children: [
                       Text(
-                        walletBalance != null ? '₹${walletBalance!.toStringAsFixed(2)}' : '₹0',
+                        '₹${walletBalance?.toStringAsFixed(2) ?? '0.00'}',
                         style: const TextStyle(fontSize: 32, color: Colors.white),
                       ),
                       const Spacer(),
@@ -499,13 +601,6 @@ void _showAlertBanner(String message) {
 
             const SizedBox(height: 24),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: walletBalance != null && walletBalance! >= 10000
-                    ? Colors.grey
-                    : const Color(0xFF1C8B40),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
               onPressed: walletBalance != null && walletBalance! >= 10000
                   ? null
                   : () {
@@ -532,7 +627,7 @@ void _showAlertBanner(String message) {
                                 const SizedBox(width: 10),
                                 const Text(
                                   "Max Limit Breached",
-                                  style: TextStyle(color: Colors.white,fontSize: 23),
+                                  style: TextStyle(color: Colors.white, fontSize: 23),
                                 ),
                               ],
                             ),
@@ -559,16 +654,41 @@ void _showAlertBanner(String message) {
                   handlePayment(amount); // Proceed with payment
                 }
               },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Add ₹${_amountController.text}',
-                    style: const TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                ],
+              style: ElevatedButton.styleFrom(
+                backgroundColor: walletBalance != null && walletBalance! >= 10000
+                    ? Colors.transparent
+                    : const Color(0xFF1C8B39), // Dark green when enabled
+                minimumSize: const Size(double.infinity, 50), // Full width button
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ).copyWith(
+                backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+                      (Set<MaterialState> states) {
+                    if (states.contains(MaterialState.disabled)) {
+                      return Colors.green.withOpacity(0.2); // Light green gradient when disabled
+                    }
+                    return walletBalance != null && walletBalance! >= 10000
+                        ? Colors.grey // Grey when the button is disabled
+                        : const Color(0xFF1C8B39); // Dark green color when enabled
+                  },
+                ),
+              ),
+              child: Text(
+                walletBalance != null && walletBalance! >= 10000
+                    ? 'Limit Reached'
+                    : 'Add ₹${_amountController.text}',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: walletBalance != null && walletBalance! >= 10000
+                      ? Colors.grey // Text color when disabled
+                      : Colors.white, // Text color when enabled
+                ),
               ),
             ),
+
 
             const SizedBox(height: 24),
           ],
@@ -587,6 +707,9 @@ class PaymentSuccessModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check if the data is available
+    bool isDataLoaded = paymentResult.isNotEmpty; // You might need to adjust this based on your actual condition
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: const BoxDecoration(
@@ -613,76 +736,111 @@ class PaymentSuccessModal extends StatelessWidget {
           const SizedBox(height: 16),
           CustomGradientDivider(),
           const SizedBox(height: 16),
-          Center(
-            child: Text(
-              '₹${(paymentResult['RechargeAmt'] ?? 0).toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 48, color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green, size: 32),
-              SizedBox(width: 8),
-              Text(
-                'Completed',
-                style: TextStyle(fontSize: 18, color: Colors.green),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Payment should now be in ${paymentResult['user'] ?? ''}'s wallet ",
-            style: const TextStyle(fontSize: 16, color: Colors.white70),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade800, // Background color for the ListTile
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.grey.shade600,
-                child: const Icon(Icons.account_circle, color: Colors.white, size: 40),
-              ),
-              title: Text(
-                paymentResult['user'] ?? '',
-                style: const TextStyle(fontSize: 18, color: Colors.white),
-              ),
-              subtitle: Text(
-                DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.parse(paymentResult['date_time'] ?? DateTime.now().toString())),
-                style: const TextStyle(fontSize: 16, color: Colors.white70),
+
+          // Shimmer effect for the content
+          if (!isDataLoaded) ...[
+            _buildShimmer(),
+          ] else ...[
+            Center(
+              child: Text(
+                '₹${(paymentResult['RechargeAmt'] ?? 0).toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 48, color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade800, // Background color for the ListTile
-              borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 16),
+            const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 32),
+                SizedBox(width: 8),
+                Text(
+                  'Completed',
+                  style: TextStyle(fontSize: 18, color: Colors.green),
+                ),
+              ],
             ),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.grey.shade600,
-                child: const Icon(Icons.receipt_long, color: Colors.white, size: 40),
-              ),
-              title: const Text(
-                'Transaction ID',
-                style: TextStyle(fontSize: 18, color: Colors.white),
-              ),
-              subtitle: Text(
-                '${paymentResult['transactionId'] ?? ''}',
-                style: const TextStyle(fontSize: 16, color: Colors.white70),
-              ),
+            const SizedBox(height: 8),
+            Text(
+              "Payment should now be in ${paymentResult['user'] ?? ''}'s wallet ",
+              style: const TextStyle(fontSize: 16, color: Colors.white70),
             ),
-          ),
+            const SizedBox(height: 24),
+            _buildListTile(
+              Icons.account_circle,
+              paymentResult['user'] ?? '',
+              DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.parse(paymentResult['date_time'] ?? DateTime.now().toString())),
+            ),
+            const SizedBox(height: 24),
+            _buildListTile(
+              Icons.receipt_long,
+              'Transaction ID',
+              '${paymentResult['transactionId'] ?? ''}',
+            ),
+          ],
         ],
       ),
     );
   }
+
+  Widget _buildShimmer() {
+    return Column(
+      children: [
+        Shimmer.fromColors(
+          baseColor: Colors.grey.shade700,
+          highlightColor: Colors.grey.shade500,
+          child: Container(
+            height: 48,
+            width: double.infinity,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Shimmer.fromColors(
+          baseColor: Colors.grey.shade700,
+          highlightColor: Colors.grey.shade500,
+          child: Container(
+            height: 48,
+            width: double.infinity,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Shimmer.fromColors(
+          baseColor: Colors.grey.shade700,
+          highlightColor: Colors.grey.shade500,
+          child: Container(
+            height: 48,
+            width: double.infinity,
+            color: Colors.grey,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildListTile(IconData icon, String title, String subtitle) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade800, // Background color for the ListTile
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.grey.shade600,
+          child: Icon(icon, color: Colors.white, size: 40),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 18, color: Colors.white),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(fontSize: 16, color: Colors.white70),
+        ),
+      ),
+    );
+  }
+
 }
 
 class PaymentFailureModal extends StatelessWidget {
