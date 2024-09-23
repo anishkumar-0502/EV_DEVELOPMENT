@@ -305,15 +305,11 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                                     <div className="input-group-prepend">
                                                                         <span className="input-group-text" style={{color:'black', width:'125px'}}>Role Name</span>
                                                                     </div>
-                                                                    <select className="form-control" value={`${role.role_id}|${role.role_name}`} onChange={handleResellerChange} required>
+                                                                    <select className="form-control" value={`${role.role_id}|${role.role_name}`} onChange={handleResellerChange}>
                                                                         <option value="">Select Role</option>
-                                                                        {selectionRoles.length === 0 ? (
-                                                                            <option disabled>No data found</option>
-                                                                        ) : (
-                                                                            selectionRoles.map((role, index) => (
-                                                                                <option key={index} value={`${role.role_id}|${role.role_name}`}>{role.role_name}</option>
-                                                                            ))
-                                                                        )}
+                                                                        {selectionRoles.map((role, index) => (
+                                                                            <option key={index} value={`${role.role_id}|${role.role_name}`}>{role.role_name}</option>
+                                                                        ))}
                                                                     </select>                                                               
                                                                 </div>
 
@@ -322,15 +318,11 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                                     <div className="input-group-prepend">
                                                                         <span className="input-group-text" style={{color:'black', width:'125px'}}>Reseller Name</span>
                                                                     </div>
-                                                                    <select className="form-control" value={reseller_id} onChange={handleselectionReseller} required>
+                                                                    <select className="form-control" value={reseller_id} onChange={handleselectionReseller}>
                                                                         <option value="">Select Reseller</option>
-                                                                        {selectionReseller.length === 0 ? (
-                                                                            <option disabled>No data found</option>
-                                                                        ) : (
-                                                                            selectionReseller.map((roles, index) => (
-                                                                                <option key={index} value={roles.reseller_id}>{roles.reseller_name}</option>
-                                                                            ))
-                                                                        )}
+                                                                        {selectionReseller.map((roles, index) => (
+                                                                            <option key={index} value={roles.reseller_id}>{roles.reseller_name}</option>
+                                                                        ))}
                                                                     </select>                                                               
                                                                 </div>
                                                                 )}

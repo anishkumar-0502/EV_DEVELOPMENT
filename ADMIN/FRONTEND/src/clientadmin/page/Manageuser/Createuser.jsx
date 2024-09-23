@@ -185,13 +185,9 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                                             required
                                                                         >
                                                                             <option value="">Select Role</option>
-                                                                            {userRoles.length === 0 ? (
-                                                                                <option disabled>No data found</option>
-                                                                            ) : (
-                                                                                userRoles.map(role => (
-                                                                                    <option key={role.role_id} value={role.role_name}>{role.role_name}</option>
-                                                                                ))
-                                                                            )}
+                                                                            {userRoles.map(role => (
+                                                                                <option key={role.role_id} value={role.role_name}>{role.role_name}</option>
+                                                                            ))}
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -207,15 +203,11 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                                             required
                                                                         >
                                                                             <option value="">Select Association</option>
-                                                                            {assname.length === 0 ? (
-                                                                                <option disabled>No data found</option>
-                                                                            ) : (
-                                                                                assname.map(association => (
-                                                                                    <option key={association.association_id} value={association.association_name}>
-                                                                                        {association.association_name}
-                                                                                    </option>
-                                                                                ))
-                                                                            )}
+                                                                            {assname.map(association => (
+                                                                                <option key={association.association_id} value={association.association_name}>
+                                                                                    {association.association_name}
+                                                                                </option>
+                                                                            ))}
                                                                         </select>
                                                                     </div>
                                                                 </div>

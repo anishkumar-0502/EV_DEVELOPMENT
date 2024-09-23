@@ -51,6 +51,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
+        print(data);
         if (data['value'] is List) {
           List<dynamic> chargingSessionData = data['value'];
           List<Map<String, dynamic>> sessionDetails = chargingSessionData.cast<Map<String, dynamic>>();
@@ -109,6 +110,16 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
+  double _calculateTotalEnergyUsage() {
+    double total = 0.0;
+    for (var session in sessionDetails) {
+      total += session['unit_consumed'] != null ? session['unit_consumed'] : 0.0;
+    }
+    return total;
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,6 +153,46 @@ class _HistoryPageState extends State<HistoryPage> {
               ],
             ),
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Container(
+                width: 200,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    Text('Total sessions',style: TextStyle(fontSize: 16, color: Colors.white),), // Changed to 'Total sessions' for clarity
+                    SizedBox(height: 5),
+                    Text(sessionDetails.length.toString(),style: TextStyle(fontSize: 16, color: Colors.white70),), // Display total count of sessions
+                  ],
+                ),
+              ),
+              Container(
+                width: 200,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    Text('Total energy usage', style: TextStyle(fontSize: 16, color: Colors.white)),
+                    SizedBox(height: 5),
+                    Text(
+                      _calculateTotalEnergyUsage().toString(),
+                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                    ), // Display the total energy consumed
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: 20,),
           Expanded(
             child: SingleChildScrollView(
               child: Scrollbar(
@@ -153,27 +204,30 @@ class _HistoryPageState extends State<HistoryPage> {
                       child: _buildShimmerCard(), // Display shimmer card while loading
                     )
                         : sessionDetails.isEmpty
-                        ? Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E1E),
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        padding: const EdgeInsets.all(20.0),
-                        child: const Center(
-                          child: Text(
-                            'No session history found.',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.red,
+                        ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Image.asset(
+                              'assets/Image/search.png', // Use the correct path to your asset
+                              width: 300, // Optional: Adjust image size
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 10), // Add some space between the image and the text
+                          const Text(
+                            'No Session History Found!', // Add your desired text
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.white70, // Optional: Adjust text color
+                            ),
+                          ),
+                        ],
                       ),
                     )
                         : Padding(
-                      padding: const EdgeInsets.only(left: 15.0, right: 20, bottom: 90),
+                      padding: const EdgeInsets.only(left: 15.0, right: 20, bottom: 50),
                       child: Container(
                         decoration: BoxDecoration(
                           color: const Color(0xFF1E1E1E),

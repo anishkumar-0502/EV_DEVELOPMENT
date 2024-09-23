@@ -9,7 +9,7 @@ const ViewClient = ({ userInfo, handleLogout }) => {
     const location = useLocation();
     const [newUser, setNewUser] = useState({
         client_name: '', client_id: '', client_phone_no: '', client_email_id: '', client_address: '', 
-        status: '', created_by: '', created_date: '', modified_by: '', modified_date: '', client_wallet: '', });
+        status: '', created_by: '', created_date: '', modified_by: '', modified_date: '', client_waller: '', });
 
     useEffect(() => {
         const { user } = location.state || {};
@@ -17,7 +17,7 @@ const ViewClient = ({ userInfo, handleLogout }) => {
             setNewUser({
                 client_name: user.client_name || '',
                 client_id: user.client_id || '',
-                client_wallet: user.client_wallet || '',
+                client_waller: user.client_waller || '',
                 client_phone_no: user.client_phone_no || '',
                 client_email_id: user.client_email_id || '',
                 client_address: user.client_address || '',
@@ -124,7 +124,7 @@ const ViewClient = ({ userInfo, handleLogout }) => {
                                                     <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Client Wallet: <span style={{ fontWeight: 'normal' }}>{newUser.client_wallet ? newUser.client_wallet : '0'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Client Wallet: <span style={{ fontWeight: 'normal' }}>{newUser.client_waller ? newUser.client_waller : '0'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">

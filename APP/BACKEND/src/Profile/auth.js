@@ -24,7 +24,7 @@ const authenticate = async (req) => {
                 }
             },
             { $unwind: '$roles' },
-            //{ $match: { 'roles.status': true } }, // Check role status
+            { $match: { 'roles.status': true } }, // Check role status
             { $limit: 1 }
         ]).toArray();
 
@@ -35,12 +35,11 @@ const authenticate = async (req) => {
         const user = userWithRole[0];
 
         // Ensure both passwords are treated as strings
-        //const passwordString = password.toString();
-        //const userPasswordString = user.password.toString();
+        const passwordString = password.toString();
+        const userPasswordString = user.password.toString();
 
         // Verify the password
-        //const passwordMatch = await bcrypt.compare(passwordString, userPasswordString);
-        const passwordMatch = (parseInt(password) === user.password);
+        const passwordMatch = await bcrypt.compare(passwordString, userPasswordString);
         if (!passwordMatch) {
             return { error: true, status: 401, message: 'Invalid credentials' };
         }
@@ -63,20 +62,10 @@ const registerUser = async (req, res, next) => {
         }
 
         // Ensure password is a string
-        //const passwordString = password.toString();
+        const passwordString = password.toString();
 
         const db = await database.connectToDatabase();
         const usersCollection = db.collection('users');
-        const userRoleCollection = db.collection('user_roles');
-
-        const checkRole = await userRoleCollection.findOne({ role_id: 5});
-
-        if(!checkRole || checkRole.status === false){
-            const errorMessage = 'User registration blocked !';
-            console.log(errorMessage)
-            return res.status(403).json({ message: errorMessage });
-        }
-
 
         // Check if the username or email is already taken
         const existingUser = await usersCollection.findOne({
@@ -93,7 +82,7 @@ const registerUser = async (req, res, next) => {
         }
 
         // Hash the password
-        //const hashedPassword = await bcrypt.hash(passwordString, 10); // 10 is the salt rounds
+        const hashedPassword = await bcrypt.hash(passwordString, 10); // 10 is the salt rounds
 
         // Use aggregation to fetch the highest user_id
         const lastUser = await usersCollection.find().sort({ user_id: -1 }).limit(1).toArray();
@@ -110,7 +99,7 @@ const registerUser = async (req, res, next) => {
             association_id: null,
             user_id: newUserId,
             username: username,
-            password: parseInt(password),
+            password: hashedPassword,
             phone_no: parseInt(phone_no),
             email_id: email_id,
             wallet_bal: 0.00,

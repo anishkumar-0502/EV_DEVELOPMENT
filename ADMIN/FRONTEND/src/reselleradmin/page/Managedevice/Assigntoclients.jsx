@@ -76,39 +76,19 @@ const Assigntoclients = ({ userInfo, handleLogout }) => {
     };
 
     // handle commission
-    const [errorMessage, setErrorMessage] = useState('');
-
-    const handleCommissionChange = (e, field) => {
+    const handleCommissionChange = (e) => {
         let value = e.target.value;
     
-        // Allow only numbers and a single decimal point
+        // Remove any non-digit or non-decimal characters
         value = value.replace(/[^0-9.]/g, '');
     
-        // Ensure there's only one decimal point and limit to two decimal places
+        // Ensure only one decimal point is allowed
         const parts = value.split('.');
         if (parts.length > 2) {
-            value = parts[0] + '.' + parts[1];
-        } else if (parts.length === 2 && parts[1].length > 2) {
-            value = parts[0] + '.' + parts[1].slice(0, 2);
+            value = parts[0] + '.' + parts[1]; // Combine the first two parts if more than one decimal point is present
         }
     
-        // Convert to float and validate range
-        const numericValue = parseFloat(value);
-        let errorMessage = '';
-        if (numericValue < 0 || numericValue > 25) {
-            errorMessage = 'Please enter a value between 0.00% and 25.00%.';
-        }
-    
-        // Limit the length to 6 characters and apply validation
-        if (value.length > 5) {
-            value = value.slice(0, 5);
-        }
-    
-        // Update the state based on validation
-        if (!errorMessage) {
-            setCommission(value);
-        }
-        setErrorMessage(errorMessage);
+        setCommission(value);
     };
     
     // submit data
@@ -251,18 +231,13 @@ const Assigntoclients = ({ userInfo, handleLogout }) => {
                                                                             value={selectedClientId}
                                                                             style={{color:'black'}}
                                                                             onChange={handleClientChange}
-                                                                            required
                                                                         >
                                                                             <option value="">Select Client</option>
-                                                                            {clientsList.length === 0 ? (
-                                                                                <option disabled>No data found</option>
-                                                                            ) : (
-                                                                                clientsList.map((clientObj) => (
-                                                                                    <option key={clientObj.client_id} value={clientObj.client_id}>
-                                                                                        {clientObj.client_name}
-                                                                                    </option>
-                                                                                ))
-                                                                            )}
+                                                                            {clientsList.map((clientObj) => (
+                                                                                <option key={clientObj.client_id} value={clientObj.client_id}>
+                                                                                    {clientObj.client_name}
+                                                                                </option>
+                                                                            ))}
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -270,7 +245,7 @@ const Assigntoclients = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Commission</label>
-                                                                    <div className="col-sm-9">
+                                                                    <div className="col-sm-4">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -278,10 +253,9 @@ const Assigntoclients = ({ userInfo, handleLogout }) => {
                                                                             <input
                                                                                 type="text"
                                                                                 className="form-control"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={commission}
                                                                                 onChange={handleCommissionChange}
-                                                                                required
                                                                             />
                                                                         </div>
                                                                     </div>
@@ -312,7 +286,7 @@ const Assigntoclients = ({ userInfo, handleLogout }) => {
                                                                                         <span className="text-danger">No Chargers Available</span>
                                                                                     )}
                                                                                 </button>
-                                                                                <div className="dropdown-menu" aria-labelledby="dropdownMenuButton" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                                                                <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                                                                     {unallocatedChargers.length > 0 ? (
                                                                                         unallocatedChargers.map((chargerObj) => (
                                                                                             <div key={chargerObj.charger_id} className="dropdown-item">
@@ -323,7 +297,6 @@ const Assigntoclients = ({ userInfo, handleLogout }) => {
                                                                                                         id={`charger-${chargerObj.charger_id}`}
                                                                                                         checked={selectedChargers.includes(chargerObj.charger_id)}
                                                                                                         onChange={(e) => handleChargerChange(chargerObj.charger_id, e.target.checked)}
-                                                                                                        required
                                                                                                     />
                                                                                                     <label className="form-check-label" htmlFor={`charger-${chargerObj.charger_id}`}>
                                                                                                         {chargerObj.charger_id}
@@ -354,7 +327,6 @@ const Assigntoclients = ({ userInfo, handleLogout }) => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        {errorMessage && <div className="text-danger">{errorMessage}</div>}
                                                         <div className="text-center">
                                                             <button type="submit" className="btn btn-primary mr-2">Submit</button>
                                                         </div>

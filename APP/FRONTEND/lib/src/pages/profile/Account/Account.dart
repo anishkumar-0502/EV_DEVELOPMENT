@@ -33,6 +33,59 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  void _showDeleteAccount() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E), // Background color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.warning, color: Colors.yellow, size: 25),
+                  const SizedBox(width: 10),
+                  const Text(
+                    "Are You Sure?",
+                    style: TextStyle(color: Colors.white, fontSize: 17),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              CustomGradientDivider(), // Custom gradient divider
+            ],
+          ),
+          content: const Text(
+              "Once deleted, you won't be able to recover your account. Confirm to delete?",
+            style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text("Cancel", style: TextStyle(color: Colors.white)),
+            ),
+            TextButton(
+              onPressed: () {
+                // Add your account deletion logic here
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,7 +127,7 @@ class _AccountPageState extends State<AccountPage> {
               GestureDetector(
                 onTap: _showTransactionModal, // Use function reference
                 child: Container(
-                  margin: const EdgeInsets.only(top: 20.0, left: 15, right: 15, bottom: 20),
+                  margin: const EdgeInsets.only(top: 20.0, left: 15, right: 15, bottom: 10),
                   padding: const EdgeInsets.all(17),
                   decoration: BoxDecoration(
                     color: const Color(0xFF3E3E3E).withOpacity(0.8),
@@ -87,11 +140,36 @@ class _AccountPageState extends State<AccountPage> {
                       Icon(Icons.currency_rupee, color: Colors.white70),
                       SizedBox(width: 20),
                       Text(
-                        'Transaction Details',
+                        'Payment Details',
                         style: TextStyle(color: Colors.white70, fontSize: 17),
                       ),
                       Spacer(),
                       Icon(Icons.arrow_forward_ios, color: Colors.white70),
+                    ],
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: _showDeleteAccount, // Use function reference
+                child: Container(
+                  margin: const EdgeInsets.only( left: 15, right: 15, bottom: 10),
+                  padding: const EdgeInsets.all(17),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3E3E3E).withOpacity(0.8),
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(10),
+                    ),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      SizedBox(width: 20),
+                      Text(
+                        'Delete account',
+                        style: TextStyle(color: Colors.red, fontSize: 17),
+                      ),
+                      Spacer(),
+
                     ],
                   ),
                 ),

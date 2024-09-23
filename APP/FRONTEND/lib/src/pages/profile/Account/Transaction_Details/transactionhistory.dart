@@ -81,7 +81,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Transaction History', style: TextStyle(color: Colors.white)),
+        title: const Text('Payment History', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black,
         automaticallyImplyLeading: false,
         actions: [
@@ -170,17 +170,26 @@ class TransactionDetailsWidget extends StatelessWidget {
     return isLoading
         ? _buildShimmer()
         : transactionDetails.isEmpty
-        ? Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.all(20.0),
-      child: const Center(
-        child: Text(
-          'No transaction history found.',
-          style: TextStyle(fontSize: 18, color: Colors.red),
-        ),
+        ? Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Image.asset(
+              'assets/Image/search.png', // Use the correct path to your asset
+              width: 300, // Optional: Adjust image size
+            ),
+          ),
+          const SizedBox(height: 10), // Add some space between the image and the text
+          const Text(
+            'No Payment History Found!', // Add your desired text
+            style: TextStyle(
+              fontSize: 20,
+              color: Colors.white70, // Optional: Adjust text color
+            ),
+          ),
+        ],
       ),
     )
         : Container(

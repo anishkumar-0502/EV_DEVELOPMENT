@@ -22,92 +22,24 @@ const EditFinance = ({ userInfo, handleLogout }) => {
     const [status, setStatus] = useState(dataItems?.status ? 'true' : 'false');
     const [isEdited, setIsEdited] = useState(false); // Track if any input is edited
 
-    const [errorMessage, setErrorMessage] = useState('');
-
-    const validateInputrs = (value) => {
-       // Allow only numbers and a single decimal point
-       value = value.replace(/[^0-9.]/g, '');
-    
-       // Check if the value starts with multiple zeros
-       if (value.startsWith('00')) {
-           value = value.slice(1); // Remove one leading zero
-       }
-        
-       const parts = value.split('.');
-       
-       // Ensure there's only one decimal point and limit to two decimal places
-       if (parts.length > 2) {
-           value = parts[0] + '.' + parts[1];
-       } else if (parts.length === 2 && parts[1].length > 2) {
-           value = parts[0] + '.' + parts[1].slice(0, 2);
-       }
-   
-       // Ensure that the value does not start with zero unless it is "0.00"
-       if (value.startsWith('0') && value.length > 1 && !value.startsWith('0.')) {
-           value = value.replace(/^0+/, ''); // Remove leading zeros
-       }
-   
-       // Limit the length to 7 characters
-       if (value.length > 6) {
-           value = value.slice(0, 6);
-       }
-   
-       // Convert to float and validate range
-       const numericValue = parseFloat(value);
-       if (numericValue < 1 || numericValue > 100) {
-           setErrorMessage(`Please enter a value between ₹1.00 and ₹100.00.`);
-           return '';
-       } else {
-           setErrorMessage(''); // Clear error if within range
-       }
-   
-       return value;
-    }; 
-    
-
     // Input validation function
     const validateInput = (value) => {
         // Allow only numbers and a single decimal point
         value = value.replace(/[^0-9.]/g, '');
-        
         const parts = value.split('.');
-        
-        // Ensure there's only one decimal point and limit to two decimal places
         if (parts.length > 2) {
             value = parts[0] + '.' + parts[1];
-        } else if (parts.length === 2 && parts[1].length > 2) {
-            value = parts[0] + '.' + parts[1].slice(0, 2);
         }
-    
-        // Ensure that the value does not start with zero unless it is "0.00"
-        if (value.startsWith('0') && value.length > 1 && !value.startsWith('0.')) {
-            value = value.replace(/^0+/, ''); // Remove leading zeros
-        }
-    
-        // Limit the length to 7 characters
+
+        // Limit the length to 6 characters
         if (value.length > 6) {
             value = value.slice(0, 6);
         }
-    
-        // Convert to float and validate range
-        const numericValue = parseFloat(value);
-        if (numericValue < 0 || numericValue > 10) {
-            setErrorMessage('Please enter a value between 0.00%  and 10.00% .');
-            return '';
-        } else {
-            setErrorMessage(''); // Clear error if within range
-        }
-    
+
         return value;
     };
 
     // Handle change and validation for all fields
-    const handleInputChangers = (setter) => (e) => {
-        let value = validateInputrs(e.target.value);
-        setter(value);
-        setIsEdited(true); // Mark as edited
-    };
-
     const handleInputChange = (setter) => (e) => {
         let value = validateInput(e.target.value);
         setter(value);
@@ -218,7 +150,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">EB Charges</label>
-                                                                    <div className="col-sm-9">
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">₹</span>
@@ -229,7 +161,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                                                 name="eb_charges"
                                                                                 maxLength={6}
                                                                                 value={eb_charges}
-                                                                                onChange={handleInputChangers(setEbCharges)}
+                                                                                onChange={handleInputChange(setEbCharges)}
                                                                                 required
                                                                             />
                                                                         </div>
@@ -239,7 +171,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">App Charges</label>
-                                                                    <div className="col-sm-9">
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -248,7 +180,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                                                 type="text"
                                                                                 className="form-control"
                                                                                 name="app_charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={app_charges}
                                                                                 onChange={handleInputChange(setAppCharges)}
                                                                                 required
@@ -260,7 +192,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Other Charges</label>
-                                                                    <div className="col-sm-9">
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -269,7 +201,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                                                 type="text"
                                                                                 className="form-control"
                                                                                 name="other_charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={other_charges}
                                                                                 onChange={handleInputChange(setOtherCharges)}
                                                                                 required
@@ -281,7 +213,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Parking Charges</label>
-                                                                    <div className="col-sm-9">
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -290,7 +222,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                                                 type="text"
                                                                                 className="form-control"
                                                                                 name="parking_charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={parking_charges}
                                                                                 onChange={handleInputChange(setParkingCharges)}
                                                                                 required
@@ -302,7 +234,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Rent Charges</label>
-                                                                    <div className="col-sm-9">
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -311,7 +243,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                                                 type="text"
                                                                                 className="form-control"
                                                                                 name="rent_charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={rent_charges}
                                                                                 onChange={handleInputChange(setRentCharges)}
                                                                                 required
@@ -323,7 +255,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Open A EB Charges</label>
-                                                                    <div className="col-sm-9">
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -332,7 +264,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                                                 type="text"
                                                                                 className="form-control"
                                                                                 name="open_a_eb_charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={open_a_eb_charges}
                                                                                 onChange={handleInputChange(setOpenAebCharges)}
                                                                                 required
@@ -344,7 +276,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Open Other Charges</label>
-                                                                    <div className="col-sm-9">
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -353,7 +285,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                                                 type="text"
                                                                                 className="form-control"
                                                                                 name="open_other_charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={open_other_charges}
                                                                                 onChange={handleInputChange(setOpenOtherCharges)}
                                                                                 required
@@ -366,7 +298,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Status</label>
-                                                                    <div className="col-sm-9">
+                                                                    <div className="col-sm-5">
                                                                         <select className="form-control" value={status} onChange={handleStatusChange} required>
                                                                             <option value="true">Active</option>
                                                                             <option value="false">DeActive</option>
@@ -375,7 +307,6 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        {errorMessage && <div className="text-danger">{errorMessage}</div>}
                                                         <div style={{ textAlign: 'center' }}>
                                                             <button type="submit" className="btn btn-primary mr-2" disabled={!isEdited}>Update</button>
                                                         </div>

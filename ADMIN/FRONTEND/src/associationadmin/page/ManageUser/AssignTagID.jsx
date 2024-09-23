@@ -47,13 +47,7 @@ const AssignTagID = ({ userInfo, handleLogout }) => {
                 user_id: userInfo.data.user_id
             });
 
-            // setData(res.data.data);
-            const currentDate = new Date();
-            const tagIDdata = res.data.data.filter((item) => {
-                const expiryDate = new Date(item.tag_id_expiry_date);
-                return expiryDate >= currentDate; // Filter future expiry dates
-            });
-            setData(tagIDdata);
+            setData(res.data.data);
             setLoading(false);
         } catch (err) {
             console.error('Error fetching data:', err);

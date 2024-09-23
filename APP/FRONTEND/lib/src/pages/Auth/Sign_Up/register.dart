@@ -162,6 +162,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return emailRegex.hasMatch(value);
   }
 
+
   bool _validateUsername(String value) {
     final usernameRegex = RegExp(r'^[a-zA-Z0-9]+$');
     return usernameRegex.hasMatch(value);
@@ -343,10 +344,17 @@ class _RegisterPageState extends State<RegisterPage> {
       style: const TextStyle(color: Colors.white),
       cursorColor: const Color(0xFF1ED760),
       keyboardType: TextInputType.emailAddress,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@.]')), // Allows only letters, numbers, @, and .
+      ],
       validator: (value) {
         if (!_isEmailInteracted) return null;
-        if (value == null || value.isEmpty) return 'Enter your email';
-        if (!_validateEmail(value)) return 'Enter a valid email';
+        if (value == null || value.isEmpty) {
+          return 'Please enter email';
+        }
+        if (!_validateEmail(value)) {
+          return 'Enter a valid Gmail address ending with .com';
+        }
         return null;
       },
       onChanged: (value) => _validateAndUpdate(),
@@ -357,6 +365,7 @@ class _RegisterPageState extends State<RegisterPage> {
       },
     );
   }
+
 
   Widget _buildPhoneField() {
     return IntlPhoneField(
@@ -378,6 +387,9 @@ class _RegisterPageState extends State<RegisterPage> {
         if (value == null || value.number.isEmpty) return 'Enter your phone number';
         return null;
       },
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly, // Allows only numbers
+      ],
       onChanged: (value) => _validateAndUpdate(),
     );
   }
@@ -410,7 +422,7 @@ class _RegisterPageState extends State<RegisterPage> {
       style: const TextStyle(color: Colors.white),
       cursorColor: const Color(0xFF1ED760),
       keyboardType: TextInputType.number,
-      inputFormatters: [LengthLimitingTextInputFormatter(4)],
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
       validator: (value) {
         if (!_isPasswordInteracted) return null;
         if (value == null || value.isEmpty) return 'Enter your password';
@@ -425,6 +437,7 @@ class _RegisterPageState extends State<RegisterPage> {
       },
     );
   }
+
 
   Widget _buildSubmitButton() {
     return ElevatedButton(

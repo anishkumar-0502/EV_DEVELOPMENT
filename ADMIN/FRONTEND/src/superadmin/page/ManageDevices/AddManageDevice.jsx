@@ -169,13 +169,9 @@ const AddManageDevice = ({ userInfo, handleLogout }) => {
                                                 </button>
                                                 <div className="dropdown-menu" aria-labelledby="dropdownMenuIconButton1">
                                                     <h6 className="dropdown-header">Select clone model</h6>
-                                                    {data.length === 0 ? (
-                                                         <option disabled style={{paddingLeft:'50px'}}>No data found</option>
-                                                    ) : (
-                                                        Array.from(new Set(data.map(item => item.charger_model))).map((uniqueModel, index) => (
-                                                            <p key={index} className="dropdown-item" onClick={() => handleClone(uniqueModel)}>{uniqueModel} KW</p>
-                                                        ))
-                                                    )}
+                                                    {Array.from(new Set(data.map(item => item.charger_model))).map((uniqueModel, index) => (
+                                                        <p key={index} className="dropdown-item" onClick={() => handleClone(uniqueModel)}>{uniqueModel} KW</p>
+                                                    ))}
                                                 </div>
                                             </div>
                                             <button type="button" className="btn btn-success" onClick={backManageDevice}>Back</button>

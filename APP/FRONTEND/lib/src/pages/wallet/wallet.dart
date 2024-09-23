@@ -242,7 +242,7 @@ void _showAlertBanner(String message) {
     });
 
     // Simulate a delay or asynchronous operation if needed
-    Future.delayed(Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       setState(() {
         isLoading = false; // End loading
       });
@@ -483,6 +483,19 @@ void _showAlertBanner(String message) {
                     'Max ₹10,000',
                     style: TextStyle(fontSize: 14, color: Colors.white70),
                   ),
+                  const SizedBox(height: 8),
+                  // Conditional error message
+                  if (walletBalance != null && walletBalance! < 100)
+                    const Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.red, size: 18), // Error icon
+                        SizedBox(width: 8), // Space between icon and text
+                        Text(
+                          'Maintain min balance of ₹100 for optimal charging.',
+                          style: TextStyle(color: Colors.red, fontSize: 14),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 16),
                   LinearProgressIndicator(
                     value: walletBalance != null ? _calculateProgress() : 0,
@@ -492,6 +505,7 @@ void _showAlertBanner(String message) {
                 ],
               ),
             ),
+
             const SizedBox(height: 24),
             const Text(
               'Add money',
@@ -516,10 +530,10 @@ void _showAlertBanner(String message) {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: 'Enter amount',
-                            hintStyle: TextStyle(color: Colors.white54),
+                            hintStyle: const TextStyle(color: Colors.white54),
                             errorText: _errorMessage,
                           ),
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           inputFormatters: <TextInputFormatter>[
                             CustomTextInputFormatter(
                               _calculateRemainingBalance(),
@@ -601,71 +615,85 @@ void _showAlertBanner(String message) {
 
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: walletBalance != null && walletBalance! >= 10000
-                  ? null
-                  : () {
-                double amount = double.tryParse(_amountController.text) ?? 0.0;
-                double totalBalance = (walletBalance ?? 0.0) + amount;
-                double remainingBalance = 10000 - (walletBalance ?? 0.0);
+              onPressed: () {
+                String amountText = _amountController.text;
+                double? amount = double.tryParse(amountText);
 
-                if (amount <= 0 || totalBalance > 10000) {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false, // Prevent dismissing by tapping outside
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        backgroundColor: const Color(0xFF1E1E1E), // Background color
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        title: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.error_outline, color: Colors.red, size: 35),
-                                const SizedBox(width: 10),
-                                const Text(
-                                  "Max Limit Breached",
-                                  style: TextStyle(color: Colors.white, fontSize: 23),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            CustomGradientDivider(), // Custom gradient divider
-                          ],
-                        ),
-                        content: Text(
-                          'The total balance after adding this amount exceeds the maximum limit of ₹10,000. You can only add up to ₹${remainingBalance.toStringAsFixed(2)}.',
-                          style: const TextStyle(color: Colors.white70), // Adjusted text color for contrast
-                        ),
-                        actions: <Widget>[
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop(); // Close the dialog
-                            },
-                            child: const Text("OK", style: TextStyle(color: Colors.white)),
-                          ),
-                        ],
-                      );
-                    },
-                  );
+                if (amountText.isEmpty || amount == null || amount <= 0) {
+                  // Show error message if the field is empty or invalid
+                  setState(() {
+                    _errorMessage = 'Please enter a valid amount to add money.';
+                  });
                 } else {
-                  handlePayment(amount); // Proceed with payment
+                  // Clear any previous error messages
+                  setState(() {
+                    _errorMessage = null;
+                  });
+
+                  double totalBalance = (walletBalance ?? 0.0) + amount;
+                  double remainingBalance = 10000 - (walletBalance ?? 0.0);
+
+                  if (totalBalance > 10000) {
+                    // If the total balance exceeds the maximum limit, show an alert dialog
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false, // Prevent dismissing by tapping outside
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          backgroundColor: const Color(0xFF1E1E1E), // Background color
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          title: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.error_outline, color: Colors.red, size: 35),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "Max Limit Breached",
+                                    style: TextStyle(color: Colors.white, fontSize: 23),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              CustomGradientDivider(), // Custom gradient divider
+                            ],
+                          ),
+                          content: Text(
+                            'The total balance after adding this amount exceeds the maximum limit of ₹10,000. You can only add up to ₹${remainingBalance.toStringAsFixed(2)}.',
+                            style: const TextStyle(color: Colors.white70), // Adjusted text color for contrast
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close the dialog
+                              },
+                              child: const Text("OK", style: TextStyle(color: Colors.white)),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  } else {
+                    // Proceed with payment if validation is successful
+                    handlePayment(amount);
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: walletBalance != null && walletBalance! >= 10000
                     ? Colors.transparent
                     : const Color(0xFF1C8B39), // Dark green when enabled
-                minimumSize: const Size(double.infinity, 50), // Full width button
+                minimumSize: const Size(double.infinity, 50), // Full-width button
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 elevation: 0,
               ).copyWith(
                 backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                      (Set<MaterialState> states) {
+                  (Set<MaterialState> states) {
                     if (states.contains(MaterialState.disabled)) {
                       return Colors.green.withOpacity(0.2); // Light green gradient when disabled
                     }
@@ -688,8 +716,6 @@ void _showAlertBanner(String message) {
                 ),
               ),
             ),
-
-
             const SizedBox(height: 24),
           ],
         ),

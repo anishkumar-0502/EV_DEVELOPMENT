@@ -813,7 +813,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
         await showModalBottomSheet(
           context: context,
           isScrollControlled: true,
-          isDismissible: false,
+          // isDismissible: false,
           enableDrag: false,
           backgroundColor: Colors.black,
           builder: (BuildContext context) {
@@ -1609,31 +1609,37 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
+
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Text(
+                                  model,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(width: 8,),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 0),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF1E1E1E),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
                                     "($chargerType)",
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: chargerTypeColor, // Use the determined color
+                                      color: Colors.white70, // Use the determined color
                                       letterSpacing: 1.2,
                                     ),
                                   ),
                                 ),
                               ],
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              model,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
                             ),
                             const SizedBox(height: 5),
                             Row(
@@ -1901,7 +1907,7 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+
                 },
               ),
             ],
@@ -2016,6 +2022,7 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
     );
   }
 }
+
 class SlantedLabel extends StatelessWidget {
   final String accessType;
 

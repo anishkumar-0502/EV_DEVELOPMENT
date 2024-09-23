@@ -111,7 +111,7 @@ const Viewuser = ({ userInfo, handleLogout }) => {
                                                 <div className="row">
                                                     <div className="col-12 col-xl-12">
                                                         <div style={{textAlign:'center'}}>
-                                                            <h4 className="card-title" style={{paddingTop:'10px'}}>User Details</h4>  
+                                                            <h4 className="card-title" style={{paddingTop:'10px'}}>Client User Details</h4>  
                                                             <hr></hr>
                                                         </div>
                                                     </div>

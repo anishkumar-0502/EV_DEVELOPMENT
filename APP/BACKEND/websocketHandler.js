@@ -5,7 +5,6 @@ const {
     getUsername, updateChargerDetails, checkChargerIdInDatabase, checkChargerTagId, checkAuthorization, calculateDifference,
     UpdateInUse, getAutostop, captureMetervalues, autostop_unit, autostop_price, insertSocketGunConfig, NullTagIDInStatus
 } = require('./functions');
-
 const Chargercontrollers = require("./src/ChargingSession/controllers.js");
 
 const PING_INTERVAL = 60000; // 60 seconds ping interval
@@ -61,7 +60,7 @@ const getUniqueIdentifierFromRequest = async (request, ws) => {
     }
 };
 
-const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, ClientConnections, clients, OCPPResponseMap, meterValuesMap, sessionFlags, charging_states, startedChargingSet, chargingSessionID, chargerStartTime, chargerStopTime) => {
+const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, ClientConnections, clients, OCPPResponseMap, meterValuesMap, sessionFlags, charging_states, startedChargingSet, chargingSessionID) => {
     wss.on('connection', async (ws, req) => {
         ws.isAlive = true;
         const uniqueIdentifier = await getUniqueIdentifierFromRequest(req, ws); // Await here
@@ -434,8 +433,7 @@ const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, Cli
                             if (status == 'Charging' && !startedChargingSet.has(key)) {
                                 sessionFlags.set(key, 1);
                                 charging_states.set(key, true);
-                                //StartTimestamp = timestamp;
-                                chargerStartTime.set(key, timestamp);
+                                StartTimestamp = timestamp;
                                 startedChargingSet.add(key);
                                 GenerateChargingSessionID = generateRandomTransactionId();
                                 chargingSessionID.set(key, GenerateChargingSessionID);
@@ -443,8 +441,7 @@ const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, Cli
 
                             if ((status === 'SuspendedEV' || status === 'Faulted') && (charging_states.get(key) == true)) {
                                 sessionFlags.set(key, 1);
-                                //StopTimestamp = timestamp;
-                                chargerStopTime.set(key, timestamp);
+                                StopTimestamp = timestamp;
                                 charging_states.set(key, false);
                                 startedChargingSet.delete(key);
                                 deleteMeterValues(key);
@@ -822,28 +819,24 @@ const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, Cli
                                 autostopSettings = meterValues.autostopSettings;
                             }
                     
-                            const processMeterValues = async (firstMeter, lastMeter, settings, identifier, connector) => {
-                                if (settings.isUnitChecked) {
-                                    await autostop_unit(firstMeter, lastMeter, settings, identifier, connector);
-                                } 
-                                if (settings.isPriceChecked) {
-                                    await autostop_price(firstMeter, lastMeter, settings, identifier, connector);
-                                }
-                            };
-                            
                             if (!meterValues.firstMeterValues && !meterValues.connectorId) {
                                 meterValues.connectorId = connectorId;
                                 meterValues.firstMeterValues = await captureMetervalues(Identifier, requestData, uniqueIdentifier, clientIpAddress, UniqueChargingSessionId, connectorId);
                                 console.log(`First MeterValues for ${uniqueIdentifier} for Connector ${connectorId}: ${meterValues.firstMeterValues}`);
-                            
-                                await processMeterValues(meterValues.firstMeterValues, meterValues.lastMeterValues, autostopSettings, uniqueIdentifier, connectorId);
+                                if (autostopSettings.isUnitChecked) {
+                                    await autostop_unit(meterValues.firstMeterValues, meterValues.lastMeterValues, autostopSettings, uniqueIdentifier, connectorId);
+                                } else if (autostopSettings.isPriceChecked) {
+                                    await autostop_price(meterValues.firstMeterValues, meterValues.lastMeterValues, autostopSettings, uniqueIdentifier, connectorId);
+                                }
                             } else {
                                 meterValues.lastMeterValues = await captureMetervalues(Identifier, requestData, uniqueIdentifier, clientIpAddress, UniqueChargingSessionId, connectorId);
                                 console.log(`Last MeterValues for ${uniqueIdentifier} for Connector ${connectorId}: ${meterValues.lastMeterValues}`);
-                            
-                                await processMeterValues(meterValues.firstMeterValues, meterValues.lastMeterValues, autostopSettings, uniqueIdentifier, connectorId);
+                                if (autostopSettings.isUnitChecked) {
+                                    await autostop_unit(meterValues.firstMeterValues, meterValues.lastMeterValues, autostopSettings, uniqueIdentifier, connectorId);
+                                } else if (autostopSettings.isPriceChecked) {
+                                    await autostop_price(meterValues.firstMeterValues, meterValues.lastMeterValues, autostopSettings, uniqueIdentifier, connectorId);
+                                }
                             }
-                            
                         } else {
                             console.error('Invalid MeterValues frame:', requestErrors);
                             response = [3, Identifier, { "errors": requestErrors }];
@@ -1029,8 +1022,7 @@ const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, Cli
                         
                         if (charging_states.get(key) === true) {
                             sessionFlags.set(key, 1);
-                            // StopTimestamp = timestamp;
-                            chargerStopTime.set(key, timestamp);
+                            StopTimestamp = timestamp;
                             charging_states.set(key, false);
                             startedChargingSet.delete(key);
                         }
@@ -1038,8 +1030,7 @@ const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, Cli
                         clearTimeout(autoStopTimer);
                     }
 
-                    if (sessionFlags.get(key) === 1) {
-                        sessionFlags.set(key, 0);
+                    if (sessionFlags.get(key) == 1) {
                         let unit;
                         let sessionPrice;
                         const meterValues = getMeterValues(key);
@@ -1051,20 +1042,14 @@ const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, Cli
                             console.log("StartMeterValues or LastMeterValues is not available.");
                         }
                         const user = await getUsername(uniqueIdentifier, connectorId);
-                        // const startTime = StartTimestamp;
-                        const startTime = chargerStartTime.get(key);
-                        // const stopTime = StopTimestamp;
-                        const stopTime = chargerStopTime.get(key);
+                        const startTime = StartTimestamp;
+                        const stopTime = StopTimestamp;
                         // Fetch the connector type from socket_gun_config
                         const socketGunConfig = await db.collection('socket_gun_config').findOne({ charger_id: uniqueIdentifier});
                         const connectorIdTypeField = `connector_${connectorId}_type`;
                         const connectorTypeValue = socketGunConfig[connectorIdTypeField];
 
-                        if(user){
-                            await handleChargingSession(uniqueIdentifier, connectorId, startTime, stopTime, unit, sessionPrice, user, chargingSessionID.get(key), connectorTypeValue);
-                        }else{
-                            console.log(`ChargerID ${uniqueIdentifier}: User is ${user}, so cant update the sesison price and commission.`);
-                        }
+                        await handleChargingSession(uniqueIdentifier, connectorId, startTime, stopTime, unit, sessionPrice, user, chargingSessionID.get(key), connectorTypeValue);
                 
                         if (charging_states.get(key) == false) {
                             const result = await updateCurrentOrActiveUserToNull(uniqueIdentifier, connectorId);
@@ -1078,10 +1063,9 @@ const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, Cli
                             console.log('End charging session is not updated - while stop only it will work');
                         }
                 
-                        // StartTimestamp = null;
-                        chargerStartTime.set(key, null);
-                        chargerStopTime.set(key, null);
-                        //StopTimestamp = null;
+                        StartTimestamp = null;
+                        StopTimestamp = null;
+                        sessionFlags.set(key, 0);
                     }
                 }
             });
