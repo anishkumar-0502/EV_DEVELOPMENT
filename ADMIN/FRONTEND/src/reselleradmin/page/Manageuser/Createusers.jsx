@@ -184,9 +184,13 @@ const CreateUsers = ({ userInfo, handleLogout }) => {
                                                                             required
                                                                         >
                                                                             <option value="">Select Role</option>
-                                                                            {userRoles.map(role => (
-                                                                                <option key={role.role_id} value={role.role_name}>{role.role_name}</option>
-                                                                            ))}
+                                                                            {userRoles.length === 0 ? (
+                                                                                <option disabled>No data found</option>
+                                                                            ) : (
+                                                                                userRoles.map(role => (
+                                                                                    <option key={role.role_id} value={role.role_name}>{role.role_name}</option>
+                                                                                ))
+                                                                            )}
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -202,9 +206,13 @@ const CreateUsers = ({ userInfo, handleLogout }) => {
                                                                             required
                                                                         >
                                                                             <option value="">Select Client</option>
-                                                                            {clientNames.map(client => (
-                                                                                <option key={client.client_id} value={client.client_name}>{client.client_name}</option>
-                                                                            ))}
+                                                                            {clientNames.length === 0 ? (
+                                                                                <option disabled>No data found</option>
+                                                                            ) : (
+                                                                                clientNames.map(client => (
+                                                                                    <option key={client.client_id} value={client.client_name}>{client.client_name}</option>
+                                                                                ))
+                                                                            )}
                                                                         </select>
                                                                     </div>
                                                                 </div>

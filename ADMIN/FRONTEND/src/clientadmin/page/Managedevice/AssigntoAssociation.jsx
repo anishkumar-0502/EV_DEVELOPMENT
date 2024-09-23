@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-
 
 const AssigntoAssociation = ({ userInfo, handleLogout }) => {
     const navigate = useNavigate();
@@ -20,6 +19,7 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
     const [clientsList, setClientsList] = useState([]);
     const fetchClientsCalled = useRef(false);
     const fetchUnallocatedChargersCalled = useRef(false);
+    const fetchFinanceIdCalled = useRef(false); 
 
     // fetch associated users
     useEffect(() => {
@@ -41,7 +41,7 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                 const response = await axios.post('/clientadmin/FetchUnAllocatedChargerToAssgin', {
                     client_id: userInfo.data.client_id,
                 });
-                console.log(response.data);
+                // console.log(response.data);
                 setUnallocatedChargers(response.data.data || []);
             } catch (error) {
                 console.error('Error fetching unallocated charger details:', error);
@@ -63,26 +63,31 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
     }, [userInfo.data.client_id]); // Use userInfo.data.reseller_id as the dependency
 
     // Fetch finance details
-    useEffect(() => {
-        const fetchFinanceId = async () => {
-            try {
-                const response = await axios.get('/clientadmin/FetchFinanceDetailsForSelection');
-                if (response.data && Array.isArray(response.data.data)) {
-                    const financeIds = response.data.data.map(item => ({
-                        finance_id: item.finance_id,
-                        totalprice: item.totalprice
-                    }));
-                    setFinanceOptions(financeIds);
-                } else {
-                    console.error('Expected an array from API response, received:', response.data);
-                }
-            } catch (error) {
-                console.error('Error fetching finance details:', error);
+    const fetchFinanceId = useCallback(async () => {
+        try {
+            const response = await axios.post('/clientadmin/FetchFinanceDetailsForSelection', {
+                client_id: userInfo.data.client_id,
+            });
+            if (response.data && Array.isArray(response.data.data)) {
+                const financeIds = response.data.data.map(item => ({
+                    finance_id: item.finance_id,
+                    totalprice: item.totalprice
+                }));
+                setFinanceOptions(financeIds);
+            } else {
+                console.error('Expected an array from API response, received:', response.data);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching finance details:', error);
+        }
+    }, [userInfo.data.client_id]);
 
-        fetchFinanceId();
-    }, []);
+    useEffect(() => {
+        if (!fetchFinanceIdCalled.current) {
+            fetchFinanceId();
+            fetchFinanceIdCalled.current = true;
+        }
+    }, [fetchFinanceId]);
 
     // select associated changes
     const handleAssociationChange = (e) => {
@@ -99,19 +104,39 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
     };
 
     // set commission
-    const handleCommissionChange = (e) => {
+    const [errorMessage, setErrorMessage] = useState('');
+
+    const handleCommissionChange = (e, field) => {
         let value = e.target.value;
     
-        // Remove any non-digit or non-decimal characters
+        // Allow only numbers and a single decimal point
         value = value.replace(/[^0-9.]/g, '');
     
-        // Ensure only one decimal point is allowed
+        // Ensure there's only one decimal point and limit to two decimal places
         const parts = value.split('.');
         if (parts.length > 2) {
-            value = parts[0] + '.' + parts[1]; // Combine the first two parts if more than one decimal point is present
+            value = parts[0] + '.' + parts[1];
+        } else if (parts.length === 2 && parts[1].length > 2) {
+            value = parts[0] + '.' + parts[1].slice(0, 2);
         }
     
-        setCommission(value);
+        // Convert to float and validate range
+        const numericValue = parseFloat(value);
+        let errorMessage = '';
+        if (numericValue < 0 || numericValue > 25) {
+            errorMessage = 'Please enter a value between 0.00% and 25.00%.';
+        }
+    
+        // Limit the length to 6 characters and apply validation
+        if (value.length > 5) {
+            value = value.slice(0, 5);
+        }
+    
+        // Update the state based on validation
+        if (!errorMessage) {
+            setCommission(value);
+        }
+        setErrorMessage(errorMessage);
     };
     
 
@@ -266,13 +291,18 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                                             value={selectedAssociationId}
                                                                             style={{color:'black'}}
                                                                             onChange={handleAssociationChange}
+                                                                            required
                                                                         >
                                                                             <option value="">Select Association</option>
-                                                                            {clientsList.map((clientObj) => (
-                                                                                <option key={clientObj.client_id} value={clientObj.association_id}>
-                                                                                    {clientObj.association_name}
-                                                                                </option>
-                                                                            ))}
+                                                                            {clientsList.length === 0 ? (
+                                                                                <option disabled>No data found</option>
+                                                                            ) : (
+                                                                                clientsList.map((clientObj) => (
+                                                                                    <option key={clientObj.association_id} value={clientObj.association_id}>
+                                                                                        {clientObj.association_name}
+                                                                                    </option>
+                                                                                ))
+                                                                            )}
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -280,7 +310,7 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Commission </label>
-                                                                    <div className="col-sm-4">
+                                                                    <div className="col-sm-9">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -288,9 +318,11 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                                             <input
                                                                                 type="text"
                                                                                 className="form-control"
-                                                                                maxLength={6}
+                                                                                maxLength={5}
                                                                                 value={commission}
+                                                                                name="commission" // Add name attribute
                                                                                 onChange={handleCommissionChange}
+                                                                                required
                                                                             />
                                                                         </div>
                                                                     </div>
@@ -321,7 +353,7 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                                                         <span className="text-danger">No Chargers Available</span>
                                                                                     )}
                                                                                 </button>
-                                                                                <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                                                <div className="dropdown-menu" aria-labelledby="dropdownMenuButton" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                                                                                     {unallocatedChargers.length > 0 ? (
                                                                                         unallocatedChargers.map((chargerObj) => (
                                                                                             <div key={chargerObj.charger_id} className="dropdown-item">
@@ -332,6 +364,8 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                                                                         id={`charger-${chargerObj.charger_id}`}
                                                                                                         checked={selectedChargers.includes(chargerObj.charger_id)}
                                                                                                         onChange={(e) => handleChargerChange(chargerObj.charger_id, e.target.checked)}
+                                                                                                        name={`charger_${chargerObj.charger_id}`} // Add name attribute
+                                                                                                      //  required
                                                                                                     />
                                                                                                     <label className="form-check-label" htmlFor={`charger-${chargerObj.charger_id}`}>
                                                                                                         {chargerObj.charger_id}
@@ -351,19 +385,24 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
                                                                     <label className="col-sm-3 col-form-label">Select Unit Price</label>
-                                                                    <div className="col-sm-4">
+                                                                    <div className="col-sm-9">
                                                                         <select
                                                                             className="form-control"
                                                                             value={selectedFinanceId}
                                                                             onChange={handleFinanceChange}
                                                                             style={{ color: 'black' }}
+                                                                            required
                                                                         >
                                                                             <option value="">Select Unit Price</option>
-                                                                            {financeOptions.map((finance) => (
-                                                                                <option key={finance.finance_id} value={finance.finance_id}>
-                                                                                    {`₹${finance.totalprice}`}
-                                                                                </option>
-                                                                            ))}
+                                                                            {financeOptions.length === 0 ? (
+                                                                                <option disabled>No data found</option>
+                                                                            ) : (
+                                                                                financeOptions.map((finance) => (
+                                                                                    <option key={finance.finance_id} value={finance.finance_id}>
+                                                                                        {`₹${finance.totalprice}`}
+                                                                                    </option>
+                                                                                ))
+                                                                            )}
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -384,6 +423,7 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        {errorMessage && <div className="text-danger">{errorMessage}</div>}
                                                         <div className="text-center">
                                                             <button type="submit" className="btn btn-primary mr-2">Submit</button>
                                                         </div>

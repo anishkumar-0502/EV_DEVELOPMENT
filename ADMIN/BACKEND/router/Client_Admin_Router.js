@@ -198,9 +198,9 @@ router.post('/FetchCommissionAmtClient', async (req, res) => {
 
 //MANAGE FINANCE
 // Route to FetchFinanceDetails
-router.get('/FetchFinanceDetails', async (req, res) => {
+router.post('/FetchFinanceDetails', async (req, res) => {
     try {
-        const data = await functions.FetchFinanceDetails(req, res);
+        const data = await functions.FetchFinanceDetails(req);
         res.status(200).json({ status: 'Success', data: data });
 
     } catch (error) {
@@ -226,10 +226,11 @@ router.post('/DeactivateOrActivateFinanceDetails', functions.DeactivateOrActivat
 router.post('/AssignFinanceToCharger', functions.AssignFinanceToCharger, (req, res) => {
     res.status(200).json({ status: 'Success' ,message:  'Finance Assigned successfully' });
 });
+
 // Route to FetchFinanceDetailsForSelection
-router.get('/FetchFinanceDetailsForSelection', async (req, res) => {
+router.post('/FetchFinanceDetailsForSelection', async (req, res) => {
     try {
-        const data = await functions.FetchFinanceDetailsForSelection(req, res);
+        const data = await functions.FetchFinanceDetailsForSelection(req);
         res.status(200).json({ status: 'Success', data: data });
 
     } catch (error) {

@@ -31,8 +31,8 @@ const Login = ({ handleLogin }) => {
         // console.log('Response data:', data); 
         handleLogin({...data});
       } else {
-        // const responseData = await response.json();
-        setErrorMessage('Login failed. Please check your credentials.');
+        const responseData = await response.json();
+        setErrorMessage('Login failed. ' + responseData.message);
       }
     } catch (error) {
       setSuccessMessage('');

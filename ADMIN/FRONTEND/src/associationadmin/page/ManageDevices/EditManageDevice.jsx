@@ -142,8 +142,8 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Charger Accessibility</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label">Charger Accessibility</label>
+                                                                    <div className="col-sm-12">
                                                                         <select className="form-control" value={selectStatus} onChange={handleStatusChange} required>
                                                                             <option value="1">Public</option>
                                                                             <option value="2">Private</option>
@@ -153,8 +153,8 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Latitude</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label">Latitude</label>
+                                                                    <div className="col-sm-12">
                                                                         <input type="text" className="form-control" value={latitude} maxLength={10} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^0-9.-]/g, ''); setLatitude(sanitizedValue); }} required />
                                                                     </div>
                                                                 </div>
@@ -163,16 +163,16 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Longitude</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label">Longitude</label>
+                                                                    <div className="col-sm-12">
                                                                         <input type="text" className="form-control" value={longitude} maxLength={11} onChange={(e) => { const value = e.target.value; const sanitizedValue = value.replace(/[^0-9.-]/g, ''); setLongitude(sanitizedValue); }} required />
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Wifi Username</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label">Wifi Username</label>
+                                                                    <div className="col-sm-12">
                                                                         <input type="text" className="form-control" value={wifiUsername} maxLength={25} onChange={(e) => setWifiUsername(e.target.value)} required />
                                                                     </div>
                                                                 </div>
@@ -181,8 +181,8 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Wifi Password</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label">Wifi Password</label>
+                                                                    <div className="col-sm-12">
                                                                         <input type="text" className="form-control" value={wifiPassword} maxLength={15} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/\s/g, ''); setWifiPassword(sanitizedValue); }} required />
                                                                     </div>
                                                                 </div>

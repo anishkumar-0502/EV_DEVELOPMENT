@@ -111,7 +111,7 @@ const ViewAss = ({ userInfo, handleLogout }) => {
                                                             <hr></hr>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Association Name:  <span style={{ fontWeight: 'normal' }}>{newass.association_name ? newass.association_name : '-'}</span></div>
@@ -128,7 +128,7 @@ const ViewAss = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Reseller Name:  <span style={{ fontWeight: 'normal' }}>{newass.reseller_name ? newass.reseller_name : '-'}</span></div>
@@ -145,7 +145,7 @@ const ViewAss = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Association Address: <span style={{ fontWeight: 'normal' }}>{newass.association_address ? newass.association_address : '-'}</span></div>
@@ -162,7 +162,7 @@ const ViewAss = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Modified By: <span style={{ fontWeight: 'normal' }}>{newass.modified_by ? newass.modified_by : '-'}</span></div>

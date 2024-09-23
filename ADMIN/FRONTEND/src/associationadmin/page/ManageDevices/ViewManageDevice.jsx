@@ -126,7 +126,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             <hr></hr>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Charger ID: <span style={{fontWeight: 'normal'}}>{deviceData.charger_id ? deviceData.charger_id : '-'}</span></div>
@@ -143,7 +143,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Vendor: <span style={{fontWeight: 'normal'}}>{deviceData.vendor ? deviceData.vendor : '-'}</span></div>
@@ -160,7 +160,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Max Power: <span style={{fontWeight: 'normal'}}>{deviceData.max_power ?  deviceData.max_power : '-'}</span></div>
@@ -177,7 +177,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Model: <span style={{fontWeight: 'normal'}}>{deviceData.model ?  deviceData.model : '-'}</span></div>
@@ -194,7 +194,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>IP: <span style={{fontWeight: 'normal'}}>{deviceData.ip ? deviceData.ip : '-'}</span></div>
@@ -211,7 +211,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Short Description: <span style={{ fontWeight: 'normal' }}>{deviceData.short_description ? deviceData.short_description : '-'}</span></div>
@@ -228,7 +228,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         {/* <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Reseller Commission: <span style={{fontWeight: 'normal'}}>{deviceData.client_commission ? deviceData.client_commission : '-'}</span></div>
@@ -250,8 +250,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
-                                                        
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Created Date: <span style={{fontWeight: 'normal'}}>{deviceData.created_date ? formatTimestamp(deviceData.created_date) : '-'}</span></div>
@@ -268,8 +267,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
-                                                        
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Status: <span style={{fontWeight: 'normal'}}>{deviceData.status ?  <span className="text-success">Active</span> : <span className="text-danger">DeActive</span>}</span></div>

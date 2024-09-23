@@ -22,8 +22,8 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
             const res = await axios.post('/associationadmin/FetchAllTagIDs', {
                 association_id: userInfo.data.association_id
             });
-            setData(res.data.data);
-            setLoading(false);
+                setData(res.data.data);
+                setLoading(false);
         } catch (err) {
             console.error('Error fetching data:', err);
             setError('Error fetching data. Please try again.');
@@ -310,6 +310,28 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
         const minutes = String(d.getMinutes()).padStart(2, '0');
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
+
+    // const getMinDate = () => {
+    //     const date = new Date();
+    //     date.setDate(date.getDate() +2); // Move to the next day
+    //     date.setHours(0, 0, 0, 0); // Set time to midnight (00:00:00) of the next day
+    //     return date.toISOString().slice(0, 16); // Format for datetime-local input
+    // }; 
+    
+    const getMinDate = () => {
+        const date = new Date();
+        date.setDate(date.getDate() + 1); // Move to two days ahead
+        date.setHours(0, 5, 0, 0); // Set time to 12:05 AM (local time) on the next day
+    
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+        // Format the date and time string for the datetime-local input
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
     
     return (
         <div className='container-scroller'>
@@ -351,7 +373,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                                     <div className="input-group-prepend">
                                                                         <span className="input-group-text" style={{color:'black', width:'180px'}}>Tag ID Expiry Date</span>
                                                                     </div>
-                                                                    <input type="datetime-local" id="tagidexpirydate" className="form-control" name="tagidexpirydate" value={add_tag_id_expiry_date} onChange={(e) => setTagIDExpiryDate(e.target.value)}/>
+                                                                    <input type="datetime-local" className="form-control" value={add_tag_id_expiry_date} onChange={(e) => setTagIDExpiryDate(e.target.value)}  min={getMinDate()}/>
                                                                 </div>
                                                             </div>
                                                             <div style={{textAlign:'center'}}>
@@ -372,22 +394,24 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                                 <h4 className="card-title">Edit Tag ID</h4>
                                                             </div>
                                                             <div className="table-responsive pt-3">
-                                                            <div className="input-group">
-                                                                <div className="input-group-prepend">
-                                                                    <span className="input-group-text" style={{ color: 'black', width: '180px' }}>Tag ID</span>
-                                                                </div>
-                                                                <input type="text" className="form-control" placeholder="Tag ID" style={{ width:'200px'}} value={tag_id} maxLength={12} readOnly />
-                                                            </div>
-                                                            </div>
-                                                            <div className="table-responsive pt-3">
                                                                 <div className="input-group">
                                                                     <div className="input-group-prepend">
-                                                                        <span className="input-group-text" style={{color:'black', width:'180px'}}>Tag ID Expiry Date</span>
+                                                                        <span className="input-group-text" style={{ color: 'black', width: '180px' }}>Tag ID</span>
                                                                     </div>
-                                                                    <input type="datetime-local" id="tagidexpirydate" className="form-control" name="tagidexpirydate"         
-                                                                    value={formatDateForInput(tag_id_expiry_date)}
-                                                                    onChange={(e) => setEditTagIDExpiryDate(e.target.value)}/>
+                                                                    <input type="text" className="form-control" placeholder="Tag ID" style={{ width:'200px'}} value={tag_id} maxLength={12} readOnly />
                                                                 </div>
+                                                            </div>
+                                                            <div className="input-group">
+                                                                <div className="input-group-prepend">
+                                                                    <span className="input-group-text" style={{ color: 'black', width: '180px' }}>Tag ID Expiry Date</span>
+                                                                </div>
+                                                                <input 
+                                                                    type="datetime-local" 
+                                                                    className="form-control"    
+                                                                    value={formatDateForInput(tag_id_expiry_date)}
+                                                                    onChange={(e) => setEditTagIDExpiryDate(e.target.value)}
+                                                                    min={getMinDate()}
+                                                                />
                                                             </div>
                                                             <div style={{textAlign:'center'}}>
                                                                 <button type="submit" className="btn btn-primary mr-2" style={{marginTop:'10px'}} disabled={tag_id === initialTagID && tag_id_expiry_date === initialTagIDExpiryDateD}>Update</button>
@@ -410,7 +434,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                             <div className="col-md-12 grid-margin">
                                                 <div className="row">
                                                     <div className="col-4 col-xl-8">
-                                                        <h4 className="card-title" style={{paddingTop:'10px'}}>List Of TagID's</h4>  
+                                                        <h4 className="card-title" style={{paddingTop:'10px'}}>List Of Tag ID's</h4>  
                                                     </div>
                                                     <div className="col-8 col-xl-4">
                                                         <div className="input-group">
@@ -425,13 +449,13 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                        <div className="table-responsive" style={{ maxHeight: '500px', overflowY: 'auto' }}>
                                             <table className="table table-striped">
                                                 <thead style={{ textAlign: 'center', position: theadsticky, tableLayout: theadfixed, top: 0, backgroundColor: theadBackgroundColor, zIndex: 1 }}>
                                                     <tr> 
                                                         <th>Sl.No</th>
                                                         <th>Tag ID</th>
-                                                        <th>TagID Expiry Date</th>
+                                                        <th>Tag ID Expiry Date</th>
                                                         <th>Status</th>
                                                         <th>Active/DeActive</th>
                                                         <th>Option</th>

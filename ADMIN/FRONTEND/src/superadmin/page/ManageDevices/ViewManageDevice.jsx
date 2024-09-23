@@ -125,7 +125,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             <hr></hr>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Charger ID: <span style={{fontWeight:'normal'}}>{newUser.charger_id ? newUser.charger_id : '-'}</span></div>
@@ -142,7 +142,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Model: <span style={{fontWeight:'normal'}}>{newUser.model ?  newUser.model : '-'}</span></div>
@@ -159,7 +159,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Gun Connector: <span style={{ fontWeight: 'normal' }}>{newUser.gun_connector === 1 ? 'Single phase' : newUser.gun_connector === 2 ? 'CSS Type 2' : newUser.gun_connector === 3 ? '3 phase socket' : '-'}</span></div>
@@ -176,7 +176,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Socket Count: <span style={{fontWeight:'normal'}}>{newUser.socket_count === 1 ? '1 Socket ' : newUser.socket_count === 2 ? '2 Sockets' : newUser.socket_count === 3 ? '3 Sockets' : newUser.socket_count === 4 ? '4 Sockets' : '-'}</span></div>
@@ -195,8 +195,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                         </div>
                                                         </div>
 
-                                                        <div className="row col-12 col-xl-12">
-
+                                                        <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Client Commission: <span style={{fontWeight:'normal'}}>{newUser.client_commission ? newUser.client_commission : '-'}</span></div>
@@ -214,7 +213,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                         </div>
                                                         </div>
 
-                                                        <div className="row col-12 col-xl-12">
+                                                        <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Longitude: <span style={{fontWeight:'normal'}}>{newUser.long ? newUser.long : '-'}</span></div>
@@ -231,10 +230,10 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Charger Accessibility: <span style={{fontWeight:'normal'}}>{newUser.charger_accessibility ? newUser.charger_accessibility : '-'}</span></div>  
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Charger Accessibility: <span style={{ fontWeight: 'normal' }}>{newUser.charger_accessibility === 1 ? 'Public' : newUser.charger_accessibility === 2 ? 'Private' : '-'}</span></div> 
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
@@ -253,8 +252,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
-                                                        
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Created By: <span style={{fontWeight:'normal'}}>{newUser.created_by ? newUser.created_by : '-'}</span></div>
@@ -271,8 +269,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
-                                                        
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Modified Date: <span style={{fontWeight:'normal'}}>{newUser.modified_date ? formatTimestamp(newUser.modified_date) : '-'}</span></div>

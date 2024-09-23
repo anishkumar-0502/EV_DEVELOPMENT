@@ -172,8 +172,8 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                          <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">User Name</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label">User Name</label>
+                                                                    <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control"
@@ -191,8 +191,8 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Phone Number</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label">Phone Number</label>
+                                                                    <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control"
@@ -209,8 +209,8 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Email ID</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label">Email ID</label>
+                                                                    <div className="col-sm-12">
                                                                         <input
                                                                             type="email"
                                                                             className="form-control"
@@ -222,8 +222,8 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Password</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label">Password</label>
+                                                                    <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control"
@@ -240,8 +240,8 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Role Name</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label">Role Name</label>
+                                                                    <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control"
@@ -253,8 +253,8 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Status</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label">Status</label>
+                                                                    <div className="col-sm-12">
                                                                         <select
                                                                             className="form-control"
                                                                             value={status}

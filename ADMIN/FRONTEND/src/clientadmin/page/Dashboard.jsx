@@ -20,7 +20,7 @@ const Dashboard = ({ userInfo, handleLogout }) => {
             const response = await axios.post('/clientadmin/FetchAllocatedCharger', {
                 client_id: userInfo.data.client_id,
             });
-            console.log(response);
+            // console.log(response);
 
             setData(response.data.data || []);
             setLoading(false);
@@ -356,7 +356,7 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="table-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                        <div className="table-responsive" style={{ maxHeight: '500px', overflowY: 'auto' }}>
                                             <table className="table table-striped">
                                                 <thead style={{ textAlign: 'center', tableLayout: 'fixed', position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                                                     <tr> 

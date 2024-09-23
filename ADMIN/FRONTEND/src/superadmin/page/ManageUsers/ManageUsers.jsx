@@ -305,11 +305,15 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                                     <div className="input-group-prepend">
                                                                         <span className="input-group-text" style={{color:'black', width:'125px'}}>Role Name</span>
                                                                     </div>
-                                                                    <select className="form-control" value={`${role.role_id}|${role.role_name}`} onChange={handleResellerChange}>
+                                                                    <select className="form-control" value={`${role.role_id}|${role.role_name}`} onChange={handleResellerChange} required>
                                                                         <option value="">Select Role</option>
-                                                                        {selectionRoles.map((role, index) => (
-                                                                            <option key={index} value={`${role.role_id}|${role.role_name}`}>{role.role_name}</option>
-                                                                        ))}
+                                                                        {selectionRoles.length === 0 ? (
+                                                                            <option disabled>No data found</option>
+                                                                        ) : (
+                                                                            selectionRoles.map((role, index) => (
+                                                                                <option key={index} value={`${role.role_id}|${role.role_name}`}>{role.role_name}</option>
+                                                                            ))
+                                                                        )}
                                                                     </select>                                                               
                                                                 </div>
 
@@ -318,11 +322,15 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                                     <div className="input-group-prepend">
                                                                         <span className="input-group-text" style={{color:'black', width:'125px'}}>Reseller Name</span>
                                                                     </div>
-                                                                    <select className="form-control" value={reseller_id} onChange={handleselectionReseller}>
+                                                                    <select className="form-control" value={reseller_id} onChange={handleselectionReseller} required>
                                                                         <option value="">Select Reseller</option>
-                                                                        {selectionReseller.map((roles, index) => (
-                                                                            <option key={index} value={roles.reseller_id}>{roles.reseller_name}</option>
-                                                                        ))}
+                                                                        {selectionReseller.length === 0 ? (
+                                                                            <option disabled>No data found</option>
+                                                                        ) : (
+                                                                            selectionReseller.map((roles, index) => (
+                                                                                <option key={index} value={roles.reseller_id}>{roles.reseller_name}</option>
+                                                                            ))
+                                                                        )}
                                                                     </select>                                                               
                                                                 </div>
                                                                 )}
@@ -402,7 +410,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                        <div className="table-responsive" style={{ maxHeight: '500px', overflowY: 'auto' }}>
                                             <table className="table table-striped">
                                                 <thead style={{ textAlign: 'center', position: theadsticky, tableLayout: theadfixed, top: 0, backgroundColor: theadBackgroundColor, zIndex: 1 }}>
                                                     <tr> 

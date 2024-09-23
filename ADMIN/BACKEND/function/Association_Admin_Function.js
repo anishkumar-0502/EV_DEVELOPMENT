@@ -262,8 +262,12 @@ async function CreateUser(req, res, next) {
                 { email_id: email_id }
             ]
          });
-        if (existingUser) {
-            return res.status(400).json({ message: 'Email ID already exists' });
+         if (existingUser) {
+            if (existingUser.email_id === email_id) {
+                return res.status(400).json({ message: 'Email ID already exists' });
+            } else if (existingUser.username === username) {
+                return res.status(400).json({ message: 'Username already exists' });
+            }
         }
 
         // Use aggregation to fetch the highest user_id
@@ -335,7 +339,7 @@ async function UpdateUser(req, res, next) {
                     username: username,
                     phone_no: phone_no,
                     password: parseInt(password),
-                    wallet_bal: wallet_bal || existingUser.wallet_bal, 
+                    wallet_bal: parseFloat(wallet_bal) || parseFloat(existingUser.wallet_bal), 
                     modified_date: new Date(),
                     modified_by: modified_by,
                     status: status,
@@ -411,37 +415,64 @@ async function FetchAllocatedChargerByClientToAssociation(req) {
         const devicesCollection = db.collection("charger_details");
         const financeCollection = db.collection("finance_details");
 
-        // Fetch the finance details
-        const financeDetails = await financeCollection.findOne();
-        if (!financeDetails) {
-            throw new Error('No finance details found');
-        }
-
         // Fetch chargers assigned to the specified association_id
         const chargers = await devicesCollection.find({ assigned_association_id: association_id }).toArray();
 
-        // Calculate total price per unit if finance details are present
-        const totalPercentage = [
-            financeDetails.app_charges,
-            financeDetails.other_charges,
-            financeDetails.parking_charges,
-            financeDetails.rent_charges,
-            financeDetails.open_a_eb_charges,
-            financeDetails.open_other_charges
-        ].reduce((sum, charge) => sum + parseFloat(charge || 0), 0);
+        if (!chargers.length) {
+            //throw new Error('No chargers found for the specified association');
+            const message = "No Charger's were found";
+            const status = 404;
+            return {message, status};
+        }
 
-        const pricePerUnit = parseFloat(financeDetails.eb_charges || 0);
-        const totalPrice = pricePerUnit + (pricePerUnit * totalPercentage / 100);
+        // Fetch all finance details
+        const financeDetailsList = await financeCollection.find().toArray();
 
-        const total_price = totalPrice.toFixed(2); // Format total price to 2 decimal places
+        if (!financeDetailsList.length) {
+            //throw new Error('No finance details found');
+            const message = "No finance's were found";
+            const status = 404;
+            return {message, status};
+        }
 
-        // Append unit_price to each charger
-        const chargersWithUnitPrice = chargers.map(charger => ({
-            ...charger,
-            unit_price: total_price
-        }));
+        // Create a map of finance details for quick lookup by finance_id
+        const financeDetailsMap = financeDetailsList.reduce((map, financeDetails) => {
+            map[financeDetails.finance_id] = financeDetails;
+            return map;
+        }, {});
+
+        // Calculate and append unit_price to each charger
+        const chargersWithUnitPrice = chargers.map(charger => {
+            const financeDetails = financeDetailsMap[charger.finance_id];
+
+            if (financeDetails) {
+                const totalPercentage = [
+                    financeDetails.app_charges,
+                    financeDetails.other_charges,
+                    financeDetails.parking_charges,
+                    financeDetails.rent_charges,
+                    financeDetails.open_a_eb_charges,
+                    financeDetails.open_other_charges
+                ].reduce((sum, charge) => sum + parseFloat(charge || 0), 0);
+
+                const pricePerUnit = parseFloat(financeDetails.eb_charges || 0);
+                const totalPrice = pricePerUnit + (pricePerUnit * totalPercentage / 100);
+                const total_price = totalPrice.toFixed(2); // Format to 2 decimal places
+
+                return {
+                    ...charger,
+                    unit_price: total_price
+                };
+            } else {
+                return {
+                    ...charger,
+                    unit_price: null // If no finance details found, set unit_price to null
+                };
+            }
+        });
 
         return chargersWithUnitPrice; // Return the chargers with the unit price included
+
     } catch (error) {
         console.error(`Error fetching chargers: ${error.message}`);
         throw new Error('Failed to fetch chargers');
@@ -618,13 +649,35 @@ async function AddUserToAssociation(req, res) {
         const db = await database.connectToDatabase();
         const usersCollection = db.collection("users");
 
-        // Check if the user exists
-        const existingUser = await usersCollection.findOne({ email_id: email_id, phone_no: parseInt(phone_no) });
-        if (!existingUser || existingUser.role_id !== 5) {
-            return res.status(404).json({ message: 'User not found' });
-        }
+        const existingUser = await usersCollection.findOne({
+            $and: [
+                {
+                    $and: [
+                        { email_id: email_id },
+                        { phone_no: parseInt(phone_no) }
+                    ]
+                },
+                {role_id: 5}
+            ]
+        });
 
-        if(existingUser.assigned_association !== null){
+        if (!existingUser) {
+            return res.status(404).json({ message: 'User not found' });
+        } 
+        
+        if (existingUser.email_id !== email_id) {
+            return res.status(404).json({ message: 'Email is incorrect' });
+        }
+        
+        if (existingUser.phone_no !== parseInt(phone_no)) {
+            return res.status(404).json({ message: 'Phone number is incorrect' });
+        }
+        
+        if (existingUser.role_id !== 5) {
+            return res.status(404).json({ message: 'User does not have the required role' });
+        }
+        
+        if (existingUser.assigned_association !== null) {
             return res.status(404).json({ message: 'User is already assigned' });
         }
 

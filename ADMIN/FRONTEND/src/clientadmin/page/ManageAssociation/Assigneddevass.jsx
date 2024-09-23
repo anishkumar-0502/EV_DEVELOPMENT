@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
@@ -12,10 +12,11 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
     const [filteredData, setFilteredData] = useState([]);
     const [originalData, setOriginalData] = useState([]);
     const association_id = location.state?.association_id || JSON.parse(localStorage.getItem('client_id'));
+    const [errorMessage, setErrorMessage] = useState('');
 
     const fetchChargerDetailsCalled = useRef(false);
 
-    const fetchChargerDetails = async () => {
+    const fetchChargerDetails = useCallback(async () => {
         try {
             const response = await fetch('/clientadmin/FetchChargerDetailsWithSession', {
                 method: 'POST',
@@ -35,7 +36,7 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
             console.error('An error occurred while fetching assigned chargers');
             console.error('Error:', error);
         }
-    };
+    }, [association_id]);
 
     // fetch charger details
     useEffect(() => {
@@ -43,7 +44,7 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
             fetchChargerDetails();
             fetchChargerDetailsCalled.current = true; // Mark fetchChargerDetails as called
         }
-    }, [association_id]);
+    }, [association_id, fetchChargerDetails]);
 
     useEffect(() => {
         if (association_id) {
@@ -75,7 +76,7 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
 
     // view session history page
     const navsessionhistory = (item) => {
-        const sessiondata = item.sessiondata[0];
+        const sessiondata = item.sessiondata;
         navigate('/clientadmin/Sessionhistoryass', { state: { sessiondata } });
     };
 
@@ -91,13 +92,14 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
     
     const handleEditUser = (item) => {
         setEditDataItem(item);
-        setEditRellComm(item.client_commission); // Set role name for editing
+        setEditClientComm(item.client_commission); // Set role name for editing
         setInitialClientCommission(item.client_commission); // Set initial value for comparison
         setShowEditForm(true); // Open the form
     };
  
     const closeEditModal = () => {
         setShowEditForm(false); // Close the form
+        setErrorMessage('');
         setTheadsticky('sticky');
         setTheadfixed('fixed');
         setTheadBackgroundColor('white');
@@ -120,7 +122,7 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
     };
  
     // Edit user role
-    const [client_commission, setEditRellComm] = useState('');
+    const [client_commission, setEditClientComm] = useState('');
      
     const editUserRole = async (e) => {
         e.preventDefault();
@@ -137,9 +139,10 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
                     title: "Update Client commission successfully",
                     icon: "success"
                 });
-                setEditRellComm(''); 
+                setEditClientComm(''); 
                 setShowEditForm(false);
                 closeEditModal();
+                setErrorMessage('');
                 setTheadsticky('sticky');
                 setTheadfixed('fixed');
                 setTheadBackgroundColor('white');
@@ -208,24 +211,42 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
                                                 <div className="input-group-prepend">
                                                     <span className="input-group-text" style={{color:'black', width:'185px'}}>Client Commission</span>
                                                 </div>
-                                                <input type="text" className="form-control" placeholder="Client Commission" value={client_commission} maxLength={6}
+                                                <input type="text" className="form-control" placeholder="Client Commission" value={client_commission} maxLength={5}
                                                     onChange={(e) => {
-                                                        let value = e.target.value; // Define `value` here
-
-                                                        // Remove any non-digit or non-decimal characters
+                                                        let value = e.target.value;
+                                                        // Allow only numbers and a single decimal point
                                                         value = value.replace(/[^0-9.]/g, '');
-
-                                                        // Ensure only one decimal point is allowed
+                                                    
+                                                        // Ensure there's only one decimal point and limit to two decimal places
                                                         const parts = value.split('.');
                                                         if (parts.length > 2) {
-                                                        value = parts[0] + '.' + parts[1]; // Combine the first two parts if more than one decimal point is present
+                                                            value = parts[0] + '.' + parts[1];
+                                                        } else if (parts.length === 2 && parts[1].length > 2) {
+                                                            value = parts[0] + '.' + parts[1].slice(0, 2);
                                                         }
+                                                    
+                                                        // Convert to float and validate range
+                                                        const numericValue = parseFloat(value);
+                                                        let errorMessage = '';
+                                                        if (numericValue < 0 || numericValue > 25) {
+                                                            errorMessage = 'Please enter a value between 0.00% and 25.00%.';
+                                                        }
+                                                        // Limit the length to 6 characters
+                                                        if (value.length > 5) {
+                                                            value = value.slice(0, 5);
+                                                        }
+                                                    
+                                                        // Update the state based on validation
+                                                        if (!errorMessage) {
+                                                            setEditClientComm(value);
 
-                                                        setEditRellComm(value); // Update state with sanitized value
+                                                        }
+                                                        setErrorMessage(errorMessage);
                                                     }}
                                                 required/>
                                             </div>
                                         </div>
+                                        {errorMessage && <div className="text-danger">{errorMessage}</div>}
                                         <div style={{textAlign:'center'}}>
                                             <button type="submit" className="btn btn-primary mr-2" style={{marginTop:'10px'}} disabled={!isUpdateButtonEnabled}>Update</button>
                                         </div>
@@ -261,7 +282,7 @@ const Assigneddevass = ({ userInfo, handleLogout }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                        <div className="table-responsive" style={{ maxHeight: '500px', overflowY: 'auto' }}>
                                             <table className="table table-striped">
                                                 <thead style={{ textAlign: 'center', position: theadsticky, tableLayout: theadfixed, top: 0, zIndex: 1, backgroundColor: theadBackgroundColor}}>
                                                     <tr>  

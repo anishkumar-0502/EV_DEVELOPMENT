@@ -9,7 +9,7 @@ const ViewClient = ({ userInfo, handleLogout }) => {
     const location = useLocation();
     const [newUser, setNewUser] = useState({
         client_name: '', client_id: '', client_phone_no: '', client_email_id: '', client_address: '', 
-        status: '', created_by: '', created_date: '', modified_by: '', modified_date: '', client_waller: '', });
+        status: '', created_by: '', created_date: '', modified_by: '', modified_date: '', client_wallet: '', });
 
     useEffect(() => {
         const { user } = location.state || {};
@@ -17,7 +17,7 @@ const ViewClient = ({ userInfo, handleLogout }) => {
             setNewUser({
                 client_name: user.client_name || '',
                 client_id: user.client_id || '',
-                client_waller: user.client_waller || '',
+                client_wallet: user.client_wallet || '',
                 client_phone_no: user.client_phone_no || '',
                 client_email_id: user.client_email_id || '',
                 client_address: user.client_address || '',
@@ -104,7 +104,7 @@ const ViewClient = ({ userInfo, handleLogout }) => {
                                                             <hr></hr>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Client Name: <span style={{ fontWeight: 'normal' }}>{newUser.client_name ? newUser.client_name : '-'}</span></div>
@@ -121,10 +121,10 @@ const ViewClient = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
-                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Client Wallet: <span style={{ fontWeight: 'normal' }}>{newUser.client_waller ? newUser.client_waller : '0'}</span></div>
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Client Wallet: <span style={{ fontWeight: 'normal' }}>{newUser.client_wallet ? newUser.client_wallet : '0'}</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
@@ -138,7 +138,7 @@ const ViewClient = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Created Date: <span style={{ fontWeight: 'normal' }}>{newUser.created_date ? formatTimestamp(newUser.created_date) : '-'}</span></div>
@@ -155,7 +155,7 @@ const ViewClient = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12">
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Status: <span style={{fontWeight:'normal'}}>{newUser.status===true ? <span className="text-success">Active</span> : <span className="text-danger">DeActive</span>}</span></div>
