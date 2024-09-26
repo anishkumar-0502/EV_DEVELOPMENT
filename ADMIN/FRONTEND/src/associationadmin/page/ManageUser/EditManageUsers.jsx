@@ -157,7 +157,7 @@ const EditManageUsers = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">User Name</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">User Name</label>
                                                                     <div className="col-sm-12">
                                                                         <input type="text" className="form-control" value={username} maxLength={25} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^a-zA-Z0-9 ]/g, ''); setUsername(sanitizedValue);}} readOnly required/>
                                                                     </div>
@@ -165,7 +165,7 @@ const EditManageUsers = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Phone Number</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Phone Number</label>
                                                                     <div className="col-sm-12">
                                                                         <input type="text" className="form-control" value={phone_no} maxLength={10} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^0-9]/g, ''); setPhoneNumber(sanitizedValue);}} required/>
                                                                     </div>
@@ -175,7 +175,7 @@ const EditManageUsers = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Email ID</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Email ID</label>
                                                                     <div className="col-sm-12">
                                                                         <input type="email" className="form-control" value={dataItem.email_id} readOnly required/>
                                                                     </div>
@@ -183,7 +183,7 @@ const EditManageUsers = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Password</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Password</label>
                                                                     <div className="col-sm-12">
                                                                         <input type="text" className="form-control" value={password} maxLength={4} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^0-9]/g, ''); setPassword(sanitizedValue);}} required/>
                                                                     </div>
@@ -193,7 +193,7 @@ const EditManageUsers = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Status</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Status</label>
                                                                     <div className="col-sm-12">
                                                                         <select className="form-control" value={selectStatus} onChange={handleStatusChange}  required >
                                                                             <option value="true">Active</option>
@@ -204,7 +204,7 @@ const EditManageUsers = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                         {errorMessage && <div className="text-danger">{errorMessage}</div>}<br/>
-                                                        <div style={{ textAlign: 'center' }}>
+                                                        <div style={{ textAlign: 'center', padding:'15px'}}>
                                                             <button type="submit" className="btn btn-primary mr-2" disabled={!isModified}>Update</button>
                                                         </div>
                                                     </form>

@@ -35,15 +35,56 @@ async function EmailConfig(email,otp){
     try{
         let sendTo = email;
         let mail_subject = 'EV POWER - FORGET PASSWORD OTP';
-        let mail_body = `Hello ${email},
-
-                        We received a request to reset your password. Please use the following One-Time Password (OTP) to proceed with the password reset process:
-
-                        Your OTP is: ${otp}
-
-                        Thank you,
-                        EV POWER`;
-
+        let mail_body = `
+            <html>
+                <head>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 0;
+                            padding: 20px;
+                            background-color: #f4f4f4;
+                        }
+                        .container {
+                            background-color: #ffffff;
+                            border-radius: 8px;
+                            padding: 20px;
+                            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                        }
+                        h2 {
+                            color: #333;
+                        }
+                        p {
+                            color: #555;
+                            line-height: 1.6;
+                        }
+                        .otp {
+                            font-weight: bold;
+                            font-size: 1.2em;
+                            color: #007BFF; /* Bootstrap primary color */
+                            background-color: #e9f5ff; /* Light background for the OTP */
+                            padding: 10px;
+                            border-radius: 4px;
+                            display: inline-block;
+                        }
+                        .footer {
+                            margin-top: 20px;
+                            font-size: 0.9em;
+                            color: #888;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h2>Hello ${email},</h2>
+                        <p>We received a request to reset your password. Please use the following One-Time Password (OTP) to proceed with the password reset process:</p>
+                        <p>Your OTP is: <span class="otp">${otp}</span></p>
+                        <p class="footer">Thank you,<br>EV POWER</p>
+                    </div>
+                </body>
+            </html>
+        `;
+        
         const result = await sendEmail(sendTo, mail_subject, mail_body);
         return result;
 

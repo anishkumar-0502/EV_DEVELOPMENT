@@ -194,7 +194,6 @@ const ManageDevice = ({ userInfo, handleLogout }) => {
                                                         <th>Charger ID</th>
                                                         <th>Charger Model</th>
                                                         <th>Charger Type</th>
-                                                        {/* <th>Gun Connector</th> */}
                                                         <th>Charger Accessibility</th>
                                                         <th>Max Current</th>
                                                         <th>Status</th>
@@ -221,15 +220,6 @@ const ManageDevice = ({ userInfo, handleLogout }) => {
                                                                     <img src={`../../images/dashboard/${dataItem.charger_model ? dataItem.charger_model : '-'}kw.png`} alt="img" />
                                                                 </td>
                                                                 <td>{dataItem.charger_type ?  dataItem.charger_type : '-'}</td>
-                                                                {/* <td>
-                                                                    {dataItem.gun_connector === 1
-                                                                        ? 'Single phase'
-                                                                        : dataItem.gun_connector === 2
-                                                                        ? 'CSS Type 2'
-                                                                        : dataItem.gun_connector === 3
-                                                                        ? '3 phase socket'
-                                                                    : '-'}
-                                                                </td> */}
                                                                 <td>{dataItem.charger_accessibility === 1 ? 'Public' : dataItem.charger_accessibility === 2 ? 'Private' : '-'}</td>
                                                                 <td>{dataItem.max_current ? dataItem.max_current : '-'}</td>
                                                                 <td>{dataItem.status===true ? <span className="text-success">Active</span> : <span className="text-danger">DeActive</span>}</td>

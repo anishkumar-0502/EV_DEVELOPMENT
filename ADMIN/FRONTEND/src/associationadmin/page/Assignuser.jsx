@@ -267,7 +267,6 @@ const Assignuser = ({ userInfo, handleLogout }) => {
                                       type="button"
                                       className="btn btn-warning"
                                       onClick={() => handleViewAssignTagID(dataItem)}
-                                      style={{ marginBottom: '10px' }}
                                   >
                                       {dataItem.tag_id === null ? 'Assign' : 'Re-assign'}
                                   </button>

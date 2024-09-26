@@ -109,10 +109,10 @@ class _ProfilePageState extends State<ProfilePage> {
       enableDrag: false,
       builder: (BuildContext context) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.9, // Set height to 70% of the screen
+          height: MediaQuery.of(context).size.height * 0.97, // Set height to 70% of the screen
           child: Padding(
             padding: MediaQuery.of(context).viewInsets,
-            child: AccountPage(username: widget.username), // Ensure this is the correct widget name
+            child: AccountPage(username: widget.username,userId: widget.userId,), // Ensure this is the correct widget name
           ),
         );
       },

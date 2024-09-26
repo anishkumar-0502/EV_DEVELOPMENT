@@ -145,7 +145,7 @@ const UpdateClient = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Client Name</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Client Name</label>
                                                                     <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
@@ -164,7 +164,7 @@ const UpdateClient = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Phone No</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Phone No</label>
                                                                     <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
@@ -182,7 +182,7 @@ const UpdateClient = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Email ID</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Email ID</label>
                                                                     <div className="col-sm-12">
                                                                         <input
                                                                             type="email"
@@ -195,7 +195,7 @@ const UpdateClient = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Wallet</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Wallet</label>
                                                                     <div className="col-sm-12">
                                                                         <input type="text"
                                                                             className="form-control"
@@ -240,7 +240,7 @@ const UpdateClient = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Address</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Address</label>
                                                                     <div className="col-sm-12">
                                                                         <textarea
                                                                             type="text"
@@ -255,7 +255,7 @@ const UpdateClient = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Status</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Status</label>
                                                                     <div className="col-sm-12">
                                                                     <select
                                                                             className="form-control"

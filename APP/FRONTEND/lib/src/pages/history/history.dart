@@ -44,7 +44,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/session/getChargingSessionDetails'),
+        Uri.parse('http://122.166.210.142:9098/session/getChargingSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username}),
       );
@@ -111,11 +111,14 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   double _calculateTotalEnergyUsage() {
-    double total = 0.0;
+    double totalEnergy = 0.0;
+
     for (var session in sessionDetails) {
-      total += session['unit_consumed'] != null ? session['unit_consumed'] : 0.0;
+      totalEnergy += double.tryParse(session['unit_consummed'].toString()) ?? 0.0;
     }
-    return total;
+
+    // Returning the total energy with 3 decimal places
+    return double.parse(totalEnergy.toStringAsFixed(3));
   }
 
 
@@ -153,11 +156,18 @@ class _HistoryPageState extends State<HistoryPage> {
               ],
             ),
           ),
+          isLoading
+              ? Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: _buildShimmerCard(), // Display shimmer card while loading
+          )
+              :
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+
               Container(
-                width: 200,
+
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E1E1E),
                   borderRadius: BorderRadius.circular(10.0),
@@ -172,7 +182,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
               ),
               Container(
-                width: 200,
+
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E1E1E),
                   borderRadius: BorderRadius.circular(10.0),
@@ -180,14 +190,29 @@ class _HistoryPageState extends State<HistoryPage> {
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   children: [
-                    Text('Total energy usage', style: TextStyle(fontSize: 16, color: Colors.white)),
-                    SizedBox(height: 5),
-                    Text(
-                      _calculateTotalEnergyUsage().toString(),
-                      style: TextStyle(fontSize: 16, color: Colors.white70),
-                    ), // Display the total energy consumed
+                    const Text(
+                      'Total energy usage',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                    const SizedBox(height: 10),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '${_calculateTotalEnergyUsage().toString()}',
+                            style: TextStyle(fontSize: 16, color: Colors.green), // The value in green
+                          ),
+                          TextSpan(
+                            text: ' kWh',
+                            style: TextStyle(fontSize: 16, color: Colors.white70), // 'kWh' in white70
+                          ),
+                        ],
+                      ),
+                    ), // Display the total energy consumed with 'kWh' added, and the value in green
                   ],
-                ),
+                )
+
+
               ),
             ],
           ),
@@ -290,7 +315,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                                 ),
                                                 const SizedBox(height: 5),
                                                 Text(
-                                                  '${sessionDetails[index]['unit_consummed']} Kwh',
+                                                  '${sessionDetails[index]['unit_consummed']} kWh',
                                                   style: const TextStyle(
                                                     fontSize: 15,
                                                     color: Colors.white60,
@@ -510,7 +535,7 @@ class SessionDetailsModal extends StatelessWidget {
               style: TextStyle(fontSize: 18, color: Colors.white),
             ),
             subtitle: Text(
-              '${sessionData['unit_consummed']} Kwh',
+              '${sessionData['unit_consummed']} kWh',
               style: const TextStyle(fontSize: 16, color: Colors.white70),
             ),
           ),

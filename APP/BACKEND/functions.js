@@ -532,9 +532,6 @@ const NullTagIDInStatus = async (charger_id, connector_id) =>{
     }
 }
 
-
-
-
 // async function checkAuthorization(charger_id, idTag) {
 //     try {
 //         const db = await connectToDatabase();
@@ -604,13 +601,14 @@ const NullTagIDInStatus = async (charger_id, connector_id) =>{
 //     }
 // }
 
-
-
 async function checkAuthorization(charger_id, idTag) {
     try {
         const db = await connectToDatabase();
         const chargerDetailsCollection = db.collection('charger_details');
         const tagIdCollection = db.collection('tag_id');
+        let tagIdDetails;
+        let expiryDate;
+        let currentDate = new Date();
 
         // Fetch charger details, including the chargePointModel
         const chargerDetails = await chargerDetailsCollection.findOne(
@@ -651,10 +649,6 @@ async function checkAuthorization(charger_id, idTag) {
             }
         }
 
-        if (!connectorId) {
-            connectorId = 1;
-        }
-
         // Check if the tag_id_for_connector_{id} does not match the provided idTag
         for (let i = 1; i <= totalConnectors; i++) {
             if (i !== connectorId && chargerDetailsWithConnectors[`tag_id_for_connector_${i}`] === idTag) {
@@ -662,18 +656,24 @@ async function checkAuthorization(charger_id, idTag) {
             }
         }
 
-        // Fetch tag_id details from the separate collection
-        let tagIdDetails = await tagIdCollection.findOne({ tag_id: idTag });
+        expiryDate = new Date();
+        expiryDate.setDate(currentDate.getDate() + 1); // Add one day to the expiry date
 
-        let expiryDate;
-        let currentDate = new Date();
+        if (connectorId) {
+            return { status: "Accepted", expiryDate: expiryDate.toISOString() , connectorId};
+        }else{
+            // Fetch tag_id details from the separate collection
+            tagIdDetails = await tagIdCollection.findOne({ tag_id: idTag, status: true });
 
-        if(!tagIdDetails){
-            expiryDate = new Date();
-            expiryDate.setDate(currentDate.getDate() + 1); // Add one day to the expiry date
-            tagIdDetails = { status: true};
-        }else if(tagIdDetails){
-            expiryDate = new Date(tagIdDetails.tag_id_expiry_date);
+            if(!tagIdDetails){
+                tagIdDetails = { status: false};
+            }else if(tagIdDetails){
+                if(tagIdDetails.tag_id_assigned === true){
+                    expiryDate = new Date(tagIdDetails.tag_id_expiry_date);
+                }else{
+                    tagIdDetails = { status: false};
+                }
+            }
         }
 
         // Check various conditions based on the tag_id details

@@ -9,8 +9,8 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
     const location = useLocation();
     const [newUser, setNewUser] = useState({
         charger_id: '', charger_model: '', charger_type: '', model: '', type: '', vendor: '', gun_connector: '', max_current:'', max_power:'', socket_count:'', current_active_user:'',
-        superadmin_commission: '', reseller_commission: '', client_commission: '',  ip: '', lat: '', long: '', short_description: '', charger_accessibility: '', unit_price: '', assigned_user: '', wifi_password: '',
-        status: '', created_by:'', created_date:'', modified_by:'', modified_date:'', _id: '',
+        superadmin_commission: '', reseller_commission: '', client_commission: '',  ip: '', lat: '', long: '', landmark: '', short_description: '', charger_accessibility: '', unit_price: '', 
+        assigned_user: '', wifi_password: '', status: '', created_by:'', created_date:'', modified_by:'', modified_date:'', connector_details: '', _id: '',
     });
 
     useEffect(() => {
@@ -34,6 +34,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                 ip: dataItem.ip || '',
                 lat: dataItem.lat || '',
                 long: dataItem.long || '',
+                landmark: dataItem.landmark || '',
                 short_description: dataItem.short_description || '',
                 charger_accessibility: dataItem.charger_accessibility || '',
                 unit_price: dataItem.unit_price || '',
@@ -44,6 +45,7 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                 modified_by: dataItem.modified_by || '',
                 modified_date: dataItem.modified_date || '',
                 status: dataItem.status || '',
+                connector_details: dataItem.connector_details || '',
                 _id: dataItem._id || '',
             });
         // Save to localStorage
@@ -277,10 +279,39 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Land Mark: <span style={{fontWeight: 'normal'}}>{newUser.landmark ? newUser.landmark : '-'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Status: <span style={{fontWeight:'normal'}}>{newUser.status === true ? <span className="text-success">Active</span> :  <span className="text-danger">DeActive</span>}</span></div>
                                                             </div>
                                                         </div>                                                               
                                                     </div>
+                                                    {/* Connector Details */}
+                                                    {newUser.connector_details && newUser.connector_details.length > 0 ? (
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                        {newUser.connector_details.map((connector, index) => (
+                                                        <div className="col-md-4" key={index}>
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>
+                                                                    Connector {index + 1}: <span style={{ fontWeight: 'bold' }}>
+                                                                     Type: <span style={{ fontWeight: 'normal' }}>{connector.connector_type},</span> Type Name: <span style={{ fontWeight: 'normal' }}>{connector.connector_type_name}</span>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        ))}
+                                                    </div>
+                                                    ) : (
+                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
+                                                                <div className="col-sm-12"><span style={{ fontWeight: 'bold' }}>Connector:</span> No Connector Details Available</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -288,7 +319,6 @@ const ViewManageDevice = ({ userInfo, handleLogout }) => {
                                 </div>
                             </div>
                         </div>
-                        
                     </div>
                     {/* Footer */}
                     <Footer />

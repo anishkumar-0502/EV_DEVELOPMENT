@@ -483,10 +483,10 @@ async function FetchAllocatedChargerByClientToAssociation(req) {
 //UpdateDevice 
 async function UpdateDevice(req, res, next) {
     try {
-        const { modified_by, charger_id, charger_accessibility , wifi_username, wifi_password,lat, long} = req.body;
+        const { modified_by, charger_id, charger_accessibility , wifi_username, wifi_password,lat, long, landmark} = req.body;
         // Validate the input
-        if (!modified_by || !charger_id || !charger_accessibility || !wifi_username || !wifi_password || !lat || !long) {
-            return res.status(400).json({ message: 'Username, chargerID, charger_accessibility , wifi_username, wifi_password,lat, long}and Status (boolean) are required' });
+        if (!modified_by || !charger_id || !charger_accessibility || !wifi_username || !wifi_password || !lat || !long || !landmark) {
+            return res.status(400).json({ message: 'All the fields are required' });
         }
 
         const db = await database.connectToDatabase();
@@ -508,8 +508,9 @@ async function UpdateDevice(req, res, next) {
                     wifi_password: wifi_password,
                     lat: lat,
                     long: long,
+                    landmark: landmark,
                     modified_by: modified_by,
-                    modified_date: new Date()
+                    modified_date: new Date(),
                 }
             }
         );
@@ -657,7 +658,8 @@ async function AddUserToAssociation(req, res) {
                         { phone_no: parseInt(phone_no) }
                     ]
                 },
-                {role_id: 5}
+                {role_id: 5},
+                {status: true}
             ]
         });
 
@@ -1035,6 +1037,14 @@ async function UpdateTagID(req, res) {
         const tag = await tagsCollection.findOne({ id: id });
         if (!tag) {
             return res.status(404).json({ message: 'Tag ID not found' });
+        }
+
+        // Check for duplicate tag_id if the tag_id is being updated
+        if (tag_id) {
+            const duplicateTag = await tagsCollection.findOne({ tag_id: tag_id, id: { $ne: id } });
+            if (duplicateTag) {
+                return res.status(400).json({ message: 'Tag ID already exists' });
+            }
         }
 
         // Update the tag_id details

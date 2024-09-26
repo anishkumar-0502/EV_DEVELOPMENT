@@ -304,7 +304,7 @@ const Logs = () => {
                                             <div className="col-md-12 grid-margin">
                                                 <div className="row">
                                                     <div className="col-12 col-sm-6 col-md-6 col-xl-6 mb-2 mb-sm-0">
-                                                        <div className="live-indicator" style={{ display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "red", color: "white", padding: "6px 10px", borderRadius: "15px",fontWeight: "bold", fontSize: "16px", cursor: "pointer",  width: "150px", height: "40px" }}>                                                            
+                                                        <div className="live-indicator" style={{ display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "red", color: "white", padding: "6px 10px", borderRadius: "10px 0 10px 0",fontWeight: "bold", fontSize: "16px", cursor: "pointer",  width: "150px", height: "40px"}}>                                                            
                                                             <span className="live-dot" style={{ width: "12px", height: "12px", backgroundColor: "white", borderRadius: "50%", marginRight: "6px", animation: "pulse 0.2s infinite" }}></span><span className="live-text">EVSE Live Log</span>
                                                         </div> 
                                                     </div>
@@ -316,7 +316,7 @@ const Logs = () => {
                                                                     <i className="icon-search" style={{color:'white'}}></i>
                                                                     </span>
                                                                 </div>
-                                                                <input type="text" className="form-control searchInputCss" placeholder="Search now" aria-label="search" aria-describedby="search" autoComplete="off"  value={searchInput} onChange={handleSearchInputChange}/>
+                                                                <input type="text" className="form-control searchInputCss" style={{borderRadius: "0 0 10px 0"}} placeholder="Search now" aria-label="search" aria-describedby="search" autoComplete="off"  value={searchInput} onChange={handleSearchInputChange}/>
                                                             </div>
                                                         </div>
                                                     )}
@@ -332,7 +332,7 @@ const Logs = () => {
                                                                 key={button.value}
                                                                 type="button"
                                                                 className={`btn ${visibleTable === button.value ? 'btn-primary' : 'btn-outline-primary'} btn-fw`}
-                                                                style={{ marginBottom: '10px', marginRight: '10px' }}
+                                                                style={{ marginBottom: '10px', marginRight: '10px'}}
                                                                 onClick={() => handleTableVisibility(button.value)}
                                                             >
                                                                 {button.label}
@@ -344,7 +344,7 @@ const Logs = () => {
                                         </div>
                                         {/* All */}
                                         {visibleTable === 'All' && (
-                                            <div className="table-responsive" style={{ maxHeight: '590px', overflowY: 'auto' }}>
+                                            <div className="table-responsive" style={{overflowY: 'auto' }}>
                                                 <table className="table table-striped">
                                                     <thead style={{ textAlign: 'center', position: 'sticky', tableLayout: 'fixed', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                                                         <tr>

@@ -172,7 +172,7 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                          <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">User Name</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">User Name</label>
                                                                     <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
@@ -191,7 +191,7 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Phone Number</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Phone Number</label>
                                                                     <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
@@ -209,7 +209,7 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Email ID</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Email ID</label>
                                                                     <div className="col-sm-12">
                                                                         <input
                                                                             type="email"
@@ -222,7 +222,7 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Password</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Password</label>
                                                                     <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
@@ -240,7 +240,7 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Role Name</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Role Name</label>
                                                                     <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
@@ -253,7 +253,7 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Status</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Status</label>
                                                                     <div className="col-sm-12">
                                                                         <select
                                                                             className="form-control"
@@ -270,7 +270,7 @@ const Edituser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                         {errorMessage && <div className="text-danger">{errorMessage}</div>}
-                                                        <div style={{ textAlign: 'center' }}>
+                                                        <div style={{ textAlign: 'center', padding:'15px'}}>
                                                             <button type="submit" className="btn btn-primary mr-2" disabled={!isModified}>Update</button>
                                                         </div>
                                                     </form>

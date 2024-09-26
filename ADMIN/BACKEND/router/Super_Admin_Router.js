@@ -260,5 +260,100 @@ router.post('/AssginChargerToReseller', async (req, res) => {
     }
 });
 
+// Route to fetch output type config
+router.post('/fetchAllOutputType', async (req, res) => {
+    try {
+        const result = await functions.fetchOutputType();
+
+        if (result.error) {
+            return res.status(result.status).json({ message: result.message });
+        }
+
+        res.status(200).json({ status: 'Success', data: result.message });
+    } catch (error) {
+        console.error('Error in fetch all output type details route:', error);
+        res.status(500).json({ status: 'Failed', message: 'Failed to fetch output type details' });
+    }
+});
+
+// Route to fetch specifc output type config
+router.post('/fetchSpecificOutputType', async (req, res) => {
+    try {
+        const result = await functions.fetchOutputType(req);
+
+        if (result.error) {
+            return res.status(result.status).json({ message: result.message });
+        }
+
+        res.status(200).json({ status: 'Success', data: result.message });
+    } catch (error) {
+        console.error('Error in fetch specific output type route:', error);
+        res.status(500).json({ status: 'Failed', message: 'Failed to fetch output type details' });
+    }
+});
+
+// Route to fetch specifc output type config
+router.post('/updateOutputType', async (req, res) => {
+    try {
+        const result = await functions.updateOutputType(req);
+
+        if (result.error) {
+            return res.status(result.status).json({ message: result.message });
+        }
+
+        res.status(200).json({ status: 'Success', data: result.message });
+    } catch (error) {
+        console.error('Error in update output type route:', error);
+        res.status(500).json({ status: 'Failed', message: 'Failed to update type details' });
+    }
+});
+
+// Route to de activate output type config
+router.post('/DeActivateOutputType', async (req, res) => {
+    try {
+        const result = await functions.DeActivateOutputType(req);
+
+        if (result.error) {
+            return res.status(result.status).json({ message: result.message });
+        }
+
+        res.status(200).json({ status: 'Success', data: result.message });
+    } catch (error) {
+        console.error('Error in De-activate output type route:', error);
+        res.status(500).json({ status: 'Failed', message: 'Failed to De-activate output details' });
+    }
+});
+
+// Route to create output type config
+router.post('/createOutputType', async (req, res) => {
+    try {
+        const result = await functions.createOutputType(req);
+
+        if (result.error) {
+            return res.status(result.status).json({ message: result.message });
+        }
+
+        res.status(200).json({ status: 'Success', data: result.message });
+    } catch (error) {
+        console.error('Error in create output type route:', error);
+        res.status(500).json({ status: 'Failed', message: 'Failed to create output details' });
+    }
+});
+
+// Route to fetch connector type name
+router.post('/fetchConnectorTypeName', async (req, res) => {
+    try{
+        const result = await functions.fetchConnectorTypeName(req);
+
+        if (result.error) {
+            return res.status(result.status).json({ message: result.message });
+        }
+
+        res.status(200).json({ status: 'Success', data: result.message });
+    }catch(error){
+        console.error('Error in fetch connector type name route:', error);
+        res.status(500).json({ status: 'Failed', message: 'Failed to fetch connector type name' });
+    }
+});
 
 module.exports = router;

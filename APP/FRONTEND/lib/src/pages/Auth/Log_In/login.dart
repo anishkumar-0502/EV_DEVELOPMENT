@@ -12,6 +12,7 @@ import '../../home.dart';
 import '../Sign_Up/register.dart';
 import '../../../utilities/Alert/alert_banner.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../Forgot_password/forgot_password.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -196,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/profile/CheckLoginCredentials'),
+        Uri.parse('http://122.166.210.142:9098/profile/CheckLoginCredentials'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email_id': email, 'password': password}),
       );
@@ -351,15 +352,16 @@ class _LoginPageState extends State<LoginPage> {
                     keyboardType: TextInputType.emailAddress,
                     cursorColor: const Color(0xFF1ED760),
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@.]')), // Allows only letters, numbers, @, and .
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9@.]')), // Allows only lowercase letters, numbers, @, and .
                     ],
+
                     validator: (value) {
                       if (!_isEmailInteracted) return null;
                       if (value == null || value.isEmpty) {
                         return 'Please enter email';
                       }
                       if (!_validateEmail(value)) {
-                        return 'Enter a valid Gmail address ending with .com';
+                        return 'Enter a valid email address ending with .com';
                       }
                       return null;
                     },
@@ -457,7 +459,14 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ForgotPasswordPage(),
+                            ),
+                          );
+                        },
                         child: const Text(
                           'Forgot password?',
                           style: TextStyle(

@@ -1,9 +1,9 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:shimmer/shimmer.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
@@ -15,6 +15,7 @@ import 'dart:ui' as ui;
 import 'dart:async';
 import '../../service/location.dart';
 import 'package:intl/intl.dart' as intl;
+import 'dart:math' as math;
 
 class HomeContent extends StatefulWidget {
   final String username;
@@ -51,6 +52,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   double? _previousBearing;
   bool _isCheckingPermission = false; // Flag to prevent repeated permission checks
   bool LocationEnabled = false;
+  final PageController _pageController = PageController(viewportFraction: 0.85);  // Page controller for scrolling cards
 
 
   @override
@@ -134,6 +136,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
       // Fetch the current location if permission is granted
       LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
+        print("_onMapCreated currentLocation $currentLocation");
 
       if (currentLocation != null) {
         // Update the current position
@@ -142,7 +145,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
         });
 
         // Smoothly animate the camera to the new position if the mapController is available
-        if (mapController != null) {
+        if (mapController != null ) {
           await mapController!.animateCamera(
             CameraUpdate.newCameraPosition(
               CameraPosition(
@@ -229,7 +232,6 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
                 // Save the flag to not show the dialog again
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 await prefs.setBool('LocationPromptClosed', true);
-
                 Navigator.of(context).pop(); // Close the dialog
               },
               child: const Text(
@@ -387,22 +389,29 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   }
 
 
+// Updated _onMapCreated function
+Future<void> _onMapCreated(GoogleMapController controller) async {
+  mapController = controller;
 
+  // Load and set the map style
+  String mapStyle = await rootBundle.loadString('assets/Map/map.json');
+  mapController?.setMapStyle(mapStyle);
+      await Future.delayed(const Duration(seconds: 1));
 
-  Future<void> _onMapCreated(GoogleMapController controller) async {
-    mapController = controller;
-    rootBundle.loadString('assets/Map/map.json').then((String mapStyle) {
-      mapController?.setMapStyle(mapStyle);
-    });
-
-
-    if (_currentPosition != null) {
-      mapController?.animateCamera(
-        CameraUpdate.newLatLng(_currentPosition!),
-      );
-      _updateMarkers();
-    }
+  // Check if the current position is available
+  if (_currentPosition != null) {
+    print("_onMapCreated $_currentPosition");
+    // Zoom to 100km radius around the current location
+    _animateTo100kmRadius();
+    _updateMarkers(); // Update markers if needed
+  } else {
+        print("_onMapCreated $_currentPosition");
+    // Optionally handle the case where the current position is not available
+    _animateTo100kmRadius();
   }
+}
+
+
 
   Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
     setState(() {
@@ -465,53 +474,58 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
       }
     }
   }
-  Future<void> _smoothlyMoveCameraForChargerMarker(LatLng startPosition, LatLng endPosition) async {
-    if (mapController != null) {
-      double totalSteps = 25; // Number of animation steps for smooth movement
-      double stepDuration = 80; // Duration between steps in milliseconds
 
-      for (int i = 1; i <= totalSteps; i++) {
-        double latitude = startPosition.latitude +
-            (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
-        double longitude = startPosition.longitude +
-            (endPosition.longitude - startPosition.longitude) * (i / totalSteps);
-        LatLng intermediatePosition = LatLng(latitude, longitude);
+Future<void> _smoothlyMoveCameraForChargerMarker(LatLng startPosition, LatLng endPosition) async {
+  if (mapController != null) {
+    const int totalSteps = 25;  // Number of animation steps for smooth movement
+    const int stepDuration = 80;  // Duration between steps in milliseconds
 
-        await mapController!.animateCamera(
-          CameraUpdate.newLatLng(intermediatePosition),
-        );
+    for (int i = 1; i <= totalSteps; i++) {
+      double latitude = startPosition.latitude +
+          (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
+      double longitude = startPosition.longitude +
+          (endPosition.longitude - startPosition.longitude) * (i / totalSteps);
+      LatLng intermediatePosition = LatLng(latitude, longitude);
 
-        await Future.delayed(Duration(milliseconds: stepDuration.toInt()));
-      }
-
-      // Once the camera reaches the destination, rotate the camera first
+      // Smoothly animate to intermediate positions
       await mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: endPosition,
-            zoom: 16.0, // Set an initial zoom level before zooming in further
-            bearing: 90.0, // Rotate the camera to 90 degrees
-            tilt: 0, // Keep the tilt at 0 initially
-          ),
-        ),
+        CameraUpdate.newLatLng(intermediatePosition),
       );
 
-      // Small delay to simulate the effect of rotating the camera
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      // After rotating the camera, now zoom in and tilt for the final effect
-      await mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: endPosition,
-            zoom: 18.0, // Final zoom level
-            tilt: 45.0, // Tilt for a 3D effect
-            bearing: 90.0, // Keep the same bearing after rotation
-          ),
-        ),
-      );
+      await Future.delayed(const Duration(milliseconds: stepDuration));
     }
+
+    // Rotate the camera and set an initial zoom and bearing
+    await mapController!.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: endPosition,
+          zoom: 16.0,  // Set an initial zoom level
+          bearing: 90.0,  // Rotate the camera 90 degrees
+          tilt: 0,  // Set tilt to 0 initially
+        ),
+      ),
+    );
+
+    // Delay to simulate rotation effect
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // Final zoom and tilt for 3D effect
+    await mapController!.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: endPosition,
+          zoom: 18.0,  // Final zoom level for close-up view
+          tilt: 45.0,  // Tilt the camera for a 3D effect
+          bearing: 90.0,  // Keep the same bearing
+        ),
+      ),
+    );
+  } else {
+    // Log or handle cases when the map controller is not initialized
+    print("Map controller is not initialized.");
   }
+}
 
 
 
@@ -632,44 +646,6 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     return BitmapDescriptor.fromBytes(resizedBytes);
   }
 
-  Future<BitmapDescriptor> _getCustomMarkerWithDirection(double bearing) async {
-    final pictureRecorder = ui.PictureRecorder();
-    final canvas = Canvas(pictureRecorder);
-
-    const double radius = 50.0;
-    final Paint fillPaint = Paint()..color = Colors.blue;
-    final Paint strokePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0;
-
-    // Draw the circle for location
-    canvas.drawCircle(const Offset(radius, radius), radius, fillPaint);
-    canvas.drawCircle(const Offset(radius, radius), radius, strokePaint);
-
-    // Draw the directional pointer
-    final Path arrowPath = Path()
-      ..moveTo(radius, radius * 0.5) // Top of the arrow
-      ..lineTo(radius * 0.7, radius * 1.5) // Left side
-      ..lineTo(radius * 1.3, radius * 1.5) // Right side
-      ..close();
-
-    final Paint arrowPaint = Paint()..color = Colors.white;
-    canvas.save();
-    canvas.translate(radius, radius); // Move origin to the center
-    canvas.rotate(bearing * 3.1415927 / 180); // Rotate according to bearing
-    canvas.translate(-radius, -radius); // Move back origin
-    canvas.drawPath(arrowPath, arrowPaint);
-    canvas.restore();
-
-    final picture = pictureRecorder.endRecording();
-    final img =
-    await picture.toImage((radius * 2).toInt(), (radius * 2).toInt());
-    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-    final buffer = byteData!.buffer.asUint8List();
-
-    return BitmapDescriptor.fromBytes(buffer);
-  }
 
   Future<BitmapDescriptor> _createCurrentLocationMarkerIcon(double bearing) async {
     final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
@@ -752,30 +728,6 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     }
   }
 
-  Future<BitmapDescriptor> _getIconFromFlutterIcon(
-      IconData iconData, Color color, double size) async {
-    final pictureRecorder = ui.PictureRecorder();
-    final canvas = Canvas(pictureRecorder);
-
-    final textPainter = TextPainter(textDirection: TextDirection.ltr)
-      ..text = TextSpan(
-        text: String.fromCharCode(iconData.codePoint),
-        style: TextStyle(
-          fontSize: size,
-          fontFamily: iconData.fontFamily,
-          color: color,
-        ),
-      )
-      ..layout();
-
-    textPainter.paint(canvas, const Offset(0, 0));
-    final picture = pictureRecorder.endRecording();
-    final img = await picture.toImage(size.toInt(), size.toInt());
-    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-    final buffer = byteData!.buffer.asUint8List();
-
-    return BitmapDescriptor.fromBytes(buffer);
-  }
   Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async {
     if (isSearching) return null;
     print("response: handleSearchRequest");
@@ -791,7 +743,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/searchCharger'),
+        Uri.parse('http://122.166.210.142:9098/searchCharger'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -813,7 +765,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
         await showModalBottomSheet(
           context: context,
           isScrollControlled: true,
-          // isDismissible: false,
+          isDismissible: false,
           enableDrag: false,
           backgroundColor: Colors.black,
           builder: (BuildContext context) {
@@ -858,7 +810,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
+        Uri.parse('http://122.166.210.142:9098/updateConnectorUser'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -894,7 +846,6 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
 
   void navigateToQRViewExample() async {
-
 
     // Check camera permission
     bool hasPermission = await Permission.camera.isGranted;
@@ -981,6 +932,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     }
   }
 
+
   void showErrorDialog(BuildContext context, String message) {
     showModalBottomSheet(
       context: context,
@@ -995,7 +947,6 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
         );
       },
     ).then((_) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
     });
   }
 
@@ -1006,7 +957,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/getRecentSessionDetails'),
+        Uri.parse('http://122.166.210.142:9098/getRecentSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
@@ -1050,7 +1001,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     try {
       final response = await http.post(
         Uri.parse(
-            'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
+            'http://122.166.210.142:9098/getAllChargersWithStatusAndPrice'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
@@ -1081,79 +1032,6 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     }
   }
 
-  Future<BitmapDescriptor> _getRotatedIcon({
-    required IconData iconData,
-    required Color color,
-    required double size,
-    required double rotation,
-  }) async {
-    final pictureRecorder = ui.PictureRecorder();
-    final canvas = Canvas(pictureRecorder);
-
-    final textPainter = TextPainter(textDirection: TextDirection.ltr)
-      ..text = TextSpan(
-        text: String.fromCharCode(iconData.codePoint),
-        style: TextStyle(
-          fontSize: size,
-          fontFamily: iconData.fontFamily,
-          color: color,
-        ),
-      )
-      ..layout();
-
-    canvas.save();
-    canvas.translate(
-        size / 2, size / 2); // Move the canvas origin to the center
-    canvas.rotate(
-        rotation * 3.1415927 / 180); // Rotate the canvas to the given bearing
-    canvas.translate(-size / 2, -size / 2); // Move back the origin
-
-    textPainter.paint(canvas, const Offset(0, 0));
-    canvas.restore();
-
-    final picture = pictureRecorder.endRecording();
-    final img = await picture.toImage(size.toInt(), size.toInt());
-    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-    final buffer = byteData!.buffer.asUint8List();
-
-    return BitmapDescriptor.fromBytes(buffer);
-  }
-  Future<BitmapDescriptor> _getDirectionMarker(double bearing) async {
-    const double size = 100.0; // Size of the icon
-    final pictureRecorder = ui.PictureRecorder();
-    final canvas = Canvas(pictureRecorder);
-
-    // Load the image from assets
-    final ByteData imageData = await rootBundle.load('assets/arrow.png');
-    final ui.Image image = await loadImageFromBytes(imageData.buffer.asUint8List());
-
-    // Adjust the center point based on the arrow's orientation
-    final double offsetX = size * 0.25; // 25% from the left
-    final double offsetY = size * 0.75; // 75% from the top
-
-    // Draw the image on the canvas
-    canvas.save();
-    canvas.translate(offsetX, offsetY); // Move origin to the adjusted center
-    canvas.rotate(bearing * 3.1415927 / 180); // Rotate according to bearing
-    canvas.translate(-offsetX, -offsetY); // Move back origin
-
-    // Draw the image with the same size as the canvas
-    canvas.drawImageRect(
-      image,
-      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-      const Rect.fromLTWH(0, 0, size, size),
-      Paint(),
-    );
-
-    canvas.restore();
-
-    final picture = pictureRecorder.endRecording();
-    final img = await picture.toImage(size.toInt(), size.toInt());
-    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-    final buffer = byteData!.buffer.asUint8List();
-
-    return BitmapDescriptor.fromBytes(buffer);
-  }
 
 
 // Helper function to load an image from bytes
@@ -1234,294 +1112,431 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     });
   }
 
-  @override
-  @override
-  Widget build(BuildContext context) {
-    return LoadingOverlay(
-      showAlertLoading: isSearching,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: GoogleMap(
-                key: _mapKey,
-                onMapCreated: _onMapCreated,
-                initialCameraPosition: CameraPosition(
-                  target: _currentPosition ?? _center,
-                  zoom: 16.0,
+void _animateTo100kmRadius() {
+  if (_currentPosition == null) return;
+
+  // Calculate bounds for a 100km radius
+  double radiusInKm = 10.0;
+  double kmInLat = 0.009; // Approximate value for 1 km in latitude
+  double kmInLng = 0.009 / cos(_currentPosition!.latitude * pi / 180.0); // Adjust based on current latitude
+
+  final LatLng southWest = LatLng(
+    _currentPosition!.latitude - (radiusInKm * kmInLat),
+    _currentPosition!.longitude - (radiusInKm * kmInLng),
+  );
+
+  final LatLng northEast = LatLng(
+    _currentPosition!.latitude + (radiusInKm * kmInLat),
+    _currentPosition!.longitude + (radiusInKm * kmInLng),
+  );
+
+  // Create the LatLngBounds
+  LatLngBounds bounds = LatLngBounds(southwest: southWest, northeast: northEast);
+
+  // Animate the camera to fit the bounds
+  mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
+}
+
+@override
+Widget build(BuildContext context) {
+  double screenWidth = MediaQuery.of(context).size.width;
+  double screenHeight = MediaQuery.of(context).size.height;
+  
+  return LoadingOverlay(
+    showAlertLoading: isSearching,
+    child: Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: GoogleMap(
+              key: _mapKey,
+              onMapCreated: _onMapCreated,
+              initialCameraPosition: CameraPosition(
+                target: _currentPosition ?? _center,
+                zoom: 15.0,
+              ),
+              markers: _markers,
+              zoomControlsEnabled: false,
+              myLocationEnabled: false,
+              myLocationButtonEnabled: false,
+              mapToolbarEnabled: false,
+              compassEnabled: false,
+              onTap: _onMapTapped,
+            ),
+          ),
+          Positioned(
+            bottom: screenHeight * 0.32,  // Responsive based on screen height
+            right: screenWidth * 0.03,  // Responsive based on screen width
+            child: FloatingActionButton(
+              backgroundColor: const Color.fromARGB(227, 76, 175, 79),
+              onPressed: _getCurrentLocation,
+              child: const Icon(Icons.my_location, color: Colors.white),
+            ),
+          ),
+          Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                  top: screenHeight * 0.05,  // Adjust padding based on screen height
+                  left: screenWidth * 0.04,  // Adjust padding based on screen width
+                  right: screenWidth * 0.04,
                 ),
-                markers: _markers,
-                zoomControlsEnabled: false,
-                myLocationEnabled: false,
-                myLocationButtonEnabled: false,
-                mapToolbarEnabled: false,
-                compassEnabled: false,
-                onTap: _onMapTapped,
-              ),
-            ),
-            Positioned(
-              bottom: 250,
-              right: 10,
-              child: FloatingActionButton(
-                backgroundColor: const Color.fromARGB(227, 76, 175, 79),
-                onPressed: _getCurrentLocation,
-                child: const Icon(Icons.my_location, color: Colors.white),
-              ),
-            ),
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 40.0, left: 16.0, right: 16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          onSubmitted: (value) {
-                            handleSearchRequest(value);
-                          },
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: const Color(0xFF0E0E0E),
-                            hintText: 'Search ChargerId...',
-                            hintStyle: const TextStyle(color: Colors.white70),
-                            prefixIcon: const Icon(Icons.search, color: Colors.white),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30.0),
-                              borderSide: BorderSide.none,
-                            ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onSubmitted: (value) {
+                          handleSearchRequest(value);
+                        },
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFF0E0E0E),
+                          hintText: 'Search ChargerId...',
+                          hintStyle: const TextStyle(color: Colors.white70),
+                          prefixIcon: const Icon(Icons.search, color: Colors.white),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30.0),
+                            borderSide: BorderSide.none,
                           ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[a-zA-Z0-9]'), // Allow only alphabets and numbers
-                            ),
-                            FilteringTextInputFormatter.deny(
-                              RegExp(r'\s'), // Disallow spaces
-                            ),
-                          ],
                         ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z0-9]'),
+                          ),
+                          FilteringTextInputFormatter.deny(
+                            RegExp(r'\s'),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0E0E0E),
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              spreadRadius: 2,
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                    ),
+                    SizedBox(width: screenWidth * 0.03),  // Adjust spacing based on screen width
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0E0E0E),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.qr_code, color: Colors.white, size: 30),
+                        onPressed: () {
+                          navigateToQRViewExample();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.04,  // Adjust horizontal padding
+                  vertical: screenHeight * 0.01,  // Adjust vertical padding
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: activeFilter == 'All Chargers'
+                              ? Colors.blue
+                              : const Color(0xFF0E0E0E),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.qr_code, color: Colors.white, size: 30),
-                          onPressed: () {
-                            navigateToQRViewExample();
-                          },
+                        onPressed: () {
+                          setState(() {
+                            activeFilter = 'All Chargers';
+                          });
+                          fetchAllChargers();
+                        },
+                        icon: const Icon(Icons.ev_station, color: Colors.white),
+                        label: const Text('All Chargers', style: TextStyle(color: Colors.white)),
+                      ),
+                      SizedBox(width: screenWidth * 0.03),  // Adjust spacing between buttons
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: activeFilter == 'Previously Used'
+                              ? Colors.blue
+                              : const Color(0xFF0E0E0E),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
                         ),
+                        onPressed: () {
+                          setState(() {
+                            activeFilter = 'Previously Used';
+                          });
+                          fetchRecentSessionDetails();
+                        },
+                        icon: const Icon(Icons.history, color: Colors.white),
+                        label: const Text('Previously Used', style: TextStyle(color: Colors.white)),
                       ),
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: activeFilter == 'All Chargers'
-                                ? Colors.blue
-                                : const Color(0xFF0E0E0E),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              activeFilter = 'All Chargers';
-                            });
-                            fetchAllChargers();
-                          },
-                          icon: const Icon(Icons.ev_station, color: Colors.white),
-                          label: const Text('All Chargers', style: TextStyle(color: Colors.white)),
-                        ),
-                        const SizedBox(width: 10),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: activeFilter == 'Previously Used'
-                                ? Colors.blue
-                                : const Color(0xFF0E0E0E),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              activeFilter = 'Previously Used';
-                            });
-                            fetchRecentSessionDetails();
-                          },
-                          icon: const Icon(Icons.history, color: Colors.white),
-                          label: const Text('Previously Used', style: TextStyle(color: Colors.white)),
-                        ),
-                      ],
-                    ),
+              ),
+              // const SizedBox(height: 50),
+              SizedBox(height: screenHeight * 0.4),  // Adjust height based on screen size
+              Expanded(
+                child: Container(
+                  // margin: EdgeInsets.only(bottom: screenHeight * 0.01),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: _buildChargerList(), // Place the charger list here
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(),
-                _buildChargerList(),
-                const SizedBox(height: 28),
+              ),
+            ],
+          ),
+          Positioned(
+            top: screenHeight * 0.2,  // Adjust positioning based on screen height
+            right: screenWidth * 0.03,  // Adjust positioning based on screen width
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  heroTag: 'zoom_in',
+                  backgroundColor: Colors.black,
+                  onPressed: () {
+                    mapController?.animateCamera(CameraUpdate.zoomIn());
+                  },
+                  child: const Icon(Icons.zoom_in_map_rounded, color: Colors.white),
+                ),
+                SizedBox(height: screenHeight * 0.01),  // Adjust spacing between buttons
+                FloatingActionButton(
+                  heroTag: 'zoom_out',
+                  backgroundColor: Colors.black,
+                  onPressed: () {
+                    mapController?.animateCamera(CameraUpdate.zoomOut());
+                  },
+                  child: const Icon(Icons.zoom_out_map_rounded, color: Colors.red),
+                ),
               ],
             ),
-            Positioned(
-              top: 170,
-              right: 10,
-              child: Column(
-                children: [
-                  FloatingActionButton(
-                    heroTag: 'zoom_in',
-                    backgroundColor: Colors.black,
-                    onPressed: () {
-                      mapController?.animateCamera(CameraUpdate.zoomIn());
-                    },
-                    child: const Icon(Icons.zoom_in_map_rounded, color: Colors.white),
-                  ),
-                  const SizedBox(height: 10),
-                  FloatingActionButton(
-                    heroTag: 'zoom_out',
-                    backgroundColor: Colors.black,
-                    onPressed: () {
-                      mapController?.animateCamera(CameraUpdate.zoomOut());
-                    },
-                    child: const Icon(Icons.zoom_out_map_rounded, color: Colors.red),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String formatTimestamp(String? timestamp) {
-    if (timestamp == null) return 'N/A'; // Handle null case
-
-    // Define date format patterns
-    final rawFormat = DateTime.tryParse(timestamp);
-    final formatter = intl.DateFormat('MM/dd/yyyy, hh:mm:ss a');
-
-    if (rawFormat != null) {
-      // If the timestamp is in ISO format, parse and format
-      final parsedDate = rawFormat.toLocal();
-      return formatter.format(parsedDate);
-    } else {
-      // Otherwise, assume it's already in the desired format and return it
-      return timestamp; // Or 'Invalid date' if you want to handle improperly formatted strings
-    }
-  }
-
-  Widget _buildChargerList() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: <Widget>[
-          const SizedBox(width: 15),
-          if (isLoading)
-            for (var i = 0; i < 3; i++) _buildShimmerCard(),
-
-          if (!isLoading && activeFilter == 'Previously Used')
-            for (var session in recentSessions)
-              _buildChargerCard(
-                context,
-                session['details']['charger_id'] ?? 'Unknown ID',
-                session['details']['model'] ?? 'Unknown Model',
-                session['status']['charger_status'] ?? 'Unknown Status',
-                formatTimestamp(session['status']['timestamp']),  // Use formatted timestamp
-                session['unit_price']?.toString() ?? 'Unknown Price',
-                session['status']['connector_id'] ?? 0,
-                session['details']['charger_accessibility']?.toString() ?? 'Unknown',
-                session['details']['charger_type'] ?? 'Unknown Type',  // Fetch charger_type
-              ),
-
-          if (!isLoading && activeFilter == 'All Chargers')
-            for (var charger in availableChargers)
-              for (var status in charger['status'] ?? [null])
-                _buildChargerCard(
-                  context,
-                  charger['charger_id'] ?? 'Unknown ID',
-                  charger['model'] ?? 'Unknown Model',
-                  status == null
-                      ? "Not yet received"  // Handle null status
-                      : status['charger_status'] ?? 'Unknown Status',
-                  status == null
-                      ? "Not yet received"  // Handle null timestamp
-                      : formatTimestamp(status['timestamp']),
-                  charger['unit_price']?.toString() ?? 'Unknown Price',
-                  status == null
-                      ? 0  // Default connector ID when status is null
-                      : status['connector_id'] ?? 'Unknown Last Updated',
-                  charger['charger_accessibility']?.toString() ?? 'Unknown',
-                  charger['charger_type'] ?? 'Unknown Type',  // Fetch charger_type
-                )
+          ),
         ],
       ),
-    );
+    ),
+  );
+}
+
+String formatTimestamp(String? timestamp) {
+  if (timestamp == null) return 'N/A'; // Handle null case
+
+  // Define date format patterns
+  final rawFormat = DateTime.tryParse(timestamp);
+  final formatter = intl.DateFormat('MM/dd/yyyy, hh:mm:ss a');
+
+  if (rawFormat != null) {
+    // If the timestamp is in ISO format, parse and format
+    final parsedDate = rawFormat.toLocal();
+    return formatter.format(parsedDate);
+  } else {
+    // Otherwise, assume it's already in the desired format and return it
+    return timestamp; // Or 'Invalid date' if you want to handle improperly formatted strings
   }
+}
 
-  Widget _buildChargerCard(
-      BuildContext context,
-      String chargerId,
-      String model,
-      String status,
-      String time,
-      String price,
-      int connectorId,
-      String accessType,
-      String chargerType, // Add chargerType parameter
-      ) {
-    String formattedTimestamp = formatTimestamp(time);
+// Function to calculate the distance between two points (in km)
+double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+  const double R = 6371; // Earth's radius in km
+  final double dLat = (lat2 - lat1) * math.pi / 180.0;
+  final double dLon = (lon2 - lon1) * math.pi / 180.0;
+  final double a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(lat1 * math.pi / 180.0) * math.cos(lat2 * math.pi / 180.0) *
+      math.sin(dLon / 2) * math.sin(dLon / 2);
+  final double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  return R * c; // Distance in km
+}
 
-    Color statusColor;
-    IconData statusIcon;
-    Color chargerTypeColor;
+void _onChargerCardChanged(int index) async {
+  if (index < availableChargers.length) {
+    var charger = availableChargers[index];
+    double? lat = double.tryParse(charger['lat']);
+    double? lng = double.tryParse(charger['long']);
 
-    // Determine status color and icon
-    switch (status) {
-      case "Available":
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle;
-        break;
-      case "Unavailable":
-        statusColor = Colors.red;
-        statusIcon = Icons.cancel;
-        break;
-      case "Preparing":
-        statusColor = Colors.yellow;
-        statusIcon = Icons.hourglass_empty;
-        break;
-      default:
-        statusColor = Colors.grey;
-        statusIcon = Icons.help;
+    if (lat != null && lng != null) {
+      LatLng chargerPosition = LatLng(lat, lng);
+
+      if (mapController != null) {
+        LatLng startPosition = _selectedPosition ?? _currentPosition ?? _center;
+
+        // Smoothly move the camera to the charger position
+        await _smoothlyMoveCameraForChargerMarker(startPosition, chargerPosition);
+
+        // Update selected position and enable map buttons
+        setState(() {
+          _selectedPosition = chargerPosition;
+          areMapButtonsEnabled = true; // Enable map buttons
+
+          // Update marker icons
+          _updateMarkerIcons(charger['charger_id']); // Assuming charger['id'] holds the unique ID of the charger
+        });
+      }
+    }
+  }
+}
+
+Future<void> _updateMarkerIcons(String chargerId) async {
+  BitmapDescriptor newIcon = await _getIconFromAsset('assets/icons/EV_location_green.png');
+  BitmapDescriptor defaultIcon = await _getIconFromAsset('assets/icons/EV_location_red.png');
+
+  setState(() {
+    // Change the icon of the previously selected marker back to default
+    if (_previousMarkerId != null) {
+      _markers = _markers.map((marker) {
+        if (marker.markerId == _previousMarkerId) {
+          return marker.copyWith(iconParam: defaultIcon);
+        }
+        return marker;
+      }).toSet();
     }
 
-    // Determine charger type color
-    chargerTypeColor = chargerType == 'AC' ? Colors.redAccent : Colors.greenAccent;
+    // Update the icon for the currently selected charger marker
+    _markers = _markers.map((marker) {
+      if (marker.markerId.value == chargerId) {
+        _previousMarkerId = marker.markerId;
+        return marker.copyWith(iconParam: newIcon);
+      }
+      return marker;
+    }).toSet();
+  });
+}
+
+Widget _buildChargerList() {
+  // List to hold charger cards
+  List<Widget> chargerCards = [];
+
+  // Add "Previously Used" charger cards if the active filter is 'Previously Used'
+  if (activeFilter == 'Previously Used') {
+    for (var session in recentSessions) {
+      chargerCards.add(
+        _buildChargerCard(
+          context,
+          session['details']['charger_id'] ?? 'Unknown ID',
+          session['details']['model'] ?? 'Unknown Model',
+          session['status']['charger_status'] ?? 'Unknown Status',
+          formatTimestamp(session['status']['timestamp']),  // Use formatted timestamp
+          session['unit_price']?.toString() ?? 'Unknown Price',
+          session['status']['connector_id'] ?? 0,
+          session['details']['charger_accessibility']?.toString() ?? 'Unknown',
+          session['details']['charger_type'] ?? 'Unknown Type',  // Fetch charger_type
+        ),
+      );
+    }
+  }
+  
+  // Add "All Chargers" if the active filter is 'All Chargers' and the charger is within 100km
+  else if (activeFilter == 'All Chargers') {
+    for (var charger in availableChargers) {
+      if (_currentPosition != null &&
+          _calculateDistance(
+                _currentPosition!.latitude,
+                _currentPosition!.longitude,
+                double.parse(charger['lat'] ?? '0'),
+                double.parse(charger['long'] ?? '0'),
+              ) <= 100.0) {
+        for (var status in charger['status'] ?? [null]) {
+          chargerCards.add(
+            _buildChargerCard(
+              context,
+              charger['charger_id'] ?? 'Unknown ID',
+              charger['model'] ?? 'Unknown Model',
+              status == null
+                  ? "Not yet received"  // Handle null status
+                  : status['charger_status'] ?? 'Unknown Status',
+              status == null
+                  ? "Not yet received"  // Handle null timestamp
+                  : formatTimestamp(status['timestamp']),
+              charger['unit_price']?.toString() ?? 'Unknown Price',
+              status == null
+                  ? 0  // Default connector ID when status is null
+                  : status['connector_id'] ?? 'Unknown Last Updated',
+              charger['charger_accessibility']?.toString() ?? 'Unknown',
+              charger['charger_type'] ?? 'Unknown Type',  // Fetch charger_type
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  // Wrap the charger cards in a PageView.builder for horizontal scrolling
+  return Expanded(
+    child: PageView.builder(
+      controller: _pageController,
+      scrollDirection: Axis.horizontal,
+      itemCount: chargerCards.length,
+      onPageChanged: (index) {
+        _onChargerCardChanged(index);  // Handle page change event
+      },
+      itemBuilder: (context, index) {
+        return chargerCards[index];
+      },
+    ),
+  );
+}
+
+
+Widget _buildChargerCard(
+  BuildContext context,
+  String chargerId,
+  String model,
+  String status,
+  String time,
+  String price,
+  int connectorId,
+  String accessType,
+  String chargerType,
+) {
+  String formattedTimestamp = formatTimestamp(time);
+
+  // Get screen size
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
+
+  // Determine status color and icon
+  Color statusColor;
+  IconData statusIcon;
+  switch (status) {
+    case "Available":
+      statusColor = Colors.green;
+      statusIcon = Icons.check_circle;
+      break;
+    case "Unavailable":
+      statusColor = Colors.red;
+      statusIcon = Icons.cancel;
+      break;
+    case "Preparing":
+      statusColor = Colors.yellow;
+      statusIcon = Icons.hourglass_empty;
+      break;
+    default:
+      statusColor = Colors.grey;
+      statusIcon = Icons.help;
+  }
 
     final charger = availableChargers.firstWhere(
           (c) => c['charger_id'] == chargerId,
       orElse: () => null,
     );
-
-    return GestureDetector(
-      onTap: () async {
+    
+  return GestureDetector(
+  onTap: () async {
         if (charger != null) {
           final lat = double.tryParse(charger['lat']);
           final lng = double.tryParse(charger['long']);
@@ -1561,290 +1576,303 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
           }
         }
       },
-      child: Stack(
-        children: [
-          Container(
-            width: 315,
-            margin: const EdgeInsets.only(right: 28, top: 20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0E0E0E),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
+    child: Stack(
+      children: [
+        Container(
+          width: screenWidth * 0.9,  // Adjust the card width dynamically
+          height: screenHeight * 0.22,  // Adjust the card height dynamically
+          margin: EdgeInsets.only(right: screenWidth * 0.05, top: screenHeight * 0.03),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0E0E0E),
+            borderRadius: BorderRadius.circular(screenWidth * 0.03),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(screenWidth * 0.03),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                "$chargerId - ",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.04,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                "[$connectorId] ",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.04,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Text(
+                                model,
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.035,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.02,
+                                  vertical: screenHeight * 0.005,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E1E1E),
+                                  borderRadius: BorderRadius.circular(screenWidth * 0.02),
+                                ),
+                                child: Text(
+                                  "($chargerType)",
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.035,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white70,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Text(
+                                status,
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.035,
+                                  color: statusColor,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Icon(
+                                statusIcon,
+                                color: statusColor,
+                                size: screenWidth * 0.035,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                formattedTimestamp,
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.03,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.currency_rupee,
+                                    color: Colors.orange,
+                                    size: screenWidth * 0.035,
+                                  ),
+                                  Text(
+                                    "$price per unit",
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.035,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildNavigateButton(context, screenWidth, screenHeight),
+                    const SizedBox(width: 10),
+                    _buildUseChargerButton(context, chargerId, screenWidth, screenHeight),
+                  ],
                 ),
               ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  "$chargerId - ",
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  "[$connectorId] ",
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
+          ),
+        ),
+        SlantedLabel(accessType: accessType),
+      ],
+    ),
+  );
+}
 
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Text(
-                                  model,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                const SizedBox(width: 8,),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 0),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E1E1E),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    "($chargerType)",
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white70, // Use the determined color
-                                      letterSpacing: 1.2,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Text(
-                                  status,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: statusColor,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Icon(
-                                  statusIcon,
-                                  color: statusColor,
-                                  size: 14,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  formattedTimestamp,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.currency_rupee,
-                                      color: Colors.orange,
-                                      size: 14,
-                                    ),
-                                    Text(
-                                      "$price per unit",
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white70,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: areMapButtonsEnabled
-                              ? () async {
-                            if (_selectedPosition != null) {
-                              final googleMapsUrl =
-                                  "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
-                              if (await canLaunch(googleMapsUrl)) {
-                                await launch(googleMapsUrl);
-                              } else {
-                                showErrorDialog(context,
-                                    'Could not open the map. Please check your internet connection or try again later.');
-                              }
-                            }
-                          }
-                              : null,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E1E1E),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.directions, color: Colors.red),
-                                  onPressed: areMapButtonsEnabled
-                                      ? () async {
-                                    if (_selectedPosition != null) {
-                                      final googleMapsUrl =
-                                          "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
-                                      if (await canLaunch(googleMapsUrl)) {
-                                        await launch(googleMapsUrl);
-                                      } else {
-                                        showErrorDialog(context,
-                                            'Could not open the map. Please check your internet connection or try again later.');
-                                      }
-                                    }
-                                  }
-                                      : null,
-                                ),
-                                const Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Text(
-                                    'Navigate',
-                                    style: TextStyle(color: Colors.white70),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            handleSearchRequest(chargerId);
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E1E1E),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.bolt, color: Colors.yellow),
-                                  onPressed: null,
-                                ),
-                                Text(
-                                  ' Use Charger',
-                                  style: TextStyle(color: Colors.white70),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+Widget _buildNavigateButton(BuildContext context, double screenWidth, double screenHeight) {
+  return Expanded(
+    child: GestureDetector(
+    onTap: areMapButtonsEnabled
+          ? () async {
+        if (_selectedPosition != null) {
+          final googleMapsUrl =
+              "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
+          if (await canLaunch(googleMapsUrl)) {
+            await launch(googleMapsUrl);
+          } else {
+            showErrorDialog(context,
+                'Could not open the map. Please check your internet connection or try again later.');
+          }
+        }
+      } : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(screenWidth * 0.02),
+        ),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.directions, color: Colors.red),
+              onPressed: areMapButtonsEnabled
+                  ? () async {
+                if (_selectedPosition != null) {
+                  final googleMapsUrl =
+                      "https://www.google.com/maps/dir/?api=1&destination=${_selectedPosition!.latitude},${_selectedPosition!.longitude}&travelmode=driving";
+                  if (await canLaunch(googleMapsUrl)) {
+                    await launch(googleMapsUrl);
+                  } else {
+                    showErrorDialog(context,
+                        'Could not open the map. Please check your internet connection or try again later.');
+                  }
+                }
+              }
+                  : null,
+            ),
+            Padding(
+              padding: EdgeInsets.all(screenWidth * 0.02),
+              child: Text(
+                'Navigate',
+                style: TextStyle(color: Colors.white70, fontSize: screenWidth * 0.035),
               ),
             ),
-          ),
-          SlantedLabel(accessType: accessType),
-        ],
-      ),
-    );
-  }
-
-
-  Widget _buildShimmerCard() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[700]!,
-      child: Container(
-        width: 280,
-        margin: const EdgeInsets.only(right: 15.0),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0E0E0E),
-          borderRadius: BorderRadius.circular(10),
+          ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      ),
+    ),
+  );
+}
+
+Widget _buildUseChargerButton(BuildContext context, String chargerId, double screenWidth, double screenHeight) {
+  return Expanded(
+    child: GestureDetector(
+      onTap: () {
+        handleSearchRequest(chargerId);
+      },
+      child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(screenWidth * 0.02),
+          ),
+          child: Row(
             children: [
-              Container(
-                width: 100,
-                height: 20,
-                color: Colors.white,
+              const IconButton(
+                icon: Icon(Icons.bolt, color: Colors.yellow),
+                onPressed: null,
               ),
-              const SizedBox(height: 5),
-              Container(
-                width: 80,
-                height: 20,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 5),
-              Row(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 20,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 5),
-                  Container(
-                    width: 20,
-                    height: 20,
-                    color: Colors.white,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
-              Container(
-                width: double.infinity,
-                height: 20,
-                color: Colors.white,
+              Padding(
+                padding: EdgeInsets.all(screenWidth * 0.02),
+                child: Text(
+                  'UseCharger',
+                  style: TextStyle(color: Colors.white70, fontSize: screenWidth * 0.033),
+                ),
               ),
             ],
           ),
         ),
       ),
     );
-  }
+  
+}
 
-
+// Widget _buildShimmerCard(BuildContext context) {
+//   double screenWidth = MediaQuery.of(context).size.width;
+//   double screenHeight = MediaQuery.of(context).size.height;
+//   return Shimmer.fromColors(
+//     baseColor: Colors.grey[800]!,
+//     highlightColor: Colors.grey[700]!,
+//     child: Container(
+//       width: screenWidth * 0.7, // Responsive width, adjust as necessary
+//       margin: EdgeInsets.only(right: screenWidth * 0.04), // Responsive margin
+//       decoration: BoxDecoration(
+//         color: const Color(0xFF0E0E0E),
+//         borderRadius: BorderRadius.circular(screenWidth * 0.025), // Responsive border radius
+//       ),
+//       child: Padding(
+//         padding: EdgeInsets.all(screenWidth * 0.025), // Responsive padding
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Container(
+//               width: screenWidth * 0.25, // Responsive width
+//               height: screenHeight * 0.025, // Responsive height
+//               color: Colors.white,
+//             ),
+//             SizedBox(height: screenHeight * 0.01), // Responsive spacing
+//             Container(
+//               width: screenWidth * 0.2, // Responsive width
+//               height: screenHeight * 0.025, // Responsive height
+//               color: Colors.white,
+//             ),
+//             SizedBox(height: screenHeight * 0.01), // Responsive spacing
+//             Row(
+//               children: [
+//                 Container(
+//                   width: screenWidth * 0.15, // Responsive width
+//                   height: screenHeight * 0.025, // Responsive height
+//                   color: Colors.white,
+//                 ),
+//                 SizedBox(width: screenWidth * 0.02), // Responsive spacing
+//                 Container(
+//                   width: screenWidth * 0.06, // Responsive width
+//                   height: screenHeight * 0.025, // Responsive height
+//                   color: Colors.white,
+//                 ),
+//               ],
+//             ),
+//             SizedBox(height: screenHeight * 0.01), // Responsive spacing
+//             Container(
+//               width: double.infinity,
+//               height: screenHeight * 0.025, // Responsive height
+//               color: Colors.white,
+//             ),
+//           ],
+//         ),
+//       ),
+//     ),
+//   );
+// }
 }
 
 class ConnectorSelectionDialog extends StatefulWidget {
@@ -1852,10 +1880,10 @@ class ConnectorSelectionDialog extends StatefulWidget {
   final Function(int, int) onConnectorSelected;
 
   const ConnectorSelectionDialog({
-    Key? key,
+    super.key,
     required this.chargerData,
     required this.onConnectorSelected,
-  }) : super(key: key);
+  });
 
   @override
   _ConnectorSelectionDialogState createState() =>
@@ -1982,9 +2010,7 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
               );
             },
           ),
-
           const SizedBox(height: 20),
-
           // Continue Button
           ElevatedButton(
             onPressed: _isFormValid()
@@ -1998,22 +2024,22 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
             }
                 : null,
             style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
-                  if (states.contains(MaterialState.disabled)) {
+              backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
+                  if (states.contains(WidgetState.disabled)) {
                     return Colors.green.withOpacity(0.2);
                   }
                   return const Color(0xFF1C8B40);
                 },
               ),
               minimumSize:
-              MaterialStateProperty.all(const Size(double.infinity, 50)),
-              shape: MaterialStateProperty.all(
+              WidgetStateProperty.all(const Size(double.infinity, 50)),
+              shape: WidgetStateProperty.all(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              elevation: MaterialStateProperty.all(0),
+              elevation: WidgetStateProperty.all(0),
             ),
             child: const Text('Continue', style: TextStyle(color: Colors.white)),
           ),
@@ -2026,13 +2052,17 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
 class SlantedLabel extends StatelessWidget {
   final String accessType;
 
-  const SlantedLabel({required this.accessType, Key? key}) : super(key: key);
+  const SlantedLabel({required this.accessType, super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Get screen width and height
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     return Positioned(
-      top: 0,
-      right: 28,
+      top: screenHeight * 0.01,  // Adjusted for screen height
+      right: screenWidth * 0.05, // Adjusted for screen width
       child: Stack(
         children: [
           ClipPath(
@@ -2041,19 +2071,19 @@ class SlantedLabel extends StatelessWidget {
               color: accessType == '1'
                   ? const Color(0xFF0E0E0E)
                   : const Color(0xFF0E0E0E),
-              height: 40,
-              width: 100,
+              height: screenHeight * 0.05, // Adjusted for screen height
+              width: screenWidth * 0.25,   // Adjusted for screen width
             ),
           ),
           Positioned(
-            right: 18,
-            top: 5,
+            right: screenWidth * 0.04,  // Adjusted for screen width
+            top: screenHeight * 0.005,  // Adjusted for screen height
             child: Text(
               accessType == '1' ? 'Public' : 'Private',
               style: TextStyle(
                 color: accessType == '1' ? Colors.green : Colors.yellow,
                 fontWeight: FontWeight.normal,
-                fontSize: 15,
+                fontSize: screenWidth * 0.04,  // Adjusted for screen width
               ),
             ),
           ),
@@ -2182,7 +2212,7 @@ class CurrentLocationMarkerPainter extends CustomPainter {
 class CurrentLocationMarker extends StatefulWidget {
   final double bearing;
 
-  CurrentLocationMarker({required this.bearing});
+  const CurrentLocationMarker({super.key, required this.bearing});
 
   @override
   _CurrentLocationMarkerState createState() => _CurrentLocationMarkerState();
@@ -2235,7 +2265,7 @@ class LoadingOverlay extends StatelessWidget {
   final bool showAlertLoading;
   final Widget child;
 
-  LoadingOverlay({required this.showAlertLoading, required this.child});
+  LoadingOverlay({super.key, required this.showAlertLoading, required this.child});
 
   Widget _buildLoadingIndicator() {
     return Container(

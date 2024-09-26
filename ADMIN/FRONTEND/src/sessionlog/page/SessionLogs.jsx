@@ -6,14 +6,14 @@ import axios from 'axios';
 
 const SessionLogs = () => { 
     const [chargerId, setChargerId] = useState('');
-    const [responseData, setResponseData] = useState(JSON.parse(localStorage.getItem('sessionLogsData')) || []);
+    const [responseData, setResponseData] = useState([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [responseDataStore, setResponseDataStore] = useState(JSON.parse(localStorage.getItem('sessionLogsData')) || []);
 
     useEffect(() => {
-        localStorage.setItem('sessionLogsData', JSON.stringify(responseData));
-    }, [responseData]);
-
+        localStorage.setItem('sessionLogsData', JSON.stringify(responseDataStore));
+    }, [responseDataStore]); 
 
     const handleSearch = async () => {
         try {
@@ -27,11 +27,13 @@ const SessionLogs = () => {
 
             if (Array.isArray(response.data.value)) {
                 setResponseData(response.data.value);
+                setResponseDataStore(response.data.value);
                 // console.log(response.data.value);
                 setError('');
                 setChargerId('');
             } else {
                 setResponseData([]);
+                setResponseDataStore([]);
                 setError('No data found.');
             }
         } catch (error) {
@@ -42,6 +44,7 @@ const SessionLogs = () => {
                 setError('Error fetching data. Please try again.');
             }
             setResponseData([]);
+            setResponseDataStore([]);
         } finally {
             setLoading(false); 
         }
@@ -68,24 +71,27 @@ const SessionLogs = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const { fromDate, toDate, selectField, value } = formData;
-
-        const filteredData = responseData.filter((item) => {
+    
+        const filteredData = responseDataStore.filter((item) => {
             const startTime = new Date(item.start_time);
             const stopTime = new Date(item.stop_time);
-            const isDateInRange = startTime >= new Date(fromDate) && stopTime <= new Date(toDate);
+    
+            // Check if fromDate or toDate is provided, otherwise ignore date filtering
+            const isDateInRange = (!fromDate || startTime >= new Date(fromDate)) && (!toDate || stopTime <= new Date(toDate));
             const matchesValue = item[selectField]?.toString().toUpperCase().includes(value.toUpperCase());
-
+    
             return isDateInRange && matchesValue;
         });
-
+    
         if (filteredData.length > 0) {
             setResponseData(filteredData);
             setFormData({ fromDate: "", toDate: "", selectField: "", value: "" });
+            setError(''); // Clear any previous error
         } else {
             setError('No data found for the provided filters.');
         }
     };
-
+    
     return (
         <div className='container-scroller'>
             {/* Header */}
@@ -107,7 +113,7 @@ const SessionLogs = () => {
                                                     </div>
                                                     <div className="col-8 col-xl-4">
                                                         <div className="input-group">
-                                                            <input type="text" className="form-control searchInputCss" placeholder="Search now" aria-label="search" aria-describedby="search" value={chargerId} onChange={(e) => setChargerId(e.target.value)} autoComplete="off" required/>
+                                                            <input type="text" className="form-control searchInputCss" placeholder="Charger ID" aria-label="search" aria-describedby="search" value={chargerId} onChange={(e) => setChargerId(e.target.value)} autoComplete="off" required/>
                                                             <div className="input-group-append">
                                                                 <button className="btn btn-success" style={{borderRadius:'0 0 10px 0'}} type="button" onClick={handleSearch}>SEND</button>
                                                             </div>
@@ -120,12 +126,12 @@ const SessionLogs = () => {
                                             <form className="form-row" onSubmit={handleSubmit}>
                                                 <div className="form-group">
                                                     <label htmlFor="fromDate" style={{fontSize:'17px'}}>From Date</label>
-                                                    <input type="date" name="fromDate" value={formData.fromDate} onChange={handleInputChange} className="form-input inputCss" required/>
+                                                    <input type="date" name="fromDate" value={formData.fromDate} onChange={handleInputChange} className="form-input inputCss"/>
                                                 </div>
                                             
                                                 <div className="form-group">
                                                     <label htmlFor="toDate" style={{fontSize:'17px'}}>To Date</label>
-                                                    <input type="date" name="toDate" value={formData.toDate} onChange={handleInputChange} className="form-input inputCss" required />
+                                                    <input type="date" name="toDate" value={formData.toDate} onChange={handleInputChange} className="form-input inputCss" />
                                                 </div>
                                             
                                                 <div className="form-group">
@@ -133,7 +139,6 @@ const SessionLogs = () => {
                                                     <select name="selectField" value={formData.selectField} onChange={handleInputChange} className="form-input inputCss" required>
                                                         <option value="" disabled>Select Field</option>
                                                         <option value="charger_id">Charger ID</option>
-                                                        <option value="session_id">Charging SessionID</option>
                                                         <option value="user">User</option>
                                                     </select>
                                                 </div>
@@ -148,7 +153,7 @@ const SessionLogs = () => {
                                                 </div>
                                             </form>
                                         </div><hr/>
-                                        <div className="table-responsive" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                                        <div className="table-responsive" style={{ overflowY: 'auto' }}>
                                             <table className="table table-striped">
                                                 <thead style={{ textAlign: 'center', tableLayout: 'fixed', position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                                                     <tr> 

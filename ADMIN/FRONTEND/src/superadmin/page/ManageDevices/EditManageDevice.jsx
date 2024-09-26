@@ -1,15 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback} from 'react';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import axios from 'axios';
 
 const EditManageDevice = ({ userInfo, handleLogout }) => {
     const location = useLocation();
-    const dataItem = location.state?.newUser || JSON.parse(localStorage.getItem('editDeviceData'));
-    localStorage.setItem('editDeviceData', JSON.stringify(dataItem));
+    const dataItem = useMemo(() => {
+        return location.state?.newUser || JSON.parse(localStorage.getItem('editDeviceData')) || { connector_details: [] };
+    }, [location.state]);
+
+    useEffect(() => {
+        // Store the dataItem in local storage whenever it changes
+        localStorage.setItem('editDeviceData', JSON.stringify(dataItem));
+    }, [dataItem]);
 
     const navigate = useNavigate();
 
@@ -28,7 +35,6 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
     const handleChargerType = (e) => {
         setType(e.target.value);
     };
-    
 
     // Form state
     const [charger_id, setChargerID] = useState(dataItem?.charger_id || '');
@@ -37,6 +43,17 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
     const [vendor, setVendor] = useState(dataItem?.vendor || '');
     const [max_current, setMaxCurrent] = useState(dataItem?.max_current || '');
     const [max_power, setMaxPower] = useState(dataItem?.max_power || '');
+    const [connectors, setConnectors] = useState(
+        (dataItem && dataItem.connector_details && dataItem.connector_details.length > 0) 
+            ? dataItem.connector_details.map(item => ({
+                connector_id: item.connector_id || 1,
+                connector_type: item.connector_type || '',
+                type_name: item.connector_type_name || '',
+                typeOptions: [],
+            }))
+            : [{ connector_id: 1, connector_type: '', type_name: '', typeOptions: [] }]
+    );    
+    const fetchConnectorsCalled = useRef(false);
 
     // Error messages
     const [errorMessage, setErrorMessage] = useState('');
@@ -51,6 +68,7 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
         vendor: dataItem?.vendor || '',
         max_current: dataItem?.max_current || '',
         max_power: dataItem?.max_power || '',
+        connectors:dataItem?.connectors || '',
     });
 
     // Update initialValues when dataItem changes
@@ -62,6 +80,7 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
             vendor: dataItem?.vendor || '',
             max_current: dataItem?.max_current || '',
             max_power: dataItem?.max_power || '',
+            connectors:dataItem?.connectors || '',
         });
     }, [dataItem]);
 
@@ -74,6 +93,81 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
         }, 5000); // Clear error messages after 5 seconds
         return () => clearTimeout(timeout);
     }, [errorMessage, errorMessageCurrent, errorMessagePower]);
+
+
+    // Function to add a new connector
+    const addConnector = () => {
+        setConnectors([...connectors, { connector_id: connectors.length + 1, connector_type: '', type_name: '', typeOptions: [] }]);
+    };
+
+    // Function to remove a connector
+    const removeConnector = (index) => {
+        const updatedConnectors = connectors.filter((_, idx) => idx !== index);
+        setConnectors(updatedConnectors);
+    };
+
+    // Function to fetch the type name options from the backend and update the connectors
+    const updateConnectors = useCallback(async (updatedConnector) => {
+        try {
+            const res = await axios.post('/superadmin/fetchConnectorTypeName', {
+                connector_type: updatedConnector.connector_type
+            });
+
+            if (res.data && res.data.status === 'Success') {
+                if (typeof res.data.data === 'string' && res.data.data === 'No details were found') {
+                    setErrorMessage('No details were found');
+                    setConnectors([]); // Clear connectors if no details found
+                } else if (Array.isArray(res.data.data)) {
+                    const newConnectors = [...connectors];
+                    newConnectors[updatedConnector.index].typeOptions = res.data.data.map(option => option.output_type_name);
+                    setConnectors(newConnectors);
+                    setErrorMessage(null); // Clear any previous error message
+                }
+            } else {
+                setErrorMessage('Error fetching data. Please try again.');
+            }
+        } catch (err) {
+            console.error('Error updating connectors:', err);
+            setErrorMessage('No details were found');
+            setConnectors([]); // Clear connectors if an error occurs
+        }
+    }, [connectors]);
+
+    
+    // Handle connector type change and trigger backend fetch for type names
+    const handleConnectorType = (index, field, value) => {
+        const updatedConnectors = [...connectors];
+        updatedConnectors[index][field] = value;
+        setConnectors(updatedConnectors);
+
+        // Fetch type names based on connector type
+        updateConnectors({ ...updatedConnectors[index], index });
+    };
+
+    // Update connector based on user input
+    const handleConnectorChange = (index, field, value) => {
+        const updatedConnectors = connectors.map((connector, idx) =>
+            idx === index ? { ...connector, [field]: value } : connector
+        );
+        setConnectors(updatedConnectors);
+
+        // Call handleConnectorType if the changed field is 'connector_type'
+        if (field === 'connector_type') {
+            handleConnectorType(index, value);
+        }
+    };
+
+    // Effect to initialize connectors if needed
+    useEffect(() => {
+        if (!fetchConnectorsCalled.current) {
+            connectors.forEach((connector, index) => {
+                if (connector.connector_type) {
+                    updateConnectors({ ...connector, index });
+                }
+            });
+            fetchConnectorsCalled.current = true;
+        }
+    }, [connectors, updateConnectors]);
 
     // Update manage device
     const editManageDevice = async (e) => {
@@ -114,6 +208,7 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                     charger_model,
                     charger_type,
                     vendor,
+                    connectors,
                     max_current: maxCurrents,
                     max_power: maxPowers,
                     modified_by: userInfo.data.email_id,
@@ -151,10 +246,10 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
             charger_type !== initialValues.charger_type ||
             vendor !== initialValues.vendor ||
             max_current !== initialValues.max_current ||
-            max_power !== initialValues.max_power
+            max_power !== initialValues.max_power ||
+            connectors !==initialValues.connectors
         );
     };
-
 
     return (
         <div className='container-scroller'>
@@ -191,7 +286,7 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Charger ID</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Charger ID</label>
                                                                     <div className="col-sm-12">
                                                                         <input type="text" className="form-control" placeholder="Charger ID" value={charger_id}  onChange={(e) => setChargerID(e.target.value)} readOnly required/>
                                                                     </div>
@@ -199,7 +294,7 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Vendor</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Vendor</label>
                                                                     <div className="col-sm-12">
                                                                         <input type="text" className="form-control" placeholder="Vendor" value={vendor} maxLength={20} onChange={(e) => {const value = e.target.value; let sanitizedValue = value.replace(/[^a-zA-Z0-9 ]/g, ''); setVendor(sanitizedValue); }} required/>
                                                                     </div>
@@ -209,7 +304,7 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Charger Model</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Charger Model</label>
                                                                     <div className="col-sm-12">
                                                                         <select className="form-control" value={charger_model} onChange={handleModel} required>
                                                                             <option value="">Select model</option>
@@ -223,7 +318,7 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Charger Type</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Charger Type</label>
                                                                     <div className="col-sm-12">
                                                                         <select className="form-control" value={charger_type} onChange={handleChargerType} required >
                                                                             <option value="AC">AC</option>
@@ -236,7 +331,7 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Max Current</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Max Current</label>
                                                                     <div className="col-sm-12">
                                                                         <input 
                                                                             type="tel" 
@@ -269,7 +364,7 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Max Power</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Max Power</label>
                                                                     <div className="col-sm-12">
                                                                         <input type="tel" className="form-control" placeholder="Max Power" value={max_power} 
                                                                         onChange={(e) => {
@@ -296,9 +391,80 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        {/* Connectors section start */}
+                                                        <h4 className="card-title" style={{ paddingTop: '25px', marginBottom: '0px' }}>Connectors</h4>
+                                                        {connectors.map((connector, index) => (
+                                                            <div className="row" key={index} style={{ margin: '0.3px' }}>
+                                                                <div className="col-md-4">
+                                                                    <div className="form-group">
+                                                                        <label className="col-form-label labelInput">Connector Type</label>
+                                                                        <select 
+                                                                            className="form-control" 
+                                                                            value={connector.connector_type || ''} 
+                                                                            onChange={(e) => handleConnectorType(index, 'connector_type', e.target.value)} 
+                                                                            required
+                                                                        >
+                                                                            <option value="" disabled>Select type</option>
+                                                                            <option value="Gun">Gun</option>
+                                                                            <option value="Socket">Socket</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="col-md-4">
+                                                                    <div className="form-group">
+                                                                        <label className="col-form-label labelInput">Type Name</label>
+                                                                        <select
+                                                                            className="form-control"
+                                                                            value={connector.type_name || ''}
+                                                                            onChange={(e) => handleConnectorChange(index, 'type_name', e.target.value)}
+                                                                            required
+                                                                            disabled={!connector.connector_type} // Disable if no connector type is selected
+                                                                        >
+                                                                            <option value="">Select type name</option>
+                                                                            {connector.typeOptions && connector.typeOptions.length > 0 ? (
+                                                                                connector.typeOptions.map((option, idx) => (
+                                                                                    <option key={idx} value={option}>
+                                                                                        {option}
+                                                                                    </option>
+                                                                                ))
+                                                                            ) : (
+                                                                                <option disabled>No options available</option>
+                                                                            )}
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="col-md-2" style={{ paddingTop: '40px' }}>
+                                                                    <div className="form-group">
+                                                                        <div style={{ textAlign: 'center' }}>
+                                                                            <button 
+                                                                                type="button" // Changed to button to avoid submitting the form
+                                                                                className="btn btn-outline-danger" 
+                                                                                onClick={() => removeConnector(index)} 
+                                                                                disabled={connectors.length === 1} // Prevent removal if there's only one connector
+                                                                            >
+                                                                                <i className="mdi mdi-delete"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                {/* Only show the "Add Connector" button in the last row */}
+                                                                {index === connectors.length - 1 && (
+                                                                    <div className="col-md-2" style={{ paddingTop: '40px' }}>
+                                                                        <div className="form-group">
+                                                                            <div style={{ textAlign: 'center' }}>
+                                                                                <button type="submit" className="btn btn-outline-primary" onClick={addConnector}>
+                                                                                    <i className="mdi mdi-plus"></i>
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                        {/* Connectors section end */}
                                                         {errorMessage && <div className="text-danger">{errorMessage}</div>}
-                                                        <div style={{textAlign:'center'}}>
-                                                        <button type="submit" className="btn btn-primary" disabled={!isFormChanged()}>Update</button>
+                                                        <div style={{textAlign:'center', padding:'15px'}}>
+                                                            <button type="submit" className="btn btn-primary" disabled={!isFormChanged()}>Update</button>
                                                         </div>
                                                     </form>
                                                 </div>

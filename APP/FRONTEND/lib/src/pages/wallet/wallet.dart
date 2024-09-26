@@ -21,6 +21,7 @@ class _WalletPageState extends State<WalletPage> {
   late Razorpay _razorpay;
   double? walletBalance;
   bool isLoading = true;
+  bool showAlertLoading = false;
 
   double? _lastPaymentAmount; // Store the last payment amount
   final TextEditingController _amountController = TextEditingController(text: '500');
@@ -81,7 +82,7 @@ class _WalletPageState extends State<WalletPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/wallet/FetchWalletBalance'),
+        Uri.parse('http://122.166.210.142:9098/wallet/FetchWalletBalance'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId}),
       );
@@ -117,7 +118,7 @@ class _WalletPageState extends State<WalletPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/wallet/getTransactionDetails'),
+        Uri.parse('http://122.166.210.142:9098/wallet/getTransactionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username}),
       );
@@ -148,30 +149,68 @@ class _WalletPageState extends State<WalletPage> {
   void handlePayment(double amount) async {
     String? username = widget.username;
     const String currency = 'INR';
+
+    setState(() {
+      showAlertLoading = true; // Show loading overlay
+    });
+
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/wallet/createOrder'),
+        Uri.parse('http://122.166.210.142:9098/wallet/createOrder'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'amount': amount, 'currency': currency}),
       );
-      var data = json.decode(response.body);
-      Map<String, dynamic> options = {
-        'key': 'rzp_test_dcep4q6wzcVYmr',
-        'amount': data['amount'],
-        'currency': data['currency'],
-        'name': 'Anish kumar A',
-        'description': 'Wallet Recharge',
-        'order_id': data['id'],
-        'prefill': {'name': username},
-        'theme': {'color': '#3399cc'},
-      };
-      _lastPaymentAmount = amount; // Store the amount
+      await Future.delayed(const Duration(seconds: 2));
 
-      _razorpay.open(options);
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
+        Map<String, dynamic> options = {
+          'key': 'rzp_test_dcep4q6wzcVYmr',
+          'amount': data['amount'],
+          'currency': data['currency'],
+          'name': 'Anish kumar A',
+          'description': 'Wallet Recharge',
+          'order_id': data['id'],
+          'prefill': {'name': username},
+          'theme': {'color': '#3399cc'},
+        };
+
+        _lastPaymentAmount = amount; // Store the amount
+
+        // Open the Razorpay payment gateway
+        _razorpay.open(options);
+      } else {
+        // Handle non-200 responses here
+        throw Exception('Failed to create order: ${response.statusCode}');
+      }
     } catch (error) {
       print('Error during payment: $error');
+      // Optionally, show an error dialog to inform the user
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Payment Error'),
+            content: Text('An error occurred while processing your payment. Please try again.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      setState(() {
+        showAlertLoading = false; // Hide loading overlay after payment process
+      });
     }
   }
+
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     String? username = widget.username;
@@ -190,7 +229,7 @@ class _WalletPageState extends State<WalletPage> {
       };
 
       var output = await http.post(
-        Uri.parse('http://122.166.210.142:4444/wallet/savePayments'),
+        Uri.parse('http://122.166.210.142:9098/wallet/savePayments'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(result),
       );
@@ -242,7 +281,7 @@ void _showAlertBanner(String message) {
     });
 
     // Simulate a delay or asynchronous operation if needed
-    Future.delayed(const Duration(milliseconds: 500), () {
+    Future.delayed(Duration(milliseconds: 500), () {
       setState(() {
         isLoading = false; // End loading
       });
@@ -388,37 +427,65 @@ void _showAlertBanner(String message) {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+    return LoadingOverlay(
+      showAlertLoading: showAlertLoading,
+      child: Scaffold(
         backgroundColor: Colors.black,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: Colors.white),
-            onPressed: _showHelpModal,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Your Wallet',
-              style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.info_outline, color: Colors.white),
+              onPressed: _showHelpModal,
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Fast, one-click payments\nSeamless charging',
-              style: TextStyle(fontSize: 16, color: Colors.white70),
-            ),
-            const SizedBox(height: 16),
-            isLoading
-                ? Shimmer.fromColors(
-              baseColor: Colors.grey[700]!,
-              highlightColor: Colors.grey[500]!,
-              child: Container(
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Your Wallet',
+                style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Fast, one-click payments\nSeamless charging',
+                style: TextStyle(fontSize: 16, color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              isLoading
+                  ? Shimmer.fromColors(
+                baseColor: Colors.grey[700]!,
+                highlightColor: Colors.grey[500]!,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E1E),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(height: 18, width: 100, color: Colors.white),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Container(height: 32, width: 150, color: Colors.white),
+                          const Spacer(),
+                          Container(height: 20, width: 50, color: Colors.white),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Container(height: 14, width: 80, color: Colors.white),
+                      const SizedBox(height: 16),
+                      Container(height: 8, color: Colors.white),
+                    ],
+                  ),
+                ),
+              )
+                  : Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E1E1E),
@@ -427,214 +494,177 @@ void _showAlertBanner(String message) {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(height: 18, width: 100, color: Colors.white),
+                    const Text(
+                      'Balance',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Container(height: 32, width: 150, color: Colors.white),
+                        Text(
+                          '₹${walletBalance?.toStringAsFixed(2) ?? '0.00'}',
+                          style: const TextStyle(fontSize: 32, color: Colors.white),
+                        ),
                         const Spacer(),
-                        Container(height: 20, width: 50, color: Colors.white),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getBalanceColor(),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            _getBalanceLevel(),
+                            style: const TextStyle(fontSize: 14, color: Colors.white),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Container(height: 14, width: 80, color: Colors.white),
+                    const Text(
+                      'Max ₹10,000',
+                      style: TextStyle(fontSize: 14, color: Colors.white70),
+                    ),
+                    const SizedBox(height: 8),
+                    // Conditional error message
+                    if (walletBalance != null && walletBalance! < 100)
+                      Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.red, size: 18), // Error icon
+                          const SizedBox(width: 8), // Space between icon and text
+                          const Text(
+                            'Maintain min balance of ₹100 for optimal charging.',
+                            style: TextStyle(color: Colors.red, fontSize: 10),
+                          ),
+                        ],
+                      ),
                     const SizedBox(height: 16),
-                    Container(height: 8, color: Colors.white),
+                    LinearProgressIndicator(
+                      value: walletBalance != null ? _calculateProgress() : 0,
+                      color: Colors.orange,
+                      backgroundColor: Colors.white12,
+                    ),
                   ],
                 ),
               ),
-            )
-                : Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(12),
+      
+              const SizedBox(height: 24),
+              const Text(
+                'Add money',
+                style: TextStyle(fontSize: 18, color: Colors.white),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Balance',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        '₹${walletBalance?.toStringAsFixed(2) ?? '0.00'}',
-                        style: const TextStyle(fontSize: 32, color: Colors.white),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _getBalanceColor(),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          _getBalanceLevel(),
-                          style: const TextStyle(fontSize: 14, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Max ₹10,000',
-                    style: TextStyle(fontSize: 14, color: Colors.white70),
-                  ),
-                  const SizedBox(height: 8),
-                  // Conditional error message
-                  if (walletBalance != null && walletBalance! < 100)
-                    const Row(
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red, size: 18), // Error icon
-                        SizedBox(width: 8), // Space between icon and text
-                        Text(
-                          'Maintain min balance of ₹100 for optimal charging.',
-                          style: TextStyle(color: Colors.red, fontSize: 14),
+                        Expanded(
+                          child: TextField(
+                            controller: _amountController,
+                            style: const TextStyle(color: Colors.white, fontSize: 18),
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              hintText: 'Enter amount',
+                              hintStyle: TextStyle(color: Colors.white54),
+                              errorText: _errorMessage,
+                            ),
+                            keyboardType: TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: <TextInputFormatter>[
+                              CustomTextInputFormatter(
+                                _calculateRemainingBalance(),
+                                    (String? error) {
+                                  setState(() {
+                                    _errorMessage = error;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+      
+      
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.white54),
+                          onPressed: () {
+                            _amountController.clear();
+                          },
                         ),
                       ],
                     ),
-                  const SizedBox(height: 16),
-                  LinearProgressIndicator(
-                    value: walletBalance != null ? _calculateProgress() : 0,
-                    color: Colors.orange,
-                    backgroundColor: Colors.white12,
-                  ),
-                ],
+                    if (_alertMessage != null)
+                      AlertBanner(message: _alertMessage!),
+                  ],
+                ),
               ),
-            ),
-
-            const SizedBox(height: 24),
-            const Text(
-              'Add money',
-              style: TextStyle(fontSize: 18, color: Colors.white),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _amountController,
-                          style: const TextStyle(color: Colors.white, fontSize: 18),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Enter amount',
-                            hintStyle: const TextStyle(color: Colors.white54),
-                            errorText: _errorMessage,
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: <TextInputFormatter>[
-                            CustomTextInputFormatter(
-                              _calculateRemainingBalance(),
-                                  (String? error) {
-                                setState(() {
-                                  _errorMessage = error;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.white54),
-                        onPressed: () {
-                          _amountController.clear();
-                        },
-                      ),
-                    ],
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      backgroundColor: Colors.white12,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () {
+                      _amountController.text = '100';
+                    },
+                    child: const Text('₹ 100', style: TextStyle(color: Colors.white)),
                   ),
-                  if (_alertMessage != null)
-                    AlertBanner(message: _alertMessage!),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      backgroundColor: Colors.white12,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () {
+                      _amountController.text = '500';
+                    },
+                    child: const Text('₹ 500', style: TextStyle(color: Colors.white)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      backgroundColor: Colors.white12,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () {
+                      _amountController.text = '1000';
+                    },
+                    child: const Text('₹ 1000', style: TextStyle(color: Colors.white)),
+                  ),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                    backgroundColor: Colors.white12,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  onPressed: () {
-                    _amountController.text = '100';
-                  },
-                  child: const Text('₹ 100', style: TextStyle(color: Colors.white)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  backgroundColor: Colors.white12,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                    backgroundColor: Colors.white12,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  onPressed: () {
-                    _amountController.text = '500';
-                  },
-                  child: const Text('₹ 500', style: TextStyle(color: Colors.white)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                    backgroundColor: Colors.white12,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  onPressed: () {
-                    _amountController.text = '1000';
-                  },
-                  child: const Text('₹ 1000', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                backgroundColor: Colors.white12,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                onPressed: () {
+                  double remainingBalance = _calculateRemainingBalance(); // Calculate remaining balance
+                  _amountController.text = remainingBalance.toStringAsFixed(2); // Set the text to the remaining balance
+                },
+                child: const Text('Maximum', style: TextStyle(color: Colors.white)),
               ),
-              onPressed: () {
-                double remainingBalance = _calculateRemainingBalance(); // Calculate remaining balance
-                _amountController.text = remainingBalance.toStringAsFixed(2); // Set the text to the remaining balance
-              },
-              child: const Text('Maximum', style: TextStyle(color: Colors.white)),
-            ),
-
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                String amountText = _amountController.text;
-                double? amount = double.tryParse(amountText);
-
-                if (amountText.isEmpty || amount == null || amount <= 0) {
-                  // Show error message if the field is empty or invalid
-                  setState(() {
-                    _errorMessage = 'Please enter a valid amount to add money.';
-                  });
-                } else {
-                  // Clear any previous error messages
-                  setState(() {
-                    _errorMessage = null;
-                  });
-
+      
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: walletBalance != null && walletBalance! >= 10000
+                    ? null
+                    : () {
+                  double amount = double.tryParse(_amountController.text) ?? 0.0;
                   double totalBalance = (walletBalance ?? 0.0) + amount;
                   double remainingBalance = 10000 - (walletBalance ?? 0.0);
-
-                  if (totalBalance > 10000) {
-                    // If the total balance exceeds the maximum limit, show an alert dialog
+      
+                  if (amount <= 0 || totalBalance > 10000) {
                     showDialog(
                       context: context,
                       barrierDismissible: false, // Prevent dismissing by tapping outside
@@ -647,13 +677,13 @@ void _showAlertBanner(String message) {
                           title: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Row(
+                              Row(
                                 children: [
-                                  Icon(Icons.error_outline, color: Colors.red, size: 35),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    "Max Limit Breached",
-                                    style: TextStyle(color: Colors.white, fontSize: 23),
+                                  const Icon(Icons.error_outline, color: Colors.red, size: 25),
+                                  const SizedBox(width: 10),
+                                  const Text(
+                                    "Error",
+                                    style: TextStyle(color: Colors.white, fontSize: 18),
                                   ),
                                 ],
                               ),
@@ -662,7 +692,9 @@ void _showAlertBanner(String message) {
                             ],
                           ),
                           content: Text(
-                            'The total balance after adding this amount exceeds the maximum limit of ₹10,000. You can only add up to ₹${remainingBalance.toStringAsFixed(2)}.',
+                            _amountController.text.isEmpty
+                                ? 'Your field is empty !! Kindly enter an valid amount.' // Message for empty input
+                                : 'The total balance after adding this amount exceeds the maximum limit of ₹10,000. You can only add up to ₹${remainingBalance.toStringAsFixed(2)}.',
                             style: const TextStyle(color: Colors.white70), // Adjusted text color for contrast
                           ),
                           actions: <Widget>[
@@ -677,47 +709,48 @@ void _showAlertBanner(String message) {
                       },
                     );
                   } else {
-                    // Proceed with payment if validation is successful
-                    handlePayment(amount);
+                    handlePayment(amount); // Proceed with payment
                   }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: walletBalance != null && walletBalance! >= 10000
-                    ? Colors.transparent
-                    : const Color(0xFF1C8B39), // Dark green when enabled
-                minimumSize: const Size(double.infinity, 50), // Full-width button
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: walletBalance != null && walletBalance! >= 10000
+                      ? Colors.transparent
+                      : const Color(0xFF1C8B39), // Dark green when enabled
+                  minimumSize: const Size(double.infinity, 50), // Full width button
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                ).copyWith(
+                  backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+                        (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.disabled)) {
+                        return Colors.green.withOpacity(0.2); // Light green gradient when disabled
+                      }
+                      return walletBalance != null && walletBalance! >= 10000
+                          ? Colors.grey // Grey when the button is disabled
+                          : const Color(0xFF1C8B39); // Dark green color when enabled
+                    },
+                  ),
                 ),
-                elevation: 0,
-              ).copyWith(
-                backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                  (Set<MaterialState> states) {
-                    if (states.contains(MaterialState.disabled)) {
-                      return Colors.green.withOpacity(0.2); // Light green gradient when disabled
-                    }
-                    return walletBalance != null && walletBalance! >= 10000
-                        ? Colors.grey // Grey when the button is disabled
-                        : const Color(0xFF1C8B39); // Dark green color when enabled
-                  },
+                child: Text(
+                  walletBalance != null && walletBalance! >= 10000
+                      ? 'Limit Reached'
+                      : 'Add ₹${_amountController.text}',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: walletBalance != null && walletBalance! >= 10000
+                        ? Colors.grey // Text color when disabled
+                        : Colors.white, // Text color when enabled
+                  ),
                 ),
               ),
-              child: Text(
-                walletBalance != null && walletBalance! >= 10000
-                    ? 'Limit Reached'
-                    : 'Add ₹${_amountController.text}',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: walletBalance != null && walletBalance! >= 10000
-                      ? Colors.grey // Text color when disabled
-                      : Colors.white, // Text color when enabled
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
+      
+      
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
@@ -1093,7 +1126,7 @@ class CustomTextInputFormatter extends TextInputFormatter {
 
     // If new value exceeds the remaining balance, show error and revert to old value
     if (newValueDouble != null && newValueDouble > remainingBalance) {
-      onValidationError("Enter a value up to ₹${remainingBalance.toStringAsFixed(2)}. Total limit is ₹10000.");
+      onValidationError("Enter a value up to ₹${remainingBalance.toStringAsFixed(2)}.Total Limit is \n₹10,000.");
       return oldValue;
     } else {
       // Clear error if valid
@@ -1101,5 +1134,107 @@ class CustomTextInputFormatter extends TextInputFormatter {
     }
 
     return newValue; // Return the new value if all validations pass
+  }
+}
+
+class LoadingOverlay extends StatelessWidget {
+  final bool showAlertLoading;
+  final Widget child;
+
+  LoadingOverlay({required this.showAlertLoading, required this.child});
+
+  Widget _buildLoadingIndicator() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      // color: Colors.black.withOpacity(0.75), // Transparent black background
+      color: Colors.black.withOpacity(0.90), // Transparent black background
+      child: Center(
+        child: _AnimatedChargingIcon(), // Use the animated charging icon
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        child, // The main content
+        if (showAlertLoading)
+          _buildLoadingIndicator(), // Use the animated loading indicator
+      ],
+    );
+  }
+}
+
+class _AnimatedChargingIcon extends StatefulWidget {
+  @override
+  __AnimatedChargingIconState createState() => __AnimatedChargingIconState();
+}
+
+class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _slideAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..forward(); // Start the animation
+
+    // Slide animation for moving the bolt icon vertically downwards
+    _slideAnimation = Tween<double>(begin: -130.0, end: 60.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Opacity animation for smooth fading in and out
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        // Reset the animation to start from the top when it reaches the bottom
+        _controller.reset();
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value), // Move vertically
+          child: Opacity(
+            opacity: _opacityAnimation.value,
+            child: child,
+          ),
+        );
+      },
+      child: const Icon(
+        Icons.bolt_sharp, // Charging icon
+        color: Colors.green, // Set the icon color
+        size: 200, // Adjust the size as needed
+      ),
+    );
   }
 }

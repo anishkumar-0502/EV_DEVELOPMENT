@@ -176,8 +176,8 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Role Name</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Role Name</label>
+                                                                    <div className="col-sm-12">
                                                                         <select
                                                                             className="form-control"
                                                                             value={newUser.role_name}
@@ -198,8 +198,8 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Association Name</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Association Name</label>
+                                                                    <div className="col-sm-12">
                                                                         <select
                                                                             className="form-control"
                                                                             value={newUser.client_name}
@@ -222,8 +222,8 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">User Name</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">User Name</label>
+                                                                    <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control" placeholder="User Name"
@@ -240,8 +240,8 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Phone No</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Phone No</label>
+                                                                    <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control" placeholder="Phone No"
@@ -258,8 +258,8 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Email ID</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Email ID</label>
+                                                                    <div className="col-sm-12">
                                                                         <input
                                                                             type="email"
                                                                             className="form-control" placeholder="Email ID"
@@ -284,8 +284,8 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Password</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Password</label>
+                                                                    <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control" placeholder="Password"
@@ -303,7 +303,7 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                         {errorMessage && <div className="text-danger">{errorMessage}</div>}
-                                                        <div style={{ textAlign: 'center' }}>
+                                                        <div style={{ textAlign: 'center', padding:'15px'}}>
                                                             <button type="submit" className="btn btn-primary mr-2">Create</button>
                                                         </div>
                                                     </form>

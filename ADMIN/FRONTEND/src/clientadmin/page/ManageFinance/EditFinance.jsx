@@ -217,7 +217,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">EB Charges</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">EB Charges</label>
                                                                     <div className="col-sm-12">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
@@ -238,7 +238,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">App Charges</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">App Charges</label>
                                                                     <div className="col-sm-12">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
@@ -259,7 +259,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Other Charges</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Other Charges</label>
                                                                     <div className="col-sm-12">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
@@ -280,7 +280,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Parking Charges</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Parking Charges</label>
                                                                     <div className="col-sm-12">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
@@ -301,7 +301,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Rent Charges</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Rent Charges</label>
                                                                     <div className="col-sm-12">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
@@ -322,7 +322,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Open A EB Charges</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Open A EB Charges</label>
                                                                     <div className="col-sm-12">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
@@ -343,7 +343,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Open Other Charges</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Open Other Charges</label>
                                                                     <div className="col-sm-12">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
@@ -365,7 +365,7 @@ const EditFinance = ({ userInfo, handleLogout }) => {
                                                             
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Status</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Status</label>
                                                                     <div className="col-sm-12">
                                                                         <select className="form-control" value={status} onChange={handleStatusChange} required>
                                                                             <option value="true">Active</option>

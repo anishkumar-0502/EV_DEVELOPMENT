@@ -1,35 +1,33 @@
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import axios from 'axios';
-import Header from '../../components/Header';
-import Sidebar from '../../components/Sidebar';
-import Footer from '../../components/Footer';
+import Header from '../components/Header';
+import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
 import Swal from 'sweetalert2';
 
-const ManageTagID = ({ userInfo, handleLogout }) => {
+const OutputTypeConfig = ({ userInfo, handleLogout }) => {
 
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filteredData] = useState([]);
     const [posts, setPosts] = useState([]);
-    const fetchUserRoleCalled = useRef(false); // Ref to track if fetchProfile has been called
-    const [initialTagID, setInitialTagID] = useState('');
-    const [initialTagIDExpiryDateD, setInitialTagIDExpiryDate]= useState('');
+    const fetchUserRoleCalled = useRef(false);
+    const [initialOutputTypeConfig, setInitialOutputTypeConfig] = useState('');
 
-    // Fetch Tagid // updated by vivek on 24 aug
+    // Fetch Output Type Config
     const fetchTagID = useCallback(async () => {
         try {
-            const res = await axios.post('/associationadmin/FetchAllTagIDs', {
+            const res = await axios.post('/superadmin/fetchAllOutputType', {
                 association_id: userInfo.data.association_id
             });
     
             if (res.data && res.data.status === 'Success') {
-                if (typeof res.data.data === 'string' && res.data.data === 'No tags found') {
+                if (typeof res.data.data === 'string' && res.data.data === 'No Output Type found') {
                     // If the response indicates no tags were found
                     setError(res.data.data);
                     setData([]); // Clear the data since no tags were found
                 } else if (Array.isArray(res.data.data)) {
-                    // If the data is an array of tag IDs, set it directly
                     setData(res.data.data);
                     setError(null); // Clear any previous errors
                 } else {
@@ -38,7 +36,6 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
             } else {
                 setError('Error fetching data. Please try again.');
             }
-    
             setLoading(false);
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -54,13 +51,13 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
         }
     }, [fetchTagID]);
 
-
     // Search data 
     const handleSearchInputChange = (e) => {
         const inputValue = e.target.value.toUpperCase();
         if (Array.isArray(data)) {
             const filteredData = data.filter((item) =>
-                item.tag_id.toUpperCase().includes(inputValue)
+                item.output_type.toUpperCase().includes(inputValue) ||
+                item.output_type_name.toUpperCase().includes(inputValue)
             );
             setPosts(filteredData);
         }
@@ -78,34 +75,15 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
         }
     }, [data, filteredData]);
 
-    // Timestamp data 
-    function formatTimestamp(originalTimestamp) {
-        const date = new Date(originalTimestamp);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        
-        let hours = date.getHours();
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12; // the hour '0' should be '12'
-        hours = String(hours).padStart(2, '0');
-    
-        const formattedDate = `${day}/${month}/${year} ${hours}:${minutes}:${seconds} ${ampm}`;
-        return formattedDate;
-    }
-
-    // Add user role start 
+    // Add Output Type Config
     const [showAddForm, setShowAddForm] = useState(false);
 
     const addChargers = () => {
         setShowAddForm(prevState => !prevState); // Toggles the form visibility
     };
     const closeAddModal = () => {
-        setTagID(''); 
-        setTagIDExpiryDate('');
+        setOutputTypeConfig(''); 
+        setOutputType('');
         setShowAddForm(false); // Close the form
         setTheadsticky('sticky');
         setTheadfixed('fixed');
@@ -116,27 +94,27 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
         display: showAddForm ? 'block' : 'none',
     }
 
-    // Add addTagID
-    const [add_tag_id, setTagID] = useState('');
-    const [add_tag_id_expiry_date, setTagIDExpiryDate] = useState('');
+    // Add Output Type Config
+    const [add_OutputType, setOutputType]  = useState('');
+    const [add_OutputTypeConfig, setOutputTypeConfig] = useState('');
 
-    const addTagID = async (e) => {
+    const addOutputTypeConfig = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('/associationadmin/CreateTagID', {
+            const response = await fetch('/superadmin/createOutputType', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ tag_id:add_tag_id, tag_id_expiry_date:add_tag_id_expiry_date, created_by: userInfo.data.email_id, association_id: userInfo.data.association_id }),
+                body: JSON.stringify({ output_type:add_OutputType, output_type_name:add_OutputTypeConfig, created_by: userInfo.data.email_id }),
             });
             if (response.ok) {
                 Swal.fire({
-                    title: "Add TagID successfully",
+                    title: "Add Output Type Config successfully",
                     icon: "success"
                 });
-                setTagID(''); 
-                setTagIDExpiryDate('');
+                setOutputTypeConfig(''); 
+                setOutputType('');
                 setShowAddForm(false);
                 closeAddModal();
                 fetchTagID();
@@ -147,29 +125,31 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                 const responseData = await response.json();
                 Swal.fire({
                     title: "Error",
-                    text: "Failed to TagID, " + responseData.message,
+                    text: responseData.message,
                     icon: "error"
                 });
             }
         }catch (error) {
             Swal.fire({
                 title: "Error:", error,
-                text: "An error occurred while adding TagID",
+                text: "An error occurred while adding Output Type Config",
                 icon: "error"
             });
         }
     };
 
-    // Edit user role start 
+    // Select model 
+    const handleModel = (e) => {
+        setOutputType(e.target.value);
+    };
+    // Edit Output Type Config
     const [showEditForm, setShowEditForm] = useState(false);
     const [dataItem, setEditDataItem] = useState(null);
 
     const handleEditUser = (dataItem) => {
         setEditDataItem(dataItem);
-        setEditTagID(dataItem.tag_id); 
-        setEditTagIDExpiryDate(dataItem.tag_id_expiry_date);
-        setInitialTagID(dataItem.tag_id); 
-        setInitialTagIDExpiryDate(dataItem.tag_id_expiry_date); 
+        setEditOutputTypeConfig(dataItem.output_type_name); 
+        setInitialOutputTypeConfig(dataItem.output_type_name); 
         setShowEditForm(true); 
     };
 
@@ -189,7 +169,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
     const [theadfixed, setTheadfixed] = useState('fixed');
 
     // Edit button thead bgcolor
-    const handleEditUserAndToggleBackground = (dataItem) => {
+    const handleEditOutputTypeConfig = (dataItem) => {
         handleEditUser(dataItem);
         setTheadsticky(theadsticky === 'sticky' ? '' : 'sticky');
         setTheadfixed(theadfixed === 'fixed' ? 'transparent' : 'fixed');
@@ -197,34 +177,32 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
     };
 
     // Add button thead bgcolor
-    const handleAddUserAndToggleBackground = () => {
+    const handleAddAddOutputTypeConfig = () => {
         addChargers();
         setTheadsticky(theadsticky === 'sticky' ? '' : 'sticky');
         setTheadfixed(theadfixed === 'fixed' ? 'transparent' : 'fixed');
         setTheadBackgroundColor(theadBackgroundColor === 'white' ? 'transparent' : 'white');
     }
 
-    // Edit user role
-    const [tag_id, setEditTagID] = useState('');
-    const [tag_id_expiry_date, setEditTagIDExpiryDate] = useState('');
+    // Edit Output Type Config
+    const [output_type_name, setEditOutputTypeConfig] = useState('');
 
-    const editTagID = async (e) => {
+    const editOutputTypeConfig = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('/associationadmin/UpdateTagID', {
+            const response = await fetch('/superadmin/updateOutputType', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ id:dataItem.id, tag_id, tag_id_expiry_date, status:dataItem.status, modified_by: userInfo.data.email_id }),
+            body: JSON.stringify({ id:dataItem.id, output_type_name, modified_by: userInfo.data.email_id}),
             });
             if (response.ok) {
                 Swal.fire({
-                    title: "Update TagID successfully",
+                    title: "Update Output Type Config successfully",
                     icon: "success"
                 });
-                setEditTagID(''); 
-                setEditTagIDExpiryDate('');
+                setEditOutputTypeConfig(''); 
                 setShowEditForm(false);
                 closeEditModal();
                 fetchTagID();
@@ -235,14 +213,14 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                 const responseData = await response.json();
                 Swal.fire({
                     title: "Error",
-                    text: "Failed to update TagID, " + responseData.message,
+                    text: responseData.message,
                     icon: "error"
                 });
             }
         }catch (error) {
             Swal.fire({
                 title: "Error:", error,
-                text: "An error occurred while update TagID",
+                text: "An error occurred while update Output Type Config",
                 icon: "error"
             });
         }
@@ -252,7 +230,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
     const changeDeActivate = async (e, id) => {
         e.preventDefault();
         try {
-            const response = await fetch('/associationadmin/DeactivateOrActivateTagID', {
+            const response = await fetch('/superadmin/DeActivateOutputType', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -286,7 +264,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
     const changeActivate = async (e, id) => {
         e.preventDefault();
         try {
-            const response = await fetch('/associationadmin/DeactivateOrActivateTagID', {
+            const response = await fetch('/superadmin/DeActivateOutputType', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -316,37 +294,24 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
         }
     };
 
-    function formatDateForInput(date) {
-        const d = new Date(date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
-
-    // const getMinDate = () => {
-    //     const date = new Date();
-    //     date.setDate(date.getDate() +2); // Move to the next day
-    //     date.setHours(0, 0, 0, 0); // Set time to midnight (00:00:00) of the next day
-    //     return date.toISOString().slice(0, 16); // Format for datetime-local input
-    // }; 
-    
-    const getMinDate = () => {
-        const date = new Date();
-        date.setDate(date.getDate() + 1); // Move to two days ahead
-        date.setHours(0, 5, 0, 0); // Set time to 12:05 AM (local time) on the next day
-    
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    // Timestamp data 
+    function formatTimestamp(originalTimestamp) {
+        const date = new Date(originalTimestamp);
         const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        
+        let hours = date.getHours();
         const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = String(hours).padStart(2, '0');
     
-        // Format the date and time string for the datetime-local input
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
+        const formattedDate = `${day}/${month}/${year} ${hours}:${minutes}:${seconds} ${ampm}`;
+        return formattedDate;
+    }
     
     return (
         <div className='container-scroller'>
@@ -361,34 +326,36 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                             <div className="col-md-12 grid-margin">
                                 <div className="row">
                                     <div className="col-12 col-xl-8 mb-4 mb-xl-0">
-                                        <h3 className="font-weight-bold">Manage Tag ID</h3>
+                                        <h3 className="font-weight-bold">Output Type Config</h3>
                                     </div>
                                     <div className="col-12 col-xl-4">
                                         <div className="justify-content-end d-flex">
-                                            <button type="button" className="btn btn-success" onClick={handleAddUserAndToggleBackground}>Add Tag ID</button>
-                                            {/* Add role start */}
+                                            <button type="button" className="btn btn-success" onClick={handleAddAddOutputTypeConfig}>Add Output Type Config</button>
+                                            {/* Add Output Type Config start */}
                                             <div className="modalStyle" style={modalAddStyle}>
                                                 <div className="modalContentStyle" style={{ maxHeight: '680px', overflowY: 'auto' }}>
                                                     <span onClick={closeAddModal} style={{ float: 'right', cursor: 'pointer', fontSize:'30px' }}>&times;</span>
-                                                    <form className="pt-3" onSubmit={addTagID}>
+                                                    <form className="pt-3" onSubmit={addOutputTypeConfig}>
                                                         <div className="card-body">
                                                             <div style={{textAlign:'center'}}>
-                                                                <h4 className="card-title">Add Tag ID</h4>
+                                                                <h4 className="card-title">Add Output Type Config</h4>
                                                             </div>
                                                             <div className="table-responsive pt-3">
-                                                                <div className="input-group">
+                                                                <div className="input-group" style={{paddingRight:'1px'}}>
                                                                     <div className="input-group-prepend">
-                                                                        <span className="input-group-text" style={{color:'black', width:'180px'}}>Tag ID</span>
+                                                                        <span className="input-group-text" style={{color:'black', width:'150px'}}>Type</span>
                                                                     </div>
-                                                                    <input type="text" className="form-control" placeholder="Tag ID" value={add_tag_id} maxLength={12} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^a-zA-Z0-9]/g, ''); setTagID(sanitizedValue);}} required/>
+                                                                    <select className="form-control"  style={{paddingRight:'10px'}} value={add_OutputType} onChange={handleModel} required>
+                                                                        <option value="">Select Type</option>
+                                                                        <option value="Gun">Gun</option>
+                                                                        <option value="Socket">Socket</option>
+                                                                    </select>
                                                                 </div>
-                                                            </div>
-                                                            <div className="table-responsive pt-3">
                                                                 <div className="input-group">
                                                                     <div className="input-group-prepend">
-                                                                        <span className="input-group-text" style={{color:'black', width:'180px'}}>Tag ID Expiry Date</span>
+                                                                        <span className="input-group-text" style={{color:'black', width:'150px'}}>Type Name</span>
                                                                     </div>
-                                                                    <input type="datetime-local" className="form-control" value={add_tag_id_expiry_date} onChange={(e) => setTagIDExpiryDate(e.target.value)}  min={getMinDate()}/>
+                                                                    <input type="text" className="form-control" placeholder="Output Type Name" value={add_OutputTypeConfig} onChange={(e) => {const value = e.target.value; const sanitizedValue = value; setOutputTypeConfig(sanitizedValue);}} required/>
                                                                 </div>
                                                             </div>
                                                             <div style={{textAlign:'center'}}>
@@ -398,44 +365,39 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                     </form>
                                                 </div>
                                             </div>
-                                            {/* Add role end */}
-                                            {/* Edit role start */}
+                                            {/* Add Output Type Config end */}
+                                            {/* Edit Output Type Config start */}
                                             <div className="modalStyle" style={modalEditStyle}>
                                                 <div className="modalContentStyle" style={{ maxHeight: '680px', overflowY: 'auto' }}>
                                                     <span onClick={closeEditModal} style={{ float: 'right', cursor: 'pointer', fontSize:'30px' }}>&times;</span>
-                                                    <form className="pt-3" onSubmit={editTagID}>
+                                                    <form className="pt-3" onSubmit={editOutputTypeConfig}>
                                                         <div className="card-body">
                                                             <div style={{textAlign:'center'}}>
-                                                                <h4 className="card-title">Edit Tag ID</h4>
+                                                                <h4 className="card-title">Edit Output Type Config</h4>
                                                             </div>
                                                             <div className="table-responsive pt-3">
                                                                 <div className="input-group">
                                                                     <div className="input-group-prepend">
-                                                                        <span className="input-group-text" style={{ color: 'black', width: '180px' }}>Tag ID</span>
+                                                                        <span className="input-group-text" style={{ color: 'black', width: '180px' }}>Type</span>
                                                                     </div>
-                                                                    <input type="text" className="form-control" placeholder="Tag ID" style={{ width:'200px'}} value={tag_id} maxLength={12} readOnly />
+                                                                    <input type="text" className="form-control" placeholder="Output Type" style={{ width:'200px'}}   value={dataItem?.output_type || ''}readOnly/>
                                                                 </div>
-                                                            </div>
-                                                            <div className="input-group">
-                                                                <div className="input-group-prepend">
-                                                                    <span className="input-group-text" style={{ color: 'black', width: '180px' }}>Tag ID Expiry Date</span>
+                                                                <div className="input-group">
+                                                                    <div className="input-group-prepend">
+                                                                        <span className="input-group-text" style={{ color: 'black', width: '180px' }}>Type Name</span>
+                                                                    </div>
+                                                                    <input type="text" className="form-control" placeholder="Output Type Name" style={{ width:'200px'}} 
+                                                                        value={output_type_name} onChange={(e) => setEditOutputTypeConfig(e.target.value)}required/>
                                                                 </div>
-                                                                <input 
-                                                                    type="datetime-local" 
-                                                                    className="form-control"    
-                                                                    value={formatDateForInput(tag_id_expiry_date)}
-                                                                    onChange={(e) => setEditTagIDExpiryDate(e.target.value)}
-                                                                    min={getMinDate()}
-                                                                />
                                                             </div>
                                                             <div style={{textAlign:'center'}}>
-                                                                <button type="submit" className="btn btn-primary mr-2" style={{marginTop:'10px'}} disabled={tag_id === initialTagID && tag_id_expiry_date === initialTagIDExpiryDateD}>Update</button>
+                                                                <button type="submit" className="btn btn-primary mr-2" style={{marginTop:'10px'}} disabled={output_type_name === initialOutputTypeConfig}>Update</button>
                                                             </div>
                                                         </div>
                                                     </form>
                                                 </div>
                                             </div>
-                                            {/* Edit role end */}
+                                            {/* Edit Output Type Config end */}
                                         </div>
                                     </div>
                                 </div>
@@ -449,7 +411,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                             <div className="col-md-12 grid-margin">
                                                 <div className="row">
                                                     <div className="col-4 col-xl-8">
-                                                        <h4 className="card-title" style={{paddingTop:'10px'}}>List Of Tag ID's</h4>  
+                                                        <h4 className="card-title" style={{paddingTop:'10px'}}>List Of Output Type Config</h4>  
                                                     </div>
                                                     <div className="col-8 col-xl-4">
                                                         <div className="input-group">
@@ -458,7 +420,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                                 <i className="icon-search"></i>
                                                                 </span>
                                                             </div>
-                                                            <input type="text" className="form-control" placeholder="Search now" aria-label="search" aria-describedby="search" autoComplete="off" onChange={handleSearchInputChange}/>
+                                                            <input type="text" className="form-control" placeholder="Search by Output Type/Name" aria-label="search" aria-describedby="search" autoComplete="off" onChange={handleSearchInputChange}/>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -469,8 +431,12 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                 <thead style={{ textAlign: 'center', position: theadsticky, tableLayout: theadfixed, top: 0, backgroundColor: theadBackgroundColor, zIndex: 1 }}>
                                                     <tr> 
                                                         <th>Sl.No</th>
-                                                        <th>Tag ID</th>
-                                                        <th>Tag ID Expiry Date</th>
+                                                        <th>Output Type</th>
+                                                        <th>Output Type Name</th>
+                                                        <th>Created By</th>
+                                                        <th>Created Date</th>
+                                                        <th>Modified By</th>
+                                                        <th>Modified Date</th>
                                                         <th>Status</th>
                                                         <th>Active/DeActive</th>
                                                         <th>Option</th>
@@ -479,19 +445,23 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                 <tbody style={{textAlign:'center'}}>
                                                     {loading ? (
                                                         <tr>
-                                                            <td colSpan="9" style={{ marginTop: '50px', textAlign: 'center' }}>Loading...</td>
+                                                            <td colSpan="10" style={{ marginTop: '50px', textAlign: 'center' }}>Loading...</td>
                                                         </tr>
                                                     ) : error ? (
                                                         <tr>
-                                                            <td colSpan="9" style={{ marginTop: '50px', textAlign: 'center' }}>Error: {error}</td>
+                                                            <td colSpan="10" style={{ marginTop: '50px', textAlign: 'center' }}>Error: {error}</td>
                                                         </tr>
                                                     ) : (
                                                         Array.isArray(posts) && posts.length > 0 ? (
                                                             posts.map((dataItem, index) => (
                                                             <tr key={index}>
                                                                 <td>{index + 1}</td>
-                                                                <td>{dataItem.tag_id ? dataItem.tag_id : '-'}</td>
-                                                                <td>{dataItem.tag_id_expiry_date ?  formatTimestamp(dataItem.tag_id_expiry_date) : '-'}</td>
+                                                                <td>{dataItem.output_type ||'-'}</td>
+                                                                <td>{dataItem.output_type_name ||'-'}</td>
+                                                                <td>{dataItem.created_by ? dataItem.created_by : '-'}</td>
+                                                                <td>{dataItem.created_date ? formatTimestamp(dataItem.created_date) : '-'}</td>
+                                                                <td>{dataItem.modified_by ? dataItem.modified_by : '-'}</td>
+                                                                <td>{dataItem.modified_date ?  formatTimestamp(dataItem.modified_date) : '-'}</td>
                                                                 <td>{dataItem.status===true ? <span className="text-success">Active</span> : <span className="text-danger">DeActive</span>}</td>
                                                                 <td>
                                                                     <div className='form-group' style={{paddingTop:'13px'}}> 
@@ -507,13 +477,13 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                                     </div>
                                                                 </td>
                                                                 <td>
-                                                                    <button type="button" className="btn btn-outline-primary btn-icon-text"  onClick={() => handleEditUserAndToggleBackground(dataItem)} style={{marginBottom:'10px'}}><i className="mdi mdi-pencil btn-icon-prepend"></i>Edit</button><br/>
+                                                                    <button type="button" className="btn btn-outline-primary btn-icon-text"  onClick={() => handleEditOutputTypeConfig(dataItem)} style={{marginBottom:'10px'}}><i className="mdi mdi-pencil btn-icon-prepend"></i>Edit</button><br/>
                                                                 </td>                                                    
                                                             </tr>
                                                         ))
                                                         ) : (
                                                         <tr>
-                                                            <td colSpan="6" style={{ marginTop: '50px', textAlign: 'center' }}>No Tag ID found</td>
+                                                            <td colSpan="10" style={{ marginTop: '50px', textAlign: 'center' }}>No Output Type Config found</td>
                                                         </tr>
                                                         )
                                                     )}
@@ -533,4 +503,4 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
     );
 };  
                  
-export default ManageTagID
+export default OutputTypeConfig

@@ -98,8 +98,8 @@ const Createass = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Association Name</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Association Name</label>
+                                                                    <div className="col-sm-12">
                                                                     <input 
                                                                         type="text" 
                                                                         className="form-control" 
@@ -117,8 +117,8 @@ const Createass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Phone No</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Phone No</label>
+                                                                    <div className="col-sm-12">
                                                                     <input 
                                                                         type="text" 
                                                                         className="form-control" 
@@ -136,8 +136,8 @@ const Createass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Email ID</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Email ID</label>
+                                                                    <div className="col-sm-12">
                                                                     <input 
                                                                         type="email" 
                                                                         className="form-control" 
@@ -163,15 +163,15 @@ const Createass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Address</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Address</label>
+                                                                    <div className="col-sm-12">
                                                                         <textarea type="text" className="form-control" placeholder="Address" maxLength={150} value={newUser.association_address} onChange={(e) => setNewUser({ ...newUser, "association_address": e.target.value })} required />
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         {errorMessage && <div className="text-danger">{errorMessage}</div>}
-                                                        <div style={{ textAlign: 'center' }}>
+                                                        <div style={{ textAlign: 'center', padding:'15px' }}>
                                                             <button type="submit" className="btn btn-primary mr-2">Create</button>
                                                         </div>
                                                     </form>

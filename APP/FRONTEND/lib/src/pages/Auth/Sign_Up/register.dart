@@ -176,7 +176,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/profile/RegisterNewUser'),
+        Uri.parse('http://122.166.210.142:9098/profile/RegisterNewUser'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': username,
@@ -345,7 +345,7 @@ class _RegisterPageState extends State<RegisterPage> {
       cursorColor: const Color(0xFF1ED760),
       keyboardType: TextInputType.emailAddress,
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@.]')), // Allows only letters, numbers, @, and .
+        FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9@.]')), // Allows only lowercase letters, numbers, @, and .
       ],
       validator: (value) {
         if (!_isEmailInteracted) return null;

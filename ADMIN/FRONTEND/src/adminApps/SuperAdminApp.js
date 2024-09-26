@@ -18,6 +18,7 @@ import ManageUserRole from '../superadmin/page/ManageUserRole';
 import ManageUsers from '../superadmin/page/ManageUsers/ManageUsers';
 import ViewUserList from '../superadmin/page/ManageUsers/ViewUserList';
 import EditUserList from '../superadmin/page/ManageUsers/EditUserList';
+import OutputTypeConfig from '../superadmin/page/OutputTypeConfig';
 import Profile from '../superadmin/page/Profile';
 import Header from '../superadmin/components/Header';
 
@@ -183,6 +184,14 @@ const SuperAdminApp = () => {
           path="ManageUserRole"
           element={loggedIn ? (
             <ManageUserRole userInfo={userInfo} handleLogout={handleLogout} />
+          ) : (
+            <Navigate to="/superadmin" />
+          )}
+        />
+        <Route
+          path="OutputTypeConfig"
+          element={loggedIn ? (
+            <OutputTypeConfig userInfo={userInfo} handleLogout={handleLogout} />
           ) : (
             <Navigate to="/superadmin" />
           )}

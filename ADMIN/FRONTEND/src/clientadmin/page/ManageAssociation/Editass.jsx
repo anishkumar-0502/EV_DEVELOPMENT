@@ -154,7 +154,7 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Association  Name</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Association  Name</label>
                                                                     <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
@@ -186,7 +186,7 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                             </div> */}
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Association Phone</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Association Phone</label>
                                                                     <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
@@ -204,7 +204,7 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Association Email</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Association Email</label>
                                                                     <div className="col-sm-12">
                                                                         <input
                                                                             type="email"
@@ -217,7 +217,7 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Association Wallet</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Association Wallet</label>
                                                                     <div className="col-sm-12">
                                                                         <input type="text"
                                                                             className="form-control"
@@ -262,7 +262,7 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Association  Address</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Association  Address</label>
                                                                     <div className="col-sm-12">
                                                                         <textarea
                                                                             type="text"
@@ -277,7 +277,7 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Status</label>
+                                                                    <label className="col-sm-12 col-form-label labelInput">Status</label>
                                                                     <div className="col-sm-12">
                                                                         <select
                                                                             className="form-control"

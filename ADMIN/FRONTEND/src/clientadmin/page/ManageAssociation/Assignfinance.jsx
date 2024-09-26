@@ -146,8 +146,8 @@ const Assignfinance = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Charger ID</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Charger ID</label>
+                                                                    <div className="col-sm-12">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control"
@@ -159,8 +159,8 @@ const Assignfinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Unit Price</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Unit Price</label>
+                                                                    <div className="col-sm-12">
                                                                         <select
                                                                             className="form-control"
                                                                             value={selectedFinanceId}
@@ -180,7 +180,7 @@ const Assignfinance = ({ userInfo, handleLogout }) => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div style={{ textAlign: 'center' }}>
+                                                        <div style={{ textAlign: 'center', padding:'15px'}}>
                                                             <button type="submit" className="btn btn-primary mr-2" disabled={!isEdited}>
                                                                 Assign
                                                             </button>

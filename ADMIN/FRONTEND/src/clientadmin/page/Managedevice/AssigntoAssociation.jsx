@@ -284,8 +284,8 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Select Association</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Select Association</label>
+                                                                    <div className="col-sm-12">
                                                                         <select
                                                                             className="form-control"
                                                                             value={selectedAssociationId}
@@ -309,8 +309,8 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Commission </label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Commission </label>
+                                                                    <div className="col-sm-12">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -332,8 +332,8 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                         <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Select Chargers</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Select Chargers</label>
+                                                                    <div className="col-sm-12">
                                                                         {chargersLoading ? (
                                                                             <p>Loading chargers...</p>
                                                                         ) : (
@@ -384,8 +384,8 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Select Unit Price</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Select Unit Price</label>
+                                                                    <div className="col-sm-12">
                                                                         <select
                                                                             className="form-control"
                                                                             value={selectedFinanceId}
@@ -411,8 +411,8 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label">Selected Chargers</label>
-                                                                    <div className="col-sm-9">
+                                                                    <label className="col-sm-12 col-form-label labelInput">Selected Chargers</label>
+                                                                    <div className="col-sm-12">
                                                                         <textarea
                                                                             className="form-control"
                                                                             value={selectedChargers.join(', ')}
@@ -424,7 +424,7 @@ const AssigntoAssociation = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                         {errorMessage && <div className="text-danger">{errorMessage}</div>}
-                                                        <div className="text-center">
+                                                        <div className="text-center" style={{padding:'15px'}}>
                                                             <button type="submit" className="btn btn-primary mr-2">Submit</button>
                                                         </div>
                                                     </form>

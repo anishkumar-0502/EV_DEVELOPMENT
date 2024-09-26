@@ -83,7 +83,7 @@ class ErrorDetails extends StatelessWidget {
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  Navigator.of(context).popUntil((route) => route.isFirst); // Close the QR code scanner page and return to the Home Page
+                  // Close the QR code scanner page and return to the Home Page
                 },
               ),
             ],
