@@ -230,18 +230,20 @@ const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, Cli
                             return errors;
                         }
                     
-                        function validateChargePointModel(model) {
-                            const errors = [];
-                            const pattern = /^(.*? - )([1-9][SG]){1,}$/;
+                        // function validateChargePointModel(model) {
+                        //     const errors = [];
+                        //     const pattern = /^(.*? - )([1-9][SG]){1,}$/;
                     
-                            if (!pattern.test(model)) {
-                                errors.push(`Invalid chargePointModel format: ${model}`);
-                            }
+                        //     if (!pattern.test(model)) {
+                        //         errors.push(`Invalid chargePointModel format: ${model}`);
+                        //     }
                     
-                            return errors;
-                        }
+                        //     return errors;
+                        // }
                     
-                        const errors = validate(data, schema).concat(validateChargePointModel(data.chargePointModel));
+                        // const errors = validate(data, schema).concat(validateChargePointModel(data.chargePointModel));
+
+                        const errors = validate(data, schema);
 
                         const sendTo =  wsConnections.get(uniqueIdentifier);
                         const response = [3, requestData[1], {
@@ -263,15 +265,15 @@ const handleWebSocketConnection = (WebSocket, wss, ClientWss, wsConnections, Cli
                                 console.log(`ChargerID: ${uniqueIdentifier} - Updated charger details successfully`);
                                 logger.info(`ChargerID: ${uniqueIdentifier} - Updated charger details successfully`);
                     
-                                const insertSocketGun= await insertSocketGunConfig(uniqueIdentifier, data.chargePointModel);
-                                if (insertSocketGun) {
-                                    console.log(`ChargerID: ${uniqueIdentifier} - insertSocketGunConfig - Updated charger details successfully`);
-                                    logger.info(`ChargerID: ${uniqueIdentifier} - insertSocketGunConfig - Updated charger details successfully`);
+                                // const insertSocketGun= await insertSocketGunConfig(uniqueIdentifier, data.chargePointModel);
+                                // if (insertSocketGun) {
+                                //     console.log(`ChargerID: ${uniqueIdentifier} - insertSocketGunConfig - Updated charger details successfully`);
+                                //     logger.info(`ChargerID: ${uniqueIdentifier} - insertSocketGunConfig - Updated charger details successfully`);
                             
-                                    } else {
-                                        console.error(`ChargerID: ${uniqueIdentifier} - insertSocketGunConfig - Failed to update charger details`);
-                                        logger.error(`ChargerID: ${uniqueIdentifier} - insertSocketGunConfig -- Failed to update charger details`);
-                                    }
+                                //     } else {
+                                //         console.error(`ChargerID: ${uniqueIdentifier} - insertSocketGunConfig - Failed to update charger details`);
+                                //         logger.error(`ChargerID: ${uniqueIdentifier} - insertSocketGunConfig -- Failed to update charger details`);
+                                //     }
                             } else {
                                 console.error(`ChargerID: ${uniqueIdentifier} - Failed to update charger details`);
                                 logger.error(`ChargerID: ${uniqueIdentifier} - Failed to update charger details`);

@@ -606,22 +606,30 @@ async function checkAuthorization(charger_id, idTag) {
         const db = await connectToDatabase();
         const chargerDetailsCollection = db.collection('charger_details');
         const tagIdCollection = db.collection('tag_id');
+        const userCollection = db.collection('users');
+        let connectorId = null;
         let tagIdDetails;
         let expiryDate;
         let currentDate = new Date();
+        let userDetails;
+
+        expiryDate = new Date();
+        expiryDate.setDate(currentDate.getDate() + 1); // Add one day to the expiry date
 
         // Fetch charger details, including the chargePointModel
-        const chargerDetails = await chargerDetailsCollection.findOne(
-            { charger_id },
-            { projection: { model: 1 } }
-        );
+        const chargerDetails = await chargerDetailsCollection.findOne({ charger_id });
         if (!chargerDetails || !chargerDetails.model) {
             return { status: "Invalid" };
         }
 
+        if(chargerDetails.status === false){
+            return { status: "Blocked", expiryDate: expiryDate.toISOString()};
+        }
+
         // Dynamically determine the number of connectors based on the chargePointModel
-        const connectors = chargerDetails.model.split('- ')[1];
-        const totalConnectors = Math.ceil(connectors.length / 2);
+        // const connectors = chargerDetails.model.split('- ')[1];
+        // const totalConnectors = Math.ceil(connectors.length / 2);
+        const totalConnectors = chargerDetails.gun_connector + chargerDetails.socket_count;
 
         // Dynamically create the projection fields based on the number of connectors
         let projection = { charger_id: 1 };
@@ -641,7 +649,6 @@ async function checkAuthorization(charger_id, idTag) {
         }
 
         // Identify the connector associated with the provided tag_id
-        let connectorId = null;
         for (let i = 1; i <= totalConnectors; i++) {
             if (chargerDetailsWithConnectors[`tag_id_for_connector_${i}`] === idTag) {
                 connectorId = i;
@@ -656,9 +663,6 @@ async function checkAuthorization(charger_id, idTag) {
             }
         }
 
-        expiryDate = new Date();
-        expiryDate.setDate(currentDate.getDate() + 1); // Add one day to the expiry date
-
         if (connectorId) {
             return { status: "Accepted", expiryDate: expiryDate.toISOString() , connectorId};
         }else{
@@ -666,11 +670,29 @@ async function checkAuthorization(charger_id, idTag) {
             tagIdDetails = await tagIdCollection.findOne({ tag_id: idTag, status: true });
 
             if(!tagIdDetails){
+                console.error('Tag Id is not found or Deactivated !');
                 tagIdDetails = { status: false};
             }else if(tagIdDetails){
                 if(tagIdDetails.tag_id_assigned === true){
-                    expiryDate = new Date(tagIdDetails.tag_id_expiry_date);
+                    //fetch wallet balance to check min balance
+                    userDetails = await userCollection.findOne({tag_id: tagIdDetails.id});
+                    if(userDetails.wallet_bal >= 100){
+                        if(chargerDetails.assigned_association_id === tagIdDetails.association_id){
+                            expiryDate = new Date(tagIdDetails.tag_id_expiry_date);
+                        }else{
+                            if(chargerDetails.charger_accessibility === 1){
+                                expiryDate = new Date(tagIdDetails.tag_id_expiry_date);
+                            }else{
+                                console.error(`Charger ID - ${charger_id} Access Denied - This charger is private charger ! `);
+                                tagIdDetails = { status: false};
+                            }
+                        }
+                    }else{
+                        console.error('Wallet balance is below 100, please recharge to start the charger !');
+                        tagIdDetails = { status: false};
+                    }
                 }else{
+                    console.error('Tag ID is not assigned, please assign to start the charger !');
                     tagIdDetails = { status: false};
                 }
             }

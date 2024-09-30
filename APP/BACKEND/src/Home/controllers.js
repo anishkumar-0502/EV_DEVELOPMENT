@@ -18,7 +18,7 @@ async function searchCharger(req, res) {
         //     return res.status(404).json({ message: errorMessage });
         // }
 
-        if (!chargerDetails || chargerDetails.charger_accessibility === !null) {
+        if (!chargerDetails || chargerDetails.charger_accessibility === null) {
             const errorMessage = 'Device ID not found !';
             return res.status(404).json({ message: errorMessage });
         }

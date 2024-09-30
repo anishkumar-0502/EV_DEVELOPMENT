@@ -112,7 +112,7 @@ class _ProfilePageState extends State<ProfilePage> {
           height: MediaQuery.of(context).size.height * 0.97, // Set height to 70% of the screen
           child: Padding(
             padding: MediaQuery.of(context).viewInsets,
-            child: AccountPage(username: widget.username,userId: widget.userId,), // Ensure this is the correct widget name
+            child: AccountPage(username: widget.username,userId: widget.userId,email:widget.email), // Ensure this is the correct widget name
           ),
         );
       },

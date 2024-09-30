@@ -30,22 +30,28 @@ router.get('/GetAction', async(req, res) => {
 
 })
 
-//send request to charger from OCPPConfig
-router.get('/SendOCPPRequest', async(req, res) => {
+router.get('/SendOCPPRequest', async (req, res) => {
     const parsedUrl = url.parse(req.url, true);
     const queryParams = parsedUrl.query;
     const id = queryParams.id;
     const payload = JSON.parse(queryParams.req);
     const action = queryParams.actionBtn;
 
-    const deviceIDToSendTo = id; // Specify the device ID you want to send the message to
+    const db = await database.connectToDatabase();
+    const collection = db.collection('charger_details');
+
+    const result = await collection.findOne({ charger_id: id });
+
+    if (!result) {
+        return res.status(404).json({ message: "Device ID not found!" });
+    }
+
+    const deviceIDToSendTo = id; // Specify the device ID to send the message to
     const wsToSendTo = wsConnections.get(deviceIDToSendTo);
     let ReqMsg = "";
 
     if (wsToSendTo) {
-
         switch (action) {
-
             case "GetConfiguration":
                 ReqMsg = [2, "1701682466381", "GetConfiguration", payload];
                 break;
@@ -95,6 +101,8 @@ router.get('/SendOCPPRequest', async(req, res) => {
             case "GetLocalListVersion":
                 ReqMsg = [2, "1701682616345", "GetLocalListVersion", payload];
                 break;
+            default:
+                return res.status(400).json({ message: "Invalid action!" }); // Handle unexpected action
         }
 
         // Map the WebSocket connection to the HTTP response
@@ -108,7 +116,7 @@ router.get('/SendOCPPRequest', async(req, res) => {
         // Charger ID Not Found/Available
         console.log('OCPP Request client not found for the specified device ID:', deviceIDToSendTo);
         logger.info('OCPP Request client not found for the specified device ID:', deviceIDToSendTo);
-        res.status(404).end('OCPP Request client not found for the specified device ID: ' + deviceIDToSendTo);
+        return res.status(404).json({ message: 'OCPP Request client not found' }); // Added return
     }
 });
 

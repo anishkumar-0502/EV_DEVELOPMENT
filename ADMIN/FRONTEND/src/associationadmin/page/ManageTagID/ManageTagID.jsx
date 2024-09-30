@@ -380,7 +380,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                                     <div className="input-group-prepend">
                                                                         <span className="input-group-text" style={{color:'black', width:'180px'}}>Tag ID</span>
                                                                     </div>
-                                                                    <input type="text" className="form-control" placeholder="Tag ID" value={add_tag_id} maxLength={12} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^a-zA-Z0-9]/g, ''); setTagID(sanitizedValue);}} required/>
+                                                                    <input type="text" className="form-control" placeholder="Tag ID" value={add_tag_id} maxLength={20} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^a-zA-Z0-9]/g, ''); setTagID(sanitizedValue);}} required/>
                                                                 </div>
                                                             </div>
                                                             <div className="table-responsive pt-3">
@@ -413,7 +413,7 @@ const ManageTagID = ({ userInfo, handleLogout }) => {
                                                                     <div className="input-group-prepend">
                                                                         <span className="input-group-text" style={{ color: 'black', width: '180px' }}>Tag ID</span>
                                                                     </div>
-                                                                    <input type="text" className="form-control" placeholder="Tag ID" style={{ width:'200px'}} value={tag_id} maxLength={12} readOnly />
+                                                                    <input type="text" className="form-control" placeholder="Tag ID" style={{ width:'200px'}} value={tag_id} maxLength={20} readOnly />
                                                                 </div>
                                                             </div>
                                                             <div className="input-group">
