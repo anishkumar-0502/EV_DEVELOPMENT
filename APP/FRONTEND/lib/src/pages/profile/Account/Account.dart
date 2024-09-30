@@ -427,10 +427,18 @@ class _RfidpageState extends State<Rfidpage> {
 
   // Function to format the date with AM/PM
   String formatDate(String? dateString) {
-    if (dateString == null) return 'N/A';
-    DateTime dateTime = DateTime.parse(dateString);
-    return DateFormat('dd/MM/yyyy, hh:mm:ss a').format(dateTime); // Adds seconds and AM/PM format
-  }
+  if (dateString == null) return 'N/A';
+  
+  // Parse the input date string
+  DateTime dateTime = DateTime.parse(dateString);
+  
+  // Convert to IST by adding 5 hours and 30 minutes
+  DateTime istDateTime = dateTime.add(const Duration(hours: 5, minutes: 30));
+
+  // Format the date in the desired format: dd/MM/yyyy, hh:mm:ss a
+  return DateFormat('dd/MM/yyyy, hh:mm:ss a').format(istDateTime);
+}
+
 
   @override
   Widget build(BuildContext context) {

@@ -259,7 +259,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
         );
       },
     );
-  }
+  }   
 
   Future<void> _showPermissionDeniedDialog() async {
     return showDialog(
