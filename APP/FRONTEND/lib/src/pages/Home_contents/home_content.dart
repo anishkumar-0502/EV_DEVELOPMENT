@@ -745,6 +745,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   Future<Map<String, dynamic>?> handleSearchRequest(
       String searchChargerID) async {
     if (isSearching) return null;
+    
     print("response: handleSearchRequest");
 
     if (searchChargerID.isEmpty) {
@@ -1287,7 +1288,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
                         0.42), // Adjust height based on screen size
                 Expanded(
                   child: Container(
-                    margin: EdgeInsets.only(bottom: 5),
+                    margin: const EdgeInsets.only(bottom: 5),
                     child: Column(
                       children: [
                         Expanded(
@@ -1330,17 +1331,18 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
                   ),
                   SizedBox(
                       height: screenHeight *
-                          0.01),
+                          0.01), // Adjust spacing between buttons
                   FloatingActionButton(
                 backgroundColor: const Color.fromARGB(227, 76, 175, 79),
                 onPressed: _getCurrentLocation,
                 child: const Icon(Icons.my_location, color: Colors.white),
               ),
-                  
                 ],
               ),
             ),
-            ],
+           
+            
+          ],
         ),
       ),
     );
@@ -1463,95 +1465,75 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     }
   }
 
+Widget _buildShimmerCard() {
+  // Get screen size
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
 
-
-  // Build Charger List
-  Widget _buildChargerList() {
-  List<Widget> chargerCards = [];
-
-  if (isLoading) {
-    // Display shimmer cards when loading
-    for (var i = 0; i < 3; i++) {
-      chargerCards.add(_buildShimmerCard());
-    }
-  } else {
-    // Add "Previously Used" charger cards
-    if (activeFilter == 'Previously Used') {
-      for (var session in recentSessions) {
-        chargerCards.add(
-          _buildChargerCard(
-            context,
-            session['details']['landmark'] ?? 'Unknown location',
-            session['details']['charger_id'] ?? 'Unknown ID',
-            session['details']['model'] ?? 'Unknown Model',
-            session['status']['charger_status'] ?? 'Unknown Status',
-            formatTimestamp(session['status']['timestamp']),
-            session['unit_price']?.toString() ?? 'Unknown Price',
-            session['status']['connector_id'] ?? 0,
-            session['details']['charger_accessibility']?.toString() ?? 'Unknown',
-            session['details']['charger_type'] ?? 'Unknown Type',
-            LatLng(
-              double.parse(session['details']['lat'] ?? '0'),
-              double.parse(session['details']['long'] ?? '0'),
-            ),
+  return Shimmer.fromColors(
+    baseColor: Colors.grey[800]!,
+    highlightColor: Colors.grey[700]!,
+    child: Container(
+      width: screenWidth * 0.9,  // Match charger card width
+      height: screenHeight * 0.2,  // Match charger card height
+      margin: EdgeInsets.only(
+        right: screenWidth * 0.05, 
+        top: screenHeight * 0.03, 
+        bottom: screenHeight * 0.05,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0E0E0E),
+        borderRadius: BorderRadius.circular(screenWidth * 0.03),  // Same border radius as charger card
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           ),
-        );
-      }
-    }
-
-    // Add "All Chargers" based on distance (within 100 km)
-    else if (activeFilter == 'All Chargers') {
-      for (var charger in availableChargers) {
-        if (_currentPosition != null &&
-            _calculateDistance(
-              _currentPosition!.latitude,
-              _currentPosition!.longitude,
-              double.parse(charger['lat'] ?? '0'),
-              double.parse(charger['long'] ?? '0'),
-            ) <= 100.0) {
-          for (var status in charger['status'] ?? [null]) {
-            chargerCards.add(
-              _buildChargerCard(
-                context,
-                charger['landmark'] ?? 'Unknown location',
-                charger['charger_id'] ?? 'Unknown ID',
-                charger['model'] ?? 'Unknown Model',
-                status == null
-                    ? "Not yet received"
-                    : status['charger_status'] ?? 'Unknown Status',
-                status == null
-                    ? "Not yet received"
-                    : formatTimestamp(status['timestamp']),
-                charger['unit_price']?.toString() ?? 'Unknown Price',
-                status == null
-                    ? 0
-                    : status['connector_id'] ?? 'Unknown Last Updated',
-                charger['charger_accessibility']?.toString() ?? 'Unknown',
-                charger['charger_type'] ?? 'Unknown Type',
-                LatLng(
-                  double.parse(charger['lat'] ?? '0'),
-                  double.parse(charger['long'] ?? '0'),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(screenWidth * 0.03),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: screenWidth * 0.25,
+              height: screenHeight * 0.02,
+              color: Colors.white,
+            ),
+            const SizedBox(height: 5),
+            Container(
+              width: screenWidth * 0.2,
+              height: screenHeight * 0.02,
+              color: Colors.white,
+            ),
+            const SizedBox(height: 5),
+            Row(
+              children: [
+                Container(
+                  width: screenWidth * 0.15,
+                  height: screenHeight * 0.02,
+                  color: Colors.white,
                 ),
-              ),
-            );
-          }
-        }
-      }
-    }
-  }
-
-  // Wrap the charger cards in a PageView.builder for horizontal scrolling
-  return Expanded(
-    child: PageView.builder(
-      controller: _pageController,
-      scrollDirection: Axis.horizontal,
-      itemCount: chargerCards.length,
-      onPageChanged: (index) {
-        _onChargerCardChanged(index); // Handle page change event
-      },
-      itemBuilder: (context, index) {
-        return chargerCards[index];
-      },
+                const SizedBox(width: 5),
+                Container(
+                  width: screenWidth * 0.05,
+                  height: screenHeight * 0.02,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Container(
+              width: screenWidth * 0.6,
+              height: screenHeight * 0.02,
+              color: Colors.white,
+            ),
+          ],
+        ),
+      ),
     ),
   );
 }
@@ -1799,82 +1781,98 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
       ),
     );
   }
+ // Build Charger List
+Widget _buildChargerList() {
+  List<Widget> chargerCards = [];
 
-
-Widget _buildShimmerCard() {
-  // Get screen size
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
-
-  return Shimmer.fromColors(
-    baseColor: Colors.grey[800]!,
-    highlightColor: Colors.grey[700]!,
-    child: Container(
-      width: screenWidth * 0.9,  // Match charger card width
-      height: screenHeight * 0.2,  // Match charger card height
-      margin: EdgeInsets.only(
-        right: screenWidth * 0.05, 
-        top: screenHeight * 0.03, 
-        bottom: screenHeight * 0.05,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E0E0E),
-        borderRadius: BorderRadius.circular(screenWidth * 0.03),  // Same border radius as charger card
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+  // Show shimmer if the data is still loading
+  if (recentSessions.isEmpty && availableChargers.isEmpty) {
+    // Data is still loading, show shimmer
+    for (var i = 0; i < 3; i++) {
+      chargerCards.add(_buildShimmerCard());
+    }
+  } else {
+    // Data is loaded, show the actual charger cards
+    if (activeFilter == 'Previously Used') {
+      for (var session in recentSessions) {
+        chargerCards.add(
+          _buildChargerCard(
+            context,
+            session['details']['landmark'] ?? 'Unknown location',
+            session['details']['charger_id'] ?? 'Unknown ID',
+            session['details']['model'] ?? 'Unknown Model',
+            session['status']['charger_status'] ?? 'Unknown Status',
+            formatTimestamp(session['status']['timestamp']),
+            session['unit_price']?.toString() ?? 'Unknown Price',
+            session['status']['connector_id'] ?? 0,
+            session['details']['charger_accessibility']?.toString() ?? 'Unknown',
+            session['details']['charger_type'] ?? 'Unknown Type',
+            LatLng(
+              double.parse(session['details']['lat'] ?? '0'),
+              double.parse(session['details']['long'] ?? '0'),
+            ),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(screenWidth * 0.03),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: screenWidth * 0.25,
-              height: screenHeight * 0.02,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 5),
-            Container(
-              width: screenWidth * 0.2,
-              height: screenHeight * 0.02,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 5),
-            Row(
-              children: [
-                Container(
-                  width: screenWidth * 0.15,
-                  height: screenHeight * 0.02,
-                  color: Colors.white,
+        );
+      }
+    } else if (activeFilter == 'All Chargers') {
+      for (var charger in availableChargers) {
+        if (_currentPosition != null &&
+            _calculateDistance(
+                  _currentPosition!.latitude,
+                  _currentPosition!.longitude,
+                  double.parse(charger['lat'] ?? '0'),
+                  double.parse(charger['long'] ?? '0'),
+                ) <=
+                100.0) {
+          for (var status in charger['status'] ?? [null]) {
+            chargerCards.add(
+              _buildChargerCard(
+                context,
+                charger['landmark'] ?? 'Unknown location',
+                charger['charger_id'] ?? 'Unknown ID',
+                charger['model'] ?? 'Unknown Model',
+                status == null
+                    ? "Not yet received"
+                    : status['charger_status'] ?? 'Unknown Status',
+                status == null
+                    ? "Not yet received"
+                    : formatTimestamp(status['timestamp']),
+                charger['unit_price']?.toString() ?? 'Unknown Price',
+                status == null
+                    ? 0
+                    : status['connector_id'] ?? 'Unknown Last Updated',
+                charger['charger_accessibility']?.toString() ?? 'Unknown',
+                charger['charger_type'] ?? 'Unknown Type',
+                LatLng(
+                  double.parse(charger['lat'] ?? '0'),
+                  double.parse(charger['long'] ?? '0'),
                 ),
-                const SizedBox(width: 5),
-                Container(
-                  width: screenWidth * 0.05,
-                  height: screenHeight * 0.02,
-                  color: Colors.white,
-                ),
-              ],
-            ),
-            const SizedBox(height: 5),
-            Container(
-              width: screenWidth * 0.6,
-              height: screenHeight * 0.02,
-              color: Colors.white,
-            ),
-          ],
-        ),
-      ),
+              ),
+            );
+          }
+        }
+      }
+    }
+  }
+
+  // Wrap the charger cards in a PageView.builder for horizontal scrolling
+  return Expanded(
+    child: PageView.builder(
+      controller: _pageController,
+      scrollDirection: Axis.horizontal,
+      itemCount: chargerCards.length,
+      onPageChanged: (index) {
+        _onChargerCardChanged(index); // Handle page change event
+      },
+      itemBuilder: (context, index) {
+        return chargerCards[index];
+      },
     ),
   );
 }
 
-  Widget _buildNavigationButton(BuildContext context) {
+ 
+Widget _buildNavigationButton(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Expanded(
@@ -1899,8 +1897,8 @@ Widget _buildShimmerCard() {
           ),
           child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.directions, color: Colors.red),
+              const IconButton(
+                icon: Icon(Icons.directions, color: Colors.red),
                 onPressed: null,
               ),
               Padding(
@@ -1935,8 +1933,8 @@ Widget _buildShimmerCard() {
           ),
           child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.bolt, color: Colors.yellow),
+              const IconButton(
+                icon: Icon(Icons.bolt, color: Colors.yellow),
                 onPressed: null,
               ),
               Padding(
@@ -2235,18 +2233,18 @@ class CrossPainter extends CustomPainter {
     return false;
   }
 }
-
 class CurrentLocationMarkerPainter extends CustomPainter {
-  final double animatedRadius; // Dynamic radius for animation
+  final double animatedRadius;
 
-  CurrentLocationMarkerPainter({
-    required this.animatedRadius,
-  });
+  CurrentLocationMarkerPainter({required this.animatedRadius});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double outerCircleRadius = animatedRadius; // Use the animated radius
-    final double dotRadius = size.width / 8; // Adjusted size for the inner dot
+    // Ensure size is appropriate
+    if (size.width == 0 || size.height == 0) return;
+
+    final double outerCircleRadius = animatedRadius;
+    final double dotRadius = size.width / 8;
     final double borderThickness = size.width / 24;
 
     // Draw the translucent outer circle
@@ -2254,38 +2252,42 @@ class CurrentLocationMarkerPainter extends CustomPainter {
       ..color = Colors.blue.withOpacity(0.2)
       ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2),
-        outerCircleRadius, circlePaint);
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      outerCircleRadius,
+      circlePaint,
+    );
 
-    // Draw the solid blue dot without rotation
+    // Draw the solid blue dot
     final Paint dotPaint = Paint()
       ..color = Colors.blue
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(
-        Offset(size.width / 2, size.height / 2), dotRadius, dotPaint);
+      Offset(size.width / 2, size.height / 2),
+      dotRadius,
+      dotPaint,
+    );
 
-    // Save the current state of the canvas before rotation
-    canvas.save();
-
-    // Translate the canvas to the center of the marker
-    canvas.translate(size.width / 2, size.height / 2);
-
-    // Draw the white border with rotation
+    // Draw the white border
     final Paint borderPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = borderThickness;
 
-    canvas.drawCircle(const Offset(0, 0), dotRadius, borderPaint);
-
-    // Restore the canvas state after drawing the rotated elements
-    canvas.restore();
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      dotRadius,
+      borderPaint,
+    );
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
+    if (oldDelegate is CurrentLocationMarkerPainter) {
+      return oldDelegate.animatedRadius != animatedRadius;
+    }
+    return true; // Repaint if not the same type
   }
 }
 
@@ -2304,24 +2306,23 @@ class _CurrentLocationMarkerState extends State<CurrentLocationMarker>
   @override
   void initState() {
     super.initState();
-
-    // Initialize the animation controller with a slightly longer duration
+    
     _controller = AnimationController(
-      duration:
-          const Duration(seconds: 2), // Longer duration for smoother animation
+      duration: const Duration(seconds: 2),
       vsync: this,
-    )..repeat(reverse: true); // Loop the animation
+    )..repeat(reverse: true);
 
-    // Define the animation for the circle's radius with smoother transitions
-    _animation = Tween<double>(begin: 50.0, end: 100.0).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    _animation = Tween<double>(begin: 50.0, end: 100.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
   }
 
   @override
   void dispose() {
-    _controller.dispose(); // Dispose of the controller when not needed
+    _controller.dispose();
     super.dispose();
   }
 
@@ -2332,14 +2333,18 @@ class _CurrentLocationMarkerState extends State<CurrentLocationMarker>
       builder: (context, child) {
         return CustomPaint(
           painter: CurrentLocationMarkerPainter(
-            animatedRadius: _animation.value, // Pass the animated radius
+            animatedRadius: _animation.value,
           ),
-          child: Container(), // Empty container just to hold the CustomPainter
+          child: const SizedBox(
+            width: 150, // Set a specific size for your marker
+            height: 150,
+          ),
         );
       },
     );
   }
 }
+
 
 class LoadingOverlay extends StatelessWidget {
   final bool showAlertLoading;
