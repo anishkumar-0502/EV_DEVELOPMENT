@@ -13,6 +13,7 @@ import '../../utilities/Alert/alert_banner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui' as ui;
 import 'dart:async';
+import 'package:shimmer/shimmer.dart';
 import '../../service/location.dart';
 import 'package:intl/intl.dart' as intl;
 import 'dart:math' as math;
@@ -757,7 +758,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/searchCharger'),
+        Uri.parse('http://122.166.210.142:9098/searchCharger'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -822,7 +823,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
+        Uri.parse('http://122.166.210.142:9098/updateConnectorUser'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -966,7 +967,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/getRecentSessionDetails'),
+        Uri.parse('http://122.166.210.142:9098/getRecentSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
@@ -1010,7 +1011,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     try {
       final response = await http.post(
         Uri.parse(
-            'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
+            'http://122.166.210.142:9098/getAllChargersWithStatusAndPrice'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': widget.userId}),
       );
@@ -1327,20 +1328,19 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
                     child: const Icon(Icons.zoom_out_map_rounded,
                         color: Colors.red),
                   ),
-                ],
-              ),
-            ),
-            // Keep the FloatingActionButton outside the Column to prevent it from moving
-            Positioned(
-              top: screenHeight * 0.53, // Pin to the bottom
-              right: screenWidth * 0.03,
-              child: FloatingActionButton(
+                  SizedBox(
+                      height: screenHeight *
+                          0.01),
+                  FloatingActionButton(
                 backgroundColor: const Color.fromARGB(227, 76, 175, 79),
                 onPressed: _getCurrentLocation,
                 child: const Icon(Icons.my_location, color: Colors.white),
               ),
+                  
+                ],
+              ),
             ),
-          ],
+            ],
         ),
       ),
     );
@@ -1463,10 +1463,18 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     }
   }
 
+
+
   // Build Charger List
   Widget _buildChargerList() {
-    List<Widget> chargerCards = [];
+  List<Widget> chargerCards = [];
 
+  if (isLoading) {
+    // Display shimmer cards when loading
+    for (var i = 0; i < 3; i++) {
+      chargerCards.add(_buildShimmerCard());
+    }
+  } else {
     // Add "Previously Used" charger cards
     if (activeFilter == 'Previously Used') {
       for (var session in recentSessions) {
@@ -1480,8 +1488,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
             formatTimestamp(session['status']['timestamp']),
             session['unit_price']?.toString() ?? 'Unknown Price',
             session['status']['connector_id'] ?? 0,
-            session['details']['charger_accessibility']?.toString() ??
-                'Unknown',
+            session['details']['charger_accessibility']?.toString() ?? 'Unknown',
             session['details']['charger_type'] ?? 'Unknown Type',
             LatLng(
               double.parse(session['details']['lat'] ?? '0'),
@@ -1491,17 +1498,17 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
         );
       }
     }
+
     // Add "All Chargers" based on distance (within 100 km)
     else if (activeFilter == 'All Chargers') {
       for (var charger in availableChargers) {
         if (_currentPosition != null &&
             _calculateDistance(
-                  _currentPosition!.latitude,
-                  _currentPosition!.longitude,
-                  double.parse(charger['lat'] ?? '0'),
-                  double.parse(charger['long'] ?? '0'),
-                ) <=
-                100.0) {
+              _currentPosition!.latitude,
+              _currentPosition!.longitude,
+              double.parse(charger['lat'] ?? '0'),
+              double.parse(charger['long'] ?? '0'),
+            ) <= 100.0) {
           for (var status in charger['status'] ?? [null]) {
             chargerCards.add(
               _buildChargerCard(
@@ -1531,22 +1538,23 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
         }
       }
     }
-
-    // Wrap the charger cards in a PageView.builder for horizontal scrolling
-    return Expanded(
-      child: PageView.builder(
-        controller: _pageController,
-        scrollDirection: Axis.horizontal,
-        itemCount: chargerCards.length,
-        onPageChanged: (index) {
-          _onChargerCardChanged(index); // Handle page change event
-        },
-        itemBuilder: (context, index) {
-          return chargerCards[index];
-        },
-      ),
-    );
   }
+
+  // Wrap the charger cards in a PageView.builder for horizontal scrolling
+  return Expanded(
+    child: PageView.builder(
+      controller: _pageController,
+      scrollDirection: Axis.horizontal,
+      itemCount: chargerCards.length,
+      onPageChanged: (index) {
+        _onChargerCardChanged(index); // Handle page change event
+      },
+      itemBuilder: (context, index) {
+        return chargerCards[index];
+      },
+    ),
+  );
+}
 
   Widget _buildChargerCard(
     BuildContext context,
@@ -1791,6 +1799,80 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
       ),
     );
   }
+
+
+Widget _buildShimmerCard() {
+  // Get screen size
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
+
+  return Shimmer.fromColors(
+    baseColor: Colors.grey[800]!,
+    highlightColor: Colors.grey[700]!,
+    child: Container(
+      width: screenWidth * 0.9,  // Match charger card width
+      height: screenHeight * 0.2,  // Match charger card height
+      margin: EdgeInsets.only(
+        right: screenWidth * 0.05, 
+        top: screenHeight * 0.03, 
+        bottom: screenHeight * 0.05,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0E0E0E),
+        borderRadius: BorderRadius.circular(screenWidth * 0.03),  // Same border radius as charger card
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(screenWidth * 0.03),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: screenWidth * 0.25,
+              height: screenHeight * 0.02,
+              color: Colors.white,
+            ),
+            const SizedBox(height: 5),
+            Container(
+              width: screenWidth * 0.2,
+              height: screenHeight * 0.02,
+              color: Colors.white,
+            ),
+            const SizedBox(height: 5),
+            Row(
+              children: [
+                Container(
+                  width: screenWidth * 0.15,
+                  height: screenHeight * 0.02,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 5),
+                Container(
+                  width: screenWidth * 0.05,
+                  height: screenHeight * 0.02,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Container(
+              width: screenWidth * 0.6,
+              height: screenHeight * 0.02,
+              color: Colors.white,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
   Widget _buildNavigationButton(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
