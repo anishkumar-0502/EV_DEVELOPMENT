@@ -7,7 +7,6 @@ import 'wallet/wallet.dart';
 import 'history/history.dart';
 import 'profile/profile.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart'; // Import the foreground task package
-import 'package:permission_handler/permission_handler.dart'; // Import the permission handler package
 import 'package:flutter/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -15,9 +14,10 @@ class HomePage extends StatefulWidget {
   final String username;
   final int? userId;
   final String email;
-  
+    final Map<String, dynamic>? selectedLocation; // Accept the selected location
 
-  const HomePage({super.key, required this.username, this.userId, required this.email});
+
+  const HomePage({super.key, required this.username, this.userId, required this.email, this.selectedLocation});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -34,7 +34,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _checkPermissions(); // Check permissions when the widget is initialized
      _connectivity = Connectivity();
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
     _checkInitialConnection();
@@ -88,7 +87,7 @@ class _HomePageState extends State<HomePage> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(Icons.error_outline, color: Colors.red, size: 35),
                   SizedBox(width: 10),
@@ -98,13 +97,13 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               CustomGradientDivider(), // Custom gradient divider
             ],
           ),
           content: Text(
             message,
-            style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
+            style: const TextStyle(color: Colors.white70), // Adjusted text color for contrast
           ),
           actions: <Widget>[
             TextButton(
@@ -143,14 +142,6 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  void _checkPermissions() async {
-    PermissionStatus status = await Permission.locationWhenInUse.status;
-
-    if (status.isDenied || status.isPermanentlyDenied) {
-      // Handle the case where permission is denied
-      // For example, show an alert or open app settings
-    }
-  }
 
   void startForegroundService() {
     FlutterForegroundTask.init(
@@ -197,7 +188,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final _pageOptions = [
-      HomeContent(username: widget.username, userId: widget.userId, email: widget.email,),
+      HomeContent(username: widget.username, userId: widget.userId, email: widget.email, selectedLocation: widget.selectedLocation),
       WalletPage(username: widget.username, userId: widget.userId, ),
       HistoryPage(username: widget.username, userId: widget.userId),
       ProfilePage(username: widget.username, userId: widget.userId, email: widget.email),

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
@@ -7,6 +8,7 @@ import 'dart:convert';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import '../ChargerDetails/ChargerConnectorPage.dart';
 import '../Charging/charging.dart';
 import '../../utilities/QR/qrscanner.dart';
 import '../../utilities/Alert/alert_banner.dart';
@@ -17,17 +19,20 @@ import 'package:shimmer/shimmer.dart';
 import '../../service/location.dart';
 import 'package:intl/intl.dart' as intl;
 import 'dart:math' as math;
+import './search.dart';
 
 class HomeContent extends StatefulWidget {
   final String username;
   final int? userId;
   final String email;
+  final Map<String, dynamic>? selectedLocation; // Accept the selected location
 
   const HomeContent(
       {super.key,
       required this.username,
       required this.userId,
-      required this.email});
+      required this.email,
+      this.selectedLocation});
 
   @override
   _HomeContentState createState() => _HomeContentState();
@@ -35,7 +40,7 @@ class HomeContent extends StatefulWidget {
 
 class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   final GlobalKey _mapKey = GlobalKey(); // Global key for map widget
-  final TextEditingController _searchController = TextEditingController();
+  Map<String, dynamic>? _currentSelectedLocation; // Now using dynamic type
   String searchChargerID = '';
   List availableChargers = [];
   List recentSessions = [];
@@ -44,7 +49,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   GoogleMapController? mapController;
   LatLng? _currentPosition;
   LatLng? _selectedPosition; // To store the selected marker's position
-  final LatLng _center = const LatLng(12.909746, 77.606360);
+  final LatLng _center = const LatLng(20.593683, 78.962883);
   Set<Marker> _markers = {};
   bool isSearching = false;
   bool areMapButtonsEnabled = false;
@@ -60,22 +65,33 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
       viewportFraction: 0.85); // Page controller for scrolling cards
   static const String apiKey = 'AIzaSyDezbZNhVuBMXMGUWqZTOtjegyNexKWosA';
   Map<String, String> _addressCache = {};
+  GoogleMapController? _mapController;
+  List<String> chargerIdsList = [];
+bool _isAnimationInProgress = false;
+CancelableOperation? _currentAnimationOperation;
+Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
+      _currentSelectedLocation = widget.selectedLocation;
     _checkLocationPermission(); // Check permissions on initialization
+  // Prioritize moving to the selected location
+
     _updateMarkers();
     activeFilter = 'All Chargers';
     fetchAllChargers();
     _startLiveTracking(); // Start live tracking
   }
 
-  @override
-  void dispose() {
-    _positionStreamSubscription?.cancel(); // Cancel the subscription
-    super.dispose();
-  }
+@override
+void dispose() {
+  // Cancel any active stream subscriptions
+
+  _positionStreamSubscription?.cancel(); // Cancel the position stream subscription
+  super.dispose(); // Call the super class dispose method
+}
+
 
 // Define the method to check and request location permissions
   Future<void> _checkLocationPermission() async {
@@ -113,6 +129,17 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     _isCheckingPermission = false;
   }
 
+void _resetSelectedLocationAndFetchCurrent() {
+  setState(() {
+    _currentSelectedLocation = null;
+    _markers.removeWhere((marker) => marker.markerId.value == 'selected_location');
+  });
+
+  _getCurrentLocation();
+}
+
+
+
   Future<void> _getCurrentLocation() async {
     // If a location fetch is already in progress, don't start a new one
     if (_isFetchingLocation) return;
@@ -120,6 +147,12 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     setState(() {
       _isFetchingLocation = true;
     });
+    
+  // if (_currentSelectedLocation != null ){
+  //   setState(() {
+  //     _currentSelectedLocation = null;
+  //   });
+  // }
 
     try {
       // Ensure location services are enabled and permission is granted before fetching location
@@ -260,7 +293,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
         );
       },
     );
-  }   
+  }
 
   Future<void> _showPermissionDeniedDialog() async {
     return showDialog(
@@ -397,28 +430,33 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
       },
     );
   }
+  // Updated _onMapCreated function
+Future<void> _onMapCreated(GoogleMapController controller) async {
+  mapController = controller;
 
-// Updated _onMapCreated function
-  Future<void> _onMapCreated(GoogleMapController controller) async {
-    mapController = controller;
+  // Load and set the map style
+  String mapStyle = await rootBundle.loadString('assets/Map/map.json');
+  mapController?.setMapStyle(mapStyle);
 
-    // Load and set the map style
-    String mapStyle = await rootBundle.loadString('assets/Map/map.json');
-    mapController?.setMapStyle(mapStyle);
-    await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(seconds: 1));
 
-    // Check if the current position is available
-    if (_currentPosition != null) {
-      print("_onMapCreated $_currentPosition");
-      // Zoom to 100km radius around the current location
-      _animateTo100kmRadius();
-      _updateMarkers(); // Update markers if needed
-    } else {
-      print("_onMapCreated $_currentPosition");
-      // Optionally handle the case where the current position is not available
-      _animateTo100kmRadius();
-    }
+  print("_currentSelectedLocation: $_currentSelectedLocation");
+
+
+
+  // Check if the current position is available
+  if (_currentPosition != null) {
+    print("_onMapCreated  _currentPosition  $_currentPosition");
+    // Zoom to 100km radius around the current location
+    _animateTo100kmRadius();
+    _updateMarkers(); // Update markers if needed
+  } else {
+    print("_onMapCreated: Current position is null");
+    // Optionally handle the case where the current position is not available
+    // _animateTo100kmRadius();
   }
+}
+
 
   Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
     setState(() {
@@ -521,17 +559,17 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
       // Delay to simulate rotation effect
       await Future.delayed(const Duration(milliseconds: 300));
 
-      // Final zoom and tilt for 3D effect
-      await mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: endPosition,
-            zoom: 18.0, // Final zoom level for close-up view
-            tilt: 45.0, // Tilt the camera for a 3D effect
-            bearing: 90.0, // Keep the same bearing
-          ),
-        ),
-      );
+      // // Final zoom and tilt for 3D effect
+      // await mapController!.animateCamera(
+      //   CameraUpdate.newCameraPosition(
+      //     CameraPosition(
+      //       target: endPosition,
+      //       zoom: 18.0, // Final zoom level for close-up view
+      //       tilt: 45.0, // Tilt the camera for a 3D effect
+      //       bearing: 90.0, // Keep the same bearing
+      //     ),
+      //   ),
+      // );
     } else {
       // Log or handle cases when the map controller is not initialized
       print("Map controller is not initialized.");
@@ -745,7 +783,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   Future<Map<String, dynamic>?> handleSearchRequest(
       String searchChargerID) async {
     if (isSearching) return null;
-    
+
     print("response: handleSearchRequest");
 
     if (searchChargerID.isEmpty) {
@@ -1003,58 +1041,65 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
       });
     }
   }
+Future<void> fetchAllChargers() async {
+  // Set loading state to true
+  setState(() {
+    isLoading = true;
+    availableChargers.clear(); // Clear previous chargers if needed
+  });
 
-  Future<void> fetchAllChargers() async {
-    setState(() {
-      isLoading = true;
-    });
+  try {
+    final response = await http.post(
+      Uri.parse('http://122.166.210.142:9098/getAllChargersWithStatusAndPrice'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'user_id': widget.userId}),
+    );
 
-    try {
-      final response = await http.post(
-        Uri.parse(
-            'http://122.166.210.142:9098/getAllChargersWithStatusAndPrice'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'user_id': widget.userId}),
-      );
-      final data = json.decode(response.body);
+    final data = json.decode(response.body);
 
-      if (response.statusCode == 200) {
-        final List<dynamic> chargerData = data['data'] ?? [];
+    // Check if the response is successful
+    if (response.statusCode == 200) {
+      final List<dynamic> chargerData = data['data'] ?? [];
 
-        // Fetch addresses for each charger and store in a new field
-        for (var charger in chargerData) {
-          final lat = double.parse(charger['lat'] ?? '0');
-          final long = double.parse(charger['long'] ?? '0');
-          final chargerId = charger['charger_id'] ?? 'Unknown ID';
+      // Fetch addresses for each charger and store in a new field
+      for (var charger in chargerData) {
+        final lat = double.parse(charger['lat'] ?? '0');
+        final long = double.parse(charger['long'] ?? '0');
+        final chargerId = charger['charger_id'] ?? 'Unknown ID';
 
-          // Fetch address only if it's not already fetched
-          if (charger['address'] == null) {
-            String address = await _getPlaceName(LatLng(lat, long), chargerId);
-            charger['address'] = address; // Store the fetched address
-          }
+        // Fetch address only if it's not already fetched
+        if (charger['address'] == null) {
+          String address = await _getPlaceName(LatLng(lat, long), chargerId);
+          charger['address'] = address; // Store the fetched address
         }
-
-        setState(() {
-          availableChargers = chargerData;
-          activeFilter = 'All Chargers';
-          isLoading = false;
-        });
-
-        _updateMarkers();
-      } else {
-        final errorData = json.decode(response.body);
-        showErrorDialog(context, errorData['message']);
-        setState(() {
-          isLoading = false;
-        });
       }
-    } catch (error) {
-      print('Internal server error $error ');
+
+      // Update available chargers and filter
       setState(() {
-        isLoading = false;
+        availableChargers = chargerData;
+        activeFilter = 'All Chargers';
+        isLoading = false; // Set loading to false after data is set
+      });
+
+      _updateMarkers(); // Update markers after setting the chargers
+    } else {
+      // Handle error response
+      final errorData = json.decode(response.body);
+      showErrorDialog(context, errorData['message']);
+      setState(() {
+        isLoading = false; // Set loading to false on error
       });
     }
+  } catch (error) {
+    print('Internal server error: $error');
+    // Handle general errors
+    showErrorDialog(context, 'An unexpected error occurred. Please try again.');
+    setState(() {
+      isLoading = false; // Set loading to false on error
+    });
   }
+}
+
 
 // Helper function to load an image from bytes
   Future<ui.Image> loadImageFromBytes(Uint8List imgBytes) async {
@@ -1101,35 +1146,153 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
       );
     });
   }
-
+  
   void _animateTo100kmRadius() {
-    if (_currentPosition == null) return;
+  print("_onMapCreated _animateTo100kmRadius _currentSelectedLocation:  $_currentSelectedLocation");
 
-    // Calculate bounds for a 100km radius
-    double radiusInKm = 10.0;
-    double kmInLat = 0.009; // Approximate value for 1 km in latitude
-    double kmInLng = 0.009 /
-        cos(_currentPosition!.latitude *
-            pi /
-            180.0); // Adjust based on current latitude
+  // Check if the current selected location is not null and the coordinates differ from the current position
+  if (_currentSelectedLocation != null) {
+    double selectedLatitude = double.parse(_currentSelectedLocation!['latitude'].toString());
+    double selectedLongitude = double.parse(_currentSelectedLocation!['longitude'].toString());
 
-    final LatLng southWest = LatLng(
-      _currentPosition!.latitude - (radiusInKm * kmInLat),
-      _currentPosition!.longitude - (radiusInKm * kmInLng),
-    );
+    // Create a LatLng object for the target location
+    final targetLocation = LatLng(selectedLatitude, selectedLongitude);
 
-    final LatLng northEast = LatLng(
-      _currentPosition!.latitude + (radiusInKm * kmInLat),
-      _currentPosition!.longitude + (radiusInKm * kmInLng),
-    );
+    // Check if the selected location and current position are not the same
+    if (_currentPosition != null && (selectedLatitude != _currentPosition!.latitude || selectedLongitude != _currentPosition!.longitude)) {
+      // Create a new marker for the selected location
+      Marker newMarker = Marker(
+        markerId: const MarkerId("selected_location"),
+        position: targetLocation,
+        infoWindow: InfoWindow(
+          title: _currentSelectedLocation!['name'],
+          snippet: _currentSelectedLocation!['address'],
+        ),
+      );
 
-    // Create the LatLngBounds
-    LatLngBounds bounds =
-        LatLngBounds(southwest: southWest, northeast: northEast);
+      // Clear existing markers and add the new marker
+      setState(() {
+        _markers.clear(); // Clear previous markers
+        _markers.add(newMarker); // Add the new marker
+      });
 
-    // Animate the camera to fit the bounds
-    mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
+      // Animate the camera to fit the 100km radius around the selected location
+      _animateToBounds(targetLocation);
+      return; // Return early to skip animating to the current position
+    }
   }
+
+  // If there is no selected location and the current position is available
+  if (_currentPosition != null) {
+    // Animate the camera to fit the 100km radius around the current position
+    _animateToBounds(_currentPosition!);
+  } else {
+    print("Current position is null, cannot animate to bounds.");
+  }
+}
+
+
+void _animateToBounds(LatLng centerLocation) {
+  if (mapController == null) {
+    print("mapController is null, cannot animate camera.");
+    return;
+  }
+
+  // Calculate bounds for a 100km radius
+  double radiusInKm = 10.0;
+  double kmInLat = 0.009; // Approximate value for 1 km in latitude
+  double kmInLng = 0.009 / cos(centerLocation.latitude * pi / 180.0); // Adjust based on latitude
+
+  final LatLng southWest = LatLng(
+    centerLocation.latitude - (radiusInKm * kmInLat),
+    centerLocation.longitude - (radiusInKm * kmInLng),
+  );
+
+  final LatLng northEast = LatLng(
+    centerLocation.latitude + (radiusInKm * kmInLat),
+    centerLocation.longitude + (radiusInKm * kmInLng),
+  );
+
+  // Create the LatLngBounds
+  LatLngBounds bounds = LatLngBounds(southwest: southWest, northeast: northEast);
+
+  // Animate the camera to fit the bounds
+  try {
+    mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
+  } catch (e) {
+    print("Error occurred while animating camera: $e");
+  }
+}
+
+
+void _moveToLocationOnMap(Map<String, dynamic> location) async{
+  double selectedLatitude = double.parse(location['latitude'].toString());
+  double selectedLongitude = double.parse(location['longitude'].toString());
+
+  // Create a LatLng object for the target location
+  final targetLocation = LatLng(selectedLatitude, selectedLongitude);
+
+  // Create a new marker for the selected location
+  Marker newMarker = Marker(
+    markerId: const MarkerId("selected_location"),
+    position: targetLocation,
+    infoWindow: InfoWindow(
+      title: location['name'], 
+      snippet: location['address'], 
+    ),
+  );
+
+  // Clear existing markers and add the new marker
+  setState(() {
+    _markers.clear(); // Clear previous markers
+    _markers.add(newMarker); // Add the new marker
+  });
+
+  // Get the current position of the map (if needed)
+  LatLng currentPosition = _currentPosition ?? LatLng(0, 0); // Default to (0,0) if unknown
+
+  // Smoothly animate the camera to the target location from the current position
+  // if (currentPosition != targetLocation) {
+  print("_onMapCreated currentPosition: $currentPosition, targetLocation: $targetLocation");
+    _animateCamera(currentPosition, targetLocation);
+  // } else {
+  //   _mapController?.animateCamera(
+  //     CameraUpdate.newLatLngZoom(targetLocation, 15.0), // Adjust zoom level if needed
+  //   );
+  // }
+}
+
+void _animateCamera(LatLng from, LatLng to) {
+  const int steps = 30; // Number of steps in the animation
+  const Duration duration = Duration(seconds: 2); // Total duration of the animation
+  Timer.periodic(duration ~/ steps, (timer) {
+    // Calculate the interpolation factor
+    double t = timer.tick / steps;
+    if (t > 1) {
+      timer.cancel();
+      t = 1; // Clamp t to 1 to avoid overflow
+    }
+    
+    // Interpolate the latitude and longitude
+    double interpolatedLat = from.latitude + (to.latitude - from.latitude) * t;
+    double interpolatedLng = from.longitude + (to.longitude - from.longitude) * t;
+
+    // Move the camera to the interpolated position
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLng(LatLng(interpolatedLat, interpolatedLng)),
+    );
+
+    // If we reach the end of the animation, zoom into the final location
+    if (t == 1) {
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(to, 15.0), // Final zoom to the selected location
+      );
+    }
+  });
+}
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -1148,7 +1311,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
                 onMapCreated: _onMapCreated,
                 initialCameraPosition: CameraPosition(
                   target: _currentPosition ?? _center,
-                  zoom: 15.0,
+                  zoom: 4.3,
                 ),
                 markers: _markers,
                 zoomControlsEnabled: false,
@@ -1172,32 +1335,54 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
                   child: Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          onSubmitted: (value) {
-                            handleSearchRequest(value);
+                        child: GestureDetector(
+                          onTap: () async {
+                            // Navigate to the search page and wait for the result
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SearchResultsPage(
+                                  handleSearchRequest: handleSearchRequest,
+                                  onLocationSelected: (locationData) {
+                                    setState(() {
+                                      searchChargerID = locationData[
+                                          'name']; // Update with the selected location's name or chargerId
+                                    });
+                                    // Directly update the map with the selected location
+                                    _moveToLocationOnMap(
+                                        locationData); // Pass locationData directly
+                                  },
+                                  username: widget.username,
+                                  email: widget.email,
+                                  userId: widget.userId,
+                                ),
+                              ),
+                            );
+                            if (result != null) {
+                              // If result is returned, update the search field with the charger ID
+                              setState(() {
+                                searchChargerID = result['chargerId'];
+                              });
+                            }
                           },
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: const Color(0xFF0E0E0E),
-                            hintText: 'Search ChargerId...',
-                            hintStyle: const TextStyle(color: Colors.white70),
-                            prefixIcon:
-                                const Icon(Icons.search, color: Colors.white),
-                            border: OutlineInputBorder(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0E0E0E),
                               borderRadius: BorderRadius.circular(30.0),
-                              borderSide: BorderSide.none,
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.search, color: Colors.white),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Search',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                              ],
                             ),
                           ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[a-zA-Z0-9]'),
-                            ),
-                            FilteringTextInputFormatter.deny(
-                              RegExp(r'\s'),
-                            ),
-                          ],
                         ),
                       ),
                       SizedBox(
@@ -1329,19 +1514,15 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
                     child: const Icon(Icons.zoom_out_map_rounded,
                         color: Colors.red),
                   ),
-                  SizedBox(
-                      height: screenHeight *
-                          0.01), // Adjust spacing between buttons
+                  SizedBox(height: screenHeight * 0.01),
                   FloatingActionButton(
-                backgroundColor: const Color.fromARGB(227, 76, 175, 79),
-                onPressed: _getCurrentLocation,
-                child: const Icon(Icons.my_location, color: Colors.white),
-              ),
+                    backgroundColor: const Color.fromARGB(227, 76, 175, 79),
+                    onPressed: _resetSelectedLocationAndFetchCurrent,
+                    child: const Icon(Icons.my_location, color: Colors.white),
+                  ),
                 ],
               ),
             ),
-           
-            
           ],
         ),
       ),
@@ -1380,36 +1561,6 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     return R * c; // Distance in km
   }
 
-  void _onChargerCardChanged(int index) async {
-    if (index < availableChargers.length) {
-      var charger = availableChargers[index];
-      double? lat = double.tryParse(charger['lat']);
-      double? lng = double.tryParse(charger['long']);
-
-      if (lat != null && lng != null) {
-        LatLng chargerPosition = LatLng(lat, lng);
-
-        if (mapController != null) {
-          LatLng startPosition =
-              _selectedPosition ?? _currentPosition ?? _center;
-
-          // Smoothly move the camera to the charger position
-          await _smoothlyMoveCameraForChargerMarker(
-              startPosition, chargerPosition);
-
-          // Update selected position and enable map buttons
-          setState(() {
-            _selectedPosition = chargerPosition;
-            areMapButtonsEnabled = true; // Enable map buttons
-
-            // Update marker icons
-            _updateMarkerIcons(charger[
-                'charger_id']); // Assuming charger['id'] holds the unique ID of the charger
-          });
-        }
-      }
-    }
-  }
 
   Future<void> _updateMarkerIcons(String chargerId) async {
     BitmapDescriptor newIcon =
@@ -1465,78 +1616,79 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     }
   }
 
-Widget _buildShimmerCard() {
-  // Get screen size
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
+  Widget _buildShimmerCard() {
+    // Get screen size
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-  return Shimmer.fromColors(
-    baseColor: Colors.grey[800]!,
-    highlightColor: Colors.grey[700]!,
-    child: Container(
-      width: screenWidth * 0.9,  // Match charger card width
-      height: screenHeight * 0.2,  // Match charger card height
-      margin: EdgeInsets.only(
-        right: screenWidth * 0.05, 
-        top: screenHeight * 0.03, 
-        bottom: screenHeight * 0.05,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E0E0E),
-        borderRadius: BorderRadius.circular(screenWidth * 0.03),  // Same border radius as charger card
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(screenWidth * 0.03),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: screenWidth * 0.25,
-              height: screenHeight * 0.02,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 5),
-            Container(
-              width: screenWidth * 0.2,
-              height: screenHeight * 0.02,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 5),
-            Row(
-              children: [
-                Container(
-                  width: screenWidth * 0.15,
-                  height: screenHeight * 0.02,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 5),
-                Container(
-                  width: screenWidth * 0.05,
-                  height: screenHeight * 0.02,
-                  color: Colors.white,
-                ),
-              ],
-            ),
-            const SizedBox(height: 5),
-            Container(
-              width: screenWidth * 0.6,
-              height: screenHeight * 0.02,
-              color: Colors.white,
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[700]!,
+      child: Container(
+        width: screenWidth * 0.9, // Match charger card width
+        height: screenHeight * 0.2, // Match charger card height
+        margin: EdgeInsets.only(
+          right: screenWidth * 0.05,
+          top: screenHeight * 0.03,
+          bottom: screenHeight * 0.05,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0E0E0E),
+          borderRadius: BorderRadius.circular(
+              screenWidth * 0.03), // Same border radius as charger card
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
+        child: Padding(
+          padding: EdgeInsets.all(screenWidth * 0.03),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: screenWidth * 0.25,
+                height: screenHeight * 0.02,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 5),
+              Container(
+                width: screenWidth * 0.2,
+                height: screenHeight * 0.02,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 5),
+              Row(
+                children: [
+                  Container(
+                    width: screenWidth * 0.15,
+                    height: screenHeight * 0.02,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 5),
+                  Container(
+                    width: screenWidth * 0.05,
+                    height: screenHeight * 0.02,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Container(
+                width: screenWidth * 0.6,
+                height: screenHeight * 0.02,
+                color: Colors.white,
+              ),
+            ],
+          ),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildChargerCard(
     BuildContext context,
@@ -1584,51 +1736,28 @@ Widget _buildShimmerCard() {
 
     // Get the address directly from the charger object (fetched once)
     String placeName = charger?['address'] ?? 'Unknown Address';
+    String address = charger?['address'] ?? 'Unknown Address';
     placeName = truncateText(placeName, 35);
     landmark = truncateText(landmark, 20);
 
     return GestureDetector(
-      onTap: () async {
+      onTap: () {
         if (charger != null) {
-          final lat = double.tryParse(charger['lat']);
-          final lng = double.tryParse(charger['long']);
-          if (lat != null && lng != null) {
-            final destinationPosition = LatLng(lat, lng);
-            LatLng startPosition =
-                _selectedPosition ?? _currentPosition ?? _center;
-
-            await _smoothlyMoveCameraForChargerMarker(
-                startPosition, destinationPosition);
-
-            setState(() {
-              _selectedPosition = destinationPosition;
-              areMapButtonsEnabled = true;
-            });
-
-            BitmapDescriptor newIcon =
-                await _getIconFromAsset('assets/icons/EV_location_green.png');
-            BitmapDescriptor defaultIcon =
-                await _getIconFromAsset('assets/icons/EV_location_red.png');
-
-            setState(() {
-              if (_previousMarkerId != null) {
-                _markers = _markers.map((marker) {
-                  if (marker.markerId == _previousMarkerId) {
-                    return marker.copyWith(iconParam: defaultIcon);
-                  }
-                  return marker;
-                }).toSet();
-              }
-
-              _markers = _markers.map((marker) {
-                if (marker.markerId.value == chargerId) {
-                  _previousMarkerId = marker.markerId;
-                  return marker.copyWith(iconParam: newIcon);
-                }
-                return marker;
-              }).toSet();
-            });
-          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChargerConnectorPage(
+                address: address,
+                landmark: landmark,
+                accessType: accessType,
+                chargerId: chargerId,
+                unitPrice: price,
+                chargerType: chargerType,
+                time: time,
+                position: position,
+              ),
+            ),
+          );
         }
       },
       child: Stack(
@@ -1767,7 +1896,7 @@ Widget _buildShimmerCard() {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _buildNavigationButton(context), // Navigation Button
-                                        const SizedBox(width: 5),
+                      const SizedBox(width: 5),
                       _buildUseChargerButton(
                           context, chargerId), // Use Charger Button
                     ],
@@ -1781,9 +1910,10 @@ Widget _buildShimmerCard() {
       ),
     );
   }
- // Build Charger List
-Widget _buildChargerList() {
+  Widget _buildChargerList() {
   List<Widget> chargerCards = [];
+  Set<String> chargerIds = {}; // Track charger IDs to avoid duplicates
+  chargerIdsList.clear(); // Clear previous IDs to avoid duplicates
 
   // Show shimmer if the data is still loading
   if (recentSessions.isEmpty && availableChargers.isEmpty) {
@@ -1795,74 +1925,103 @@ Widget _buildChargerList() {
     // Data is loaded, show the actual charger cards
     if (activeFilter == 'Previously Used') {
       for (var session in recentSessions) {
-        chargerCards.add(
-          _buildChargerCard(
-            context,
-            session['details']['landmark'] ?? 'Unknown location',
-            session['details']['charger_id'] ?? 'Unknown ID',
-            session['details']['model'] ?? 'Unknown Model',
-            session['status']['charger_status'] ?? 'Unknown Status',
-            formatTimestamp(session['status']['timestamp']),
-            session['unit_price']?.toString() ?? 'Unknown Price',
-            session['status']['connector_id'] ?? 0,
-            session['details']['charger_accessibility']?.toString() ?? 'Unknown',
-            session['details']['charger_type'] ?? 'Unknown Type',
-            LatLng(
-              double.parse(session['details']['lat'] ?? '0'),
-              double.parse(session['details']['long'] ?? '0'),
+        String chargerId = session['details']['charger_id']?.trim() ?? 'Unknown ID';
+        if (!chargerIds.contains(chargerId)) {
+          chargerIds.add(chargerId);
+          chargerIdsList.add(chargerId); // Add to the separate list
+          chargerCards.add(
+            _buildChargerCard(
+              context,
+              session['details']['landmark'] ?? 'Unknown location',
+              chargerId,
+              session['details']['model'] ?? 'Unknown Model',
+              session['status']['charger_status'] ?? 'Unknown Status',
+              formatTimestamp(session['status']['timestamp']),
+              session['unit_price']?.toString() ?? 'Unknown Price',
+              session['status']['connector_id'] ?? 0,
+              session['details']['charger_accessibility']?.toString() ?? 'Unknown',
+              session['details']['charger_type'] ?? 'Unknown Type',
+              LatLng(
+                double.parse(session['details']['lat'] ?? '0'),
+                double.parse(session['details']['long'] ?? '0'),
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     } else if (activeFilter == 'All Chargers') {
       for (var charger in availableChargers) {
-        if (_currentPosition != null &&
-            _calculateDistance(
-                  _currentPosition!.latitude,
-                  _currentPosition!.longitude,
-                  double.parse(charger['lat'] ?? '0'),
-                  double.parse(charger['long'] ?? '0'),
-                ) <=
-                100.0) {
-          for (var status in charger['status'] ?? [null]) {
-            chargerCards.add(
-              _buildChargerCard(
-                context,
-                charger['landmark'] ?? 'Unknown location',
-                charger['charger_id'] ?? 'Unknown ID',
-                charger['model'] ?? 'Unknown Model',
-                status == null
-                    ? "Not yet received"
-                    : status['charger_status'] ?? 'Unknown Status',
-                status == null
-                    ? "Not yet received"
-                    : formatTimestamp(status['timestamp']),
-                charger['unit_price']?.toString() ?? 'Unknown Price',
-                status == null
-                    ? 0
-                    : status['connector_id'] ?? 'Unknown Last Updated',
-                charger['charger_accessibility']?.toString() ?? 'Unknown',
-                charger['charger_type'] ?? 'Unknown Type',
-                LatLng(
-                  double.parse(charger['lat'] ?? '0'),
-                  double.parse(charger['long'] ?? '0'),
+        String chargerId = charger['charger_id']?.trim() ?? 'Unknown ID';
+        double chargerLatitude = double.parse(charger['lat'] ?? '0');
+        double chargerLongitude = double.parse(charger['long'] ?? '0');
+
+        LatLng referencePosition = _currentSelectedLocation != null
+            ? LatLng(
+                double.parse(_currentSelectedLocation!['latitude']),
+                double.parse(_currentSelectedLocation!['longitude']),
+              )
+            : (_currentPosition ?? _center!);
+
+        print("referencePosition $referencePosition $_currentSelectedLocation");
+        if (_calculateDistance(
+              referencePosition.latitude,
+              referencePosition.longitude,
+              chargerLatitude,
+              chargerLongitude,
+            ) <=
+            100.0) {
+          if (!chargerIds.contains(chargerId)) {
+            chargerIds.add(chargerId);
+            chargerIdsList.add(chargerId);
+
+            var statusList = charger['status'] ?? [null];
+            if (statusList.isNotEmpty) {
+              var status = statusList.first;
+
+              chargerCards.add(
+                _buildChargerCard(
+                  context,
+                  charger['landmark'] ?? 'Unknown location',
+                  chargerId,
+                  charger['model'] ?? 'Unknown Model',
+                  status == null
+                      ? "Not yet received"
+                      : status['charger_status'] ?? 'Unknown Status',
+                  status == null
+                      ? "Not yet received"
+                      : formatTimestamp(status['timestamp']),
+                  charger['unit_price']?.toString() ?? 'Unknown Price',
+                  status == null
+                      ? 0
+                      : status['connector_id'] ?? 'Unknown Last Updated',
+                  charger['charger_accessibility']?.toString() ?? 'Unknown',
+                  charger['charger_type'] ?? 'Unknown Type',
+                  LatLng(
+                    chargerLatitude,
+                    chargerLongitude,
+                  ),
                 ),
-              ),
-            );
+              );
+            }
           }
         }
       }
     }
   }
 
-  // Wrap the charger cards in a PageView.builder for horizontal scrolling
+  // // If no charger cards were added, return an empty container or any placeholder
+  // if (chargerCards.isEmpty) {
+  //   return Container(); // Return an empty container when no data is available
+  // }
+
   return Expanded(
     child: PageView.builder(
       controller: _pageController,
       scrollDirection: Axis.horizontal,
       itemCount: chargerCards.length,
       onPageChanged: (index) {
-        _onChargerCardChanged(index); // Handle page change event
+        String chargerId = chargerIdsList[index];
+        _onChargerCardChanged(chargerId);
       },
       itemBuilder: (context, index) {
         return chargerCards[index];
@@ -1871,8 +2030,68 @@ Widget _buildChargerList() {
   );
 }
 
- 
-Widget _buildNavigationButton(BuildContext context) {
+
+void _onChargerCardChanged(String chargerId) {
+  print("_onChargerCardChanged $chargerId");
+
+  // Cancel any existing debounce timers
+  _debounceTimer?.cancel();
+
+  // Add a short debounce duration (e.g., 150ms)
+  _debounceTimer = Timer(const Duration(milliseconds: 150), () async {
+    // Find the charger in the availableChargers list using the chargerId
+    var charger = availableChargers.firstWhere(
+      (charger) => charger['charger_id'] == chargerId,
+      orElse: () => null,
+    );
+
+    if (charger != null) {
+      double? lat = double.tryParse(charger['lat']);
+      double? lng = double.tryParse(charger['long']);
+
+      if (lat != null && lng != null) {
+        LatLng chargerPosition = LatLng(lat, lng);
+
+        if (mapController != null) {
+          LatLng startPosition = _selectedPosition ?? _currentPosition ?? _center;
+
+          // If an animation is in progress, cancel it before starting a new one
+          if (_isAnimationInProgress) {
+            _currentAnimationOperation?.cancel();
+          }
+
+          _isAnimationInProgress = true;
+
+          // Wrap the animation in a CancelableOperation
+          _currentAnimationOperation = CancelableOperation.fromFuture(
+            _smoothlyMoveCameraForChargerMarker(startPosition, chargerPosition),
+          );
+
+          try {
+            await _currentAnimationOperation!.value;
+
+            // Animation completed, update state
+            if (mounted) {
+              setState(() {
+                _selectedPosition = chargerPosition;
+                areMapButtonsEnabled = true; // Enable map buttons
+
+                // Update marker icons
+                _updateMarkerIcons(charger['charger_id']);
+              });
+            }
+          } catch (e) {
+            print("Animation was cancelled or failed: $e");
+          } finally {
+            _isAnimationInProgress = false;
+          }
+        }
+      }
+    }
+  });
+}
+
+  Widget _buildNavigationButton(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Expanded(
@@ -2233,6 +2452,7 @@ class CrossPainter extends CustomPainter {
     return false;
   }
 }
+
 class CurrentLocationMarkerPainter extends CustomPainter {
   final double animatedRadius;
 
@@ -2306,7 +2526,7 @@ class _CurrentLocationMarkerState extends State<CurrentLocationMarker>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -2322,6 +2542,7 @@ class _CurrentLocationMarkerState extends State<CurrentLocationMarker>
 
   @override
   void dispose() {
+    
     _controller.dispose();
     super.dispose();
   }
@@ -2344,7 +2565,6 @@ class _CurrentLocationMarkerState extends State<CurrentLocationMarker>
     );
   }
 }
-
 
 class LoadingOverlay extends StatelessWidget {
   final bool showAlertLoading;

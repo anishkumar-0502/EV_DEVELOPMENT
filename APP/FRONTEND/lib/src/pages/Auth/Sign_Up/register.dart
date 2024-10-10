@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:http/http.dart' as http;
 import '../Log_In/login.dart';
-import '../../../utilities/Seperater/gradientPainter.dart';
 import '../../../utilities/Alert/alert_banner.dart'; // Import the alert banner
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -82,7 +81,7 @@ class _RegisterPageState extends State<RegisterPage> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(Icons.error_outline, color: Colors.red, size: 35),
                   SizedBox(width: 10),
@@ -92,13 +91,13 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               CustomGradientDivider(), // Custom gradient divider
             ],
           ),
           content: Text(
             message,
-            style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
+            style: const TextStyle(color: Colors.white70), // Adjusted text color for contrast
           ),
           actions: <Widget>[
             TextButton(

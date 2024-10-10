@@ -155,7 +155,7 @@ Widget _buildLoadingIndicator() {
     width: double.infinity,
     height: double.infinity,
     color: Colors.black.withOpacity(0.7), // Transparent black background
-    child: Center(
+    child: const Center(
       child: Icon(
         Icons.bolt, // Use a charging icon like 'bolt' or 'electric_car'
         color: Colors.yellow, // Set the icon color
@@ -361,7 +361,7 @@ Widget _buildLoadingIndicator() {
         //     ],
         //   ),
         // );
-        AlertBanner(
+        const AlertBanner(
           message:'Updation unsuccessful!' ,
           backgroundColor: Colors.red,
         );
@@ -384,7 +384,7 @@ Widget _buildLoadingIndicator() {
       //     ],
       //   ),
       // );
-      AlertBanner(
+      const AlertBanner(
         message:'Failed to update charging details' ,
         backgroundColor: Colors.red,
       );
@@ -1050,18 +1050,18 @@ Widget _buildAnimatedTempColorCircle() {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Current t°',
                     style: TextStyle(color: Colors.white, fontSize: 14),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     // '${_currentTemperature.toInt()} °C' ,
                     '33.5 °C',
-                    style: const TextStyle(color: Colors.white, fontSize: 24),
+                    style: TextStyle(color: Colors.white, fontSize: 24),
                   ),
                 ],
               ),
@@ -2323,27 +2323,27 @@ Widget build(BuildContext context) {
               ),
             ),
             if (TagIDStatus == 'Invalid')
-              AlertBanner(
+              const AlertBanner(
                 message: 'Invalid NFC Card',
                 backgroundColor: Colors.red,
               ),
             if (TagIDStatus == 'blocked')
-              AlertBanner(
+              const AlertBanner(
                 message: 'Your account is blocked',
                 backgroundColor: Colors.red,
               ),
             if (TagIDStatus == 'expired')
-              AlertBanner(
+              const AlertBanner(
                 message: 'Your NFC Card has expired',
                 backgroundColor: Colors.red,
               ),
             if (TagIDStatus == 'Concurrent')
-              AlertBanner(
+              const AlertBanner(
                 message: 'Concurrent transaction in progress',
                 backgroundColor: Colors.red,
               ),
               if (NoResponseFromCharger)
-                AlertBanner(
+                const AlertBanner(
                 message:'No response from the charger. Please try again!' ,
                 backgroundColor: Colors.red,
               ),
@@ -3111,7 +3111,7 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
           ),
         );
       },
-      child: Icon(
+      child: const Icon(
         Icons.bolt_sharp, // Charging icon
         color: Colors.green, // Set the icon color
         size: 200, // Adjust the size as needed

@@ -13,13 +13,7 @@ import 'src/utilities/User_Model/user.dart';
 import 'src/utilities/User_Model/ImageProvider.dart';
 import 'src/pages/wallet/wallet.dart';
 import 'src/pages/profile/Account/Transaction_Details/transaction_details.dart';
-// import 'screens/configure_download/state/configure_download_provider.dart';
-// import 'screens/main/pages/map/state/map_provider.dart';
-// import 'screens/main/pages/downloading/state/downloading_provider.dart';
-// import 'screens/main/pages/region_selection/state/region_selection_provider.dart';
-// import 'shared/state/general_provider.dart';
-// import 'screens/main/main.dart';
-// import 'screens/initialisation_error/initialisation_error.dart';
+
 
 void main() async {
   // Ensure Flutter bindings are initialized before calling any asynchronous methods
@@ -40,7 +34,6 @@ void main() async {
   } catch (err) {
     initErr = err;
   }
-
   // Now run the app with providers
   runApp(MyApp(initialisationError: initErr));
 }
