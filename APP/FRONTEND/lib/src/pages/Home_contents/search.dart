@@ -35,6 +35,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
   List<Map<String, String>> recentLocations = [];
   List<Map<String, Object>> filteredLocations = [];
   LatLng? _currentPosition;
+bool _isLoading = false; // Add this variable to manage loading state
 
   // Initialize recent locations from SharedPreferences
   @override
@@ -67,6 +68,34 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
       print('Error in search: ${result?['message']}');
     }
   }
+
+void _oncurrentLocationSelected(Map<String, dynamic> location) {
+  // Convert latitude and longitude to strings to ensure consistency
+  final selectedLocation = {
+    'name': location['name'],
+    'address': location['address'],
+    'latitude': location['latitude'].toString(), // Ensure it's a string
+    'longitude': location['longitude'].toString(), // Ensure it's a string
+  };
+
+  // Pass the selected location to the callback
+  widget.onLocationSelected(selectedLocation);
+
+  print("_currentSelectedLocation $selectedLocation");
+
+  // Use Navigator.push to add the new page without disrupting other content
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => HomePage(
+        selectedLocation: selectedLocation, // Pass the consistent selectedLocation
+        username: widget.username,
+        userId: widget.userId,
+        email: widget.email,
+      ),
+    ),
+  );
+}
 void _onLocationSelected(Map<String, dynamic> location) {
   // Convert latitude and longitude to strings to ensure consistency
   final selectedLocation = {
@@ -235,35 +264,51 @@ void _onLocationSelected(Map<String, dynamic> location) {
     }
   }
 
-  void _filterLocations(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        filteredLocations = [];
-      });
-    } else {
-      List<Map<String, dynamic>> locations = await fetchLocations(query);
 
-      setState(() {
-        // Convert each location to the expected type
-        filteredLocations = locations.map((location) {
-          // Print the filtered locations
-          for (var location in filteredLocations) {
-            print('Name: ${location['name']}');
-            print('Address: ${location['address']}');
-            print('Latitude: ${location['latitude']}');
-            print('Longitude: ${location['longitude']}');
-            print(''); // Just for better formatting
-          }
-          return {
-            'name': location['name'] as String,
-            'address': location['address'] as String,
-            'latitude': location['latitude'] as double, // Keep as double
-            'longitude': location['longitude'] as double, // Keep as double
-          };
-        }).toList();
-      });
-    }
+void _filterLocations(String query) async {
+  // Clear previous filtered locations when query is empty
+  if (query.isEmpty) {
+    setState(() {
+      filteredLocations = [];
+      _isLoading = false; // Set loading to false if no query
+    });
+    return; // Exit early
   }
+
+  // Set loading to true before fetching locations
+  setState(() {
+    _isLoading = true;
+  });
+
+  // Fetch locations based on the query
+  List<Map<String, dynamic>> locations = await fetchLocations(query);
+
+  setState(() {
+    // Print the filtered locations
+    for (var location in locations) {
+      print('Name: ${location['name']}');
+      print('Address: ${location['address']}');
+      print('Latitude: ${location['latitude']}');
+      print('Longitude: ${location['longitude']}');
+      print(''); // Just for better formatting
+    }
+
+    // Update the filtered locations
+    filteredLocations = locations.map((location) {
+      return {
+        'name': location['name'] as String,
+        'address': location['address'] as String,
+        'latitude': location['latitude'] as double,
+        'longitude': location['longitude'] as double,
+      };
+    }).toList();
+
+    // Set loading to false after fetching locations
+    _isLoading = false;
+  });
+}
+
+  
 Future<void> _getCurrentLocation() async {
   try {
  
@@ -278,7 +323,7 @@ Future<void> _getCurrentLocation() async {
       });
 
       // Call the _onLocationSelected function with the current location data
-      _onLocationSelected({
+      _oncurrentLocationSelected({
         'name': 'Current Location',
         'address': 'Your Current Address', // You can customize this as needed
         'latitude': currentLocation.latitude.toString(),
@@ -423,6 +468,18 @@ Future<void> _getCurrentLocation() async {
                 ),
                 cursorColor: const Color(0xFF1ED760),
               ),
+              // Show loading indicator with message if _isLoading is true
+              if (_isLoading)
+                const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 13), // Space between the indicator and text
+                      Text('Fetching locations...', style: TextStyle(fontSize: 16,  color: Colors.orangeAccent)),
+                      SizedBox(height: 10), // Space between the indicator and text
+                    ],
+                  ),
+                ),
 
               if (filteredLocations.isNotEmpty)
                 ListView.builder(
@@ -464,19 +521,20 @@ Future<void> _getCurrentLocation() async {
                         _onLocationSelected(location);
                         setState(() {
                           filteredLocations = [];
+                          _isLoading = false;
                         });
                       },
                     );
                   },
                 ),
-                 const SizedBox(height: 10),
+              const SizedBox(height: 10),
              ElevatedButton.icon(
               onPressed: _getCurrentLocation, // Call the function here
-              icon: Icon(Icons.my_location,color: Colors.white,), // Icon for current location
-              label: Text('Current location',style: TextStyle(color: Colors.white,fontSize: 18),),
+              icon: const Icon(Icons.my_location,color: Colors.white,), // Icon for current location
+              label: const Text('Current location',style: TextStyle(color: Colors.white,fontSize: 18),),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green, // Set the button color to green
-                minimumSize: Size(double.infinity, 50), // Full width button and set height
+                minimumSize: const Size(double.infinity, 50), // Full width button and set height
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8), // Optional: Rounded corners
                 ),
