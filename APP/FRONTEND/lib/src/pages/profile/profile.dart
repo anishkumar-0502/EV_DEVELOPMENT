@@ -94,7 +94,7 @@ class _ProfilePageState extends State<ProfilePage> {
           height: MediaQuery.of(context).size.height * 0.7, // Set height to 70% of the screen
           child: Padding(
             padding: MediaQuery.of(context).viewInsets,
-            child: HelpPage(), // Ensure this is the correct widget name
+            child: const HelpPage(), // Ensure this is the correct widget name
           ),
         );
       },
@@ -236,10 +236,10 @@ class _ProfilePageState extends State<ProfilePage> {
                               color: _selectedTileIndex == 0
                                   ? Colors.green.withOpacity(0.1)
                                   : Colors.black,
-                              child: ListTile(
-                                title: const Text('Account', style: TextStyle(color: Colors.white)),
-                                leading: const Icon(Icons.account_circle, color: Colors.white),
-                                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                              child: const ListTile(
+                                title: Text('Account', style: TextStyle(color: Colors.white)),
+                                leading: Icon(Icons.account_circle, color: Colors.white),
+                                trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
                               ),
                             ),
                           ),
@@ -260,10 +260,10 @@ class _ProfilePageState extends State<ProfilePage> {
                               color: _selectedTileIndex == 1
                                   ? Colors.green.withOpacity(0.1)
                                   : Colors.black,
-                              child: ListTile(
-                                title: const Text('Terms and Conditions', style: TextStyle(color: Colors.white)),
-                                leading: const Icon(Icons.description, color: Colors.white),
-                                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                              child: const ListTile(
+                                title: Text('Terms and Conditions', style: TextStyle(color: Colors.white)),
+                                leading: Icon(Icons.description, color: Colors.white),
+                                trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
                               ),
                             ),
                           ),
@@ -284,19 +284,19 @@ class _ProfilePageState extends State<ProfilePage> {
                               color: _selectedTileIndex == 2
                                   ? Colors.green.withOpacity(0.1)
                                   : Colors.black,
-                              child: ListTile(
-                                title: const Text('Privacy Policy', style: TextStyle(color: Colors.white)),
-                                leading: const Icon(Icons.policy, color: Colors.white),
-                                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                              child: const ListTile(
+                                title: Text('Privacy Policy', style: TextStyle(color: Colors.white)),
+                                leading: Icon(Icons.policy, color: Colors.white),
+                                trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
                               ),
                             ),
                           ),
-                          SizedBox(width: 10,height: 30,),
+                          const SizedBox(width: 10,height: 30,),
                           SizedBox(
                             width: 300,
                             child:CustomGradientDivider (),
                           ),
-                          SizedBox(height: 5,),
+                          const SizedBox(height: 5,),
                           GestureDetector(
                             onTap: () {
                               _logout(); // Correctly invoking the _logout function
@@ -318,7 +318,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               //   ),
                               // ),
                               child: ListTile(
-                                title: Row(
+                                title: const Row(
                                   mainAxisAlignment: MainAxisAlignment.center, // Center the content horizontally
                                   children: [
                                     Icon(
@@ -340,18 +340,18 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
                           ),
-                          SizedBox(height: 100,),
+                          const SizedBox(height: 100,),
                           Container(
-                            margin:EdgeInsets.only(bottom: 50,top: 50) ,
+                            margin:const EdgeInsets.only(bottom: 50,top: 50) ,
 
                             child: Column(
                               children: [
-                                Text(
-                                  'Version : alpha 1.0.0 ',
+                                const Text(
+                                  'Version : alpha 1.0.1 ',
                                   style: TextStyle(color: Colors.white70, fontSize: 12),
                                 ),
                                 RichText(
-                                  text: TextSpan(
+                                  text: const TextSpan(
                                     style: TextStyle(color: Colors.white70, fontSize: 12),
                                     children: [
                                       TextSpan(text: 'Copyright © 2024 '),

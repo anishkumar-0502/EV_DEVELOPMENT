@@ -187,23 +187,23 @@ class _WalletPageState extends State<WalletPage> {
     } catch (error) {
       print('Error during payment: $error');
       // Optionally, show an error dialog to inform the user
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Payment Error'),
-            content: Text('An error occurred while processing your payment. Please try again.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
+      // showDialog(
+      //   context: context,
+      //   builder: (BuildContext context) {
+      //     return AlertDialog(
+      //       title: Text('Payment Error'),
+      //       content: Text('An error occurred while processing your payment. Please try again.'),
+      //       actions: [
+      //         TextButton(
+      //           onPressed: () {
+      //             Navigator.of(context).pop();
+      //           },
+      //           child: Text('OK'),
+      //         ),
+      //       ],
+      //     );
+      //   },
+      // );
     } finally {
       setState(() {
         showAlertLoading = false; // Hide loading overlay after payment process

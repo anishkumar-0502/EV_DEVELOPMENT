@@ -32,6 +32,7 @@ class _RegisterPageState extends State<RegisterPage> {
   late Connectivity _connectivity;
   late StreamSubscription<ConnectivityResult> _connectivitySubscription;
   bool _isDialogOpen = false;
+  bool isSearching = false;
 
   @override
   void initState() {
@@ -168,10 +169,16 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _handleRegister() async {
+    if (isSearching) return;
     final String username = _usernameController.text;
     final String email = _emailController.text;
     final String phone = _phoneController.text;
     final String password = _passwordController.text;
+
+     setState(() {
+      isSearching = true;
+    });
+
 
     try {
       var response = await http.post(
@@ -184,6 +191,9 @@ class _RegisterPageState extends State<RegisterPage> {
           'password': password,
         }),
       );
+
+       await Future.delayed(const Duration(seconds: 3));
+
       if (response.statusCode == 200) {
         _showAlertBannerSuccess("User successfully registered");
         await Future.delayed(const Duration(seconds: 3));
@@ -192,10 +202,17 @@ class _RegisterPageState extends State<RegisterPage> {
           MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       } else {
+        setState(() {
+          isSearching = false;
+        });
         final data = json.decode(response.body);
         _showAlertBanner(data['message']);
       }
     } catch (e) {
+      setState(() {
+          isSearching = false;
+        });
+      print('register $e');
       _showAlertBanner('Internal server error');
     }
   }
@@ -203,6 +220,7 @@ class _RegisterPageState extends State<RegisterPage> {
   void _showAlertBanner(String message) {
     setState(() {
       _alertMessage = message;
+       isSearching = false;
     });
     Future.delayed(const Duration(seconds: 3), () {
       setState(() {
@@ -214,7 +232,9 @@ class _RegisterPageState extends State<RegisterPage> {
   void _showAlertBannerSuccess(String message) async {
     setState(() {
       successMsg = message;
+       isSearching = false;
     });
+   
     Future.delayed(const Duration(seconds: 3), () {
       setState(() {
         successMsg = null;
@@ -224,75 +244,78 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+    return LoadingOverlay(
+      showAlertLoading: isSearching, 
+      child: Scaffold(
         backgroundColor: Colors.black,
-        elevation: 0,
-        toolbarHeight: 0,
-      ),
-      body: Column(
-        children: [
-          if (_alertMessage != null) AlertBanner(message: _alertMessage!),
-          if (successMsg != null) SuccessBanner(message: successMsg!),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Create your Account',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          elevation: 0,
+          toolbarHeight: 0,
+        ),
+        body: Column(
+          children: [
+            if (_alertMessage != null) AlertBanner(message: _alertMessage!),
+            if (successMsg != null) SuccessBanner(message: successMsg!),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Create your Account',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      "Fill in the details below to get started.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    _buildUsernameField(),
-                    const SizedBox(height: 20),
-                    _buildEmailField(),
-                    const SizedBox(height: 20),
-                    _buildPasswordField(),
-                    const SizedBox(height: 20),
-                    _buildPhoneField(),
-                    const SizedBox(height: 20),
-                    _buildSubmitButton(),
-                    const SizedBox(height: 20),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginPage()),
-                          );
-                        },
-                        child: Text(
-                          'Already a user? Sign In ?',
-                          style: TextStyle(fontSize: 15, color: Colors.green[700]),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Fill in the details below to get started.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 20),
+                      _buildUsernameField(),
+                      const SizedBox(height: 20),
+                      _buildEmailField(),
+                      const SizedBox(height: 20),
+                      _buildPasswordField(),
+                      const SizedBox(height: 20),
+                      _buildPhoneField(),
+                      const SizedBox(height: 20),
+                      _buildSubmitButton(),
+                      const SizedBox(height: 20),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const LoginPage()),
+                            );
+                          },
+                          child: Text(
+                            'Already a user? Sign In ?',
+                            style: TextStyle(fontSize: 15, color: Colors.green[700]),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -547,5 +570,108 @@ class GradientPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
+  }
+}
+
+
+class LoadingOverlay extends StatelessWidget {
+  final bool showAlertLoading;
+  final Widget child;
+
+  LoadingOverlay({required this.showAlertLoading, required this.child});
+
+  Widget _buildLoadingIndicator() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      // color: Colors.black.withOpacity(0.75), // Transparent black background
+      color: Colors.black.withOpacity(0.90), // Transparent black background
+      child: Center(
+        child: _AnimatedChargingIcon(), // Use the animated charging icon
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        child, // The main content
+        if (showAlertLoading)
+          _buildLoadingIndicator(), // Use the animated loading indicator
+      ],
+    );
+  }
+}
+
+class _AnimatedChargingIcon extends StatefulWidget {
+  @override
+  __AnimatedChargingIconState createState() => __AnimatedChargingIconState();
+}
+
+class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _slideAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..forward(); // Start the animation
+
+    // Slide animation for moving the bolt icon vertically downwards
+    _slideAnimation = Tween<double>(begin: -130.0, end: 60.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Opacity animation for smooth fading in and out
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        // Reset the animation to start from the top when it reaches the bottom
+        _controller.reset();
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value), // Move vertically
+          child: Opacity(
+            opacity: _opacityAnimation.value,
+            child: child,
+          ),
+        );
+      },
+      child: const Icon(
+        Icons.bolt_sharp, // Charging icon
+        color: Colors.green, // Set the icon color
+        size: 200, // Adjust the size as needed
+      ),
+    );
   }
 }

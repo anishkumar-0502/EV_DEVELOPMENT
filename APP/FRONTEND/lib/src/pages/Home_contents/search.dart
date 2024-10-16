@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'package:ev_app/src/pages/Charging/charging.dart';
 import 'package:ev_app/src/pages/home.dart';
 import 'package:ev_app/src/service/location.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -310,8 +313,234 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     });
   }
 
+  Future<void> _showLocationServicesDialog() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E), // Background color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.location_on, color: Colors.red, size: 35),
+                  SizedBox(width: 10),
+                  Expanded(
+                    // Add this to prevent the overflow issue
+                    child: Text(
+                      "Enable Location", // The heading text
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow
+                          .ellipsis, // Optional: add ellipsis if text overflows
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              CustomGradientDivider(), // Custom gradient divider
+            ],
+          ),
+          content: const Text(
+            'Location services are required to use this feature. Please enable location services in your phone settings.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.white70), // Adjusted text color for contrast
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                // Save the flag to not show the dialog again
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('LocationPromptClosed', true);
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Close",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                await Geolocator
+                    .openLocationSettings(); // Open the location settings
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Settings",
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  Future<void> _showPermissionDeniedDialog() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E), // Background color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.location_on, color: Colors.red, size: 35),
+                  SizedBox(width: 10),
+                  Expanded(
+                    // Prevent text overflow
+                    child: Text(
+                      "Permission Denied",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow
+                          .ellipsis, // Optional: add ellipsis if text overflows
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              CustomGradientDivider(), // Custom gradient divider
+            ],
+          ),
+          content: const Text(
+            'This app requires location permissions to function correctly. Please grant location permissions in settings.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.white70), // Adjusted text color for contrast
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                openAppSettings(); // Open app settings
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Settings",
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  Future<void> _showPermanentlyDeniedDialog() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E), // Background color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.warning, color: Colors.red, size: 35),
+                  SizedBox(width: 10),
+                  Expanded(
+                    // Prevent text overflow
+                    child: Text(
+                      "Permission Denied",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow
+                          .ellipsis, // Optional: add ellipsis if text overflows
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              CustomGradientDivider(), // Custom gradient divider
+            ],
+          ),
+          content: const Text(
+            'Location permissions are permanently denied. Please enable them in the app settings.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.white70), // Adjusted text color for contrast
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                openAppSettings(); // Open app settings
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Settings",
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
   Future<void> _getCurrentLocation() async {
     try {
+     // Ensure location services are enabled and permission is granted before fetching location
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await _showLocationServicesDialog();
+        return;
+      }
+
+      PermissionStatus permission = await Permission.location.status;
+      if (permission.isDenied) {
+        await _showPermissionDeniedDialog();
+        return;
+      } else if (permission.isPermanentlyDenied) {
+        await _showPermanentlyDeniedDialog();
+        return;
+      }
+
       // Fetch the current location if permission is granted
       LatLng? currentLocation =
           await LocationService.instance.getCurrentLocation();

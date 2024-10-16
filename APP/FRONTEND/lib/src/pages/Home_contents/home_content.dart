@@ -1137,7 +1137,6 @@ Future<void> fetchAllChargers() async {
   } catch (error) {
     print('Internal server error: $error');
     // Handle general errors
-    showErrorDialog(context, 'An unexpected error occurred. Please try again.');
     setState(() {
       isLoading = false; // Set loading to false on error
     });
