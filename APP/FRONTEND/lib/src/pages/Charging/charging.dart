@@ -1008,10 +1008,10 @@ void handleStopTransaction() async {
   } catch (error) {
     print('Error: $error');
   } finally {
-    setState(() {
-      isLoading = false;
-      _isStopLoading = false;
-    });
+    // setState(() {
+    //   isLoading = false;
+    //   _isStopLoading = false;
+    // });
   }
 }
 
