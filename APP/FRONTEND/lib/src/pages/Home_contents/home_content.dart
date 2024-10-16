@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:async/async.dart';
+import 'package:ev_app/src/pages/home.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
@@ -11,7 +12,6 @@ import 'package:geolocator/geolocator.dart';
 import '../ChargerDetails/ChargerConnectorPage.dart';
 import '../Charging/charging.dart';
 import '../../utilities/QR/qrscanner.dart';
-import '../../utilities/Alert/alert_banner.dart';
 import 'dart:ui' as ui;
 import 'dart:async';
 import 'package:shimmer/shimmer.dart';
@@ -197,6 +197,8 @@ void _resetSelectedLocationAndFetchCurrent() {
         }
 
         // Update the current location marker on the map
+        _updateMarkers();
+        fetchAllChargers();
         // await _updateCurrentLocationMarker(_previousBearing ?? 0);
       } else {
         print('Current location could not be determined.');
@@ -837,7 +839,7 @@ void _updateMarkers() async {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/searchCharger'),
+        Uri.parse('http://122.166.210.142:4444/searchCharger'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -870,7 +872,7 @@ void _updateMarkers() async {
                 onConnectorSelected: (connectorId, connectorType) {
                   updateConnectorUser(
                       searchChargerID, connectorId, connectorType);
-                },
+                  }, username: widget.username, email: widget.email, userId: widget.userId,
               ),
             );
           },
@@ -902,7 +904,7 @@ void _updateMarkers() async {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/updateConnectorUser'),
+        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -1033,7 +1035,7 @@ void _updateMarkers() async {
       builder: (BuildContext context) {
         return Padding(
           padding: MediaQuery.of(context).viewInsets,
-          child: ErrorDetails(errorData: message),
+          child: ErrorDetails(errorData: message, username: widget.username, email: widget.email, userId: widget.userId),
         );
       },
     ).then((_) {});
@@ -1046,7 +1048,7 @@ void _updateMarkers() async {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:9098/getRecentSessionDetails'),
+        Uri.parse('http://122.166.210.142:4444/getRecentSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
@@ -1091,7 +1093,7 @@ Future<void> fetchAllChargers() async {
 
   try {
     final response = await http.post(
-      Uri.parse('http://122.166.210.142:9098/getAllChargersWithStatusAndPrice'),
+      Uri.parse('http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'user_id': widget.userId}),
     );
@@ -1656,17 +1658,19 @@ Future<void> _updateMarkerIcons(String chargerId) async {
       baseColor: Colors.grey[800]!,
       highlightColor: Colors.grey[700]!,
       child: Container(
-        width: screenWidth * 0.9, // Match charger card width
+        width: screenWidth * 0.8, // Match charger card width
         height: screenHeight * 0.2, // Match charger card height
         margin: EdgeInsets.only(
-          right: screenWidth * 0.05,
+          right: screenWidth * 0.013,
           top: screenHeight * 0.03,
           bottom: screenHeight * 0.05,
+          left:screenHeight * 0.03, // Add extra left margin for the first card
+
         ),
         decoration: BoxDecoration(
           color: const Color(0xFF0E0E0E),
           borderRadius: BorderRadius.circular(
-              screenWidth * 0.03), // Same border radius as charger card
+              screenWidth * 0.01), // Same border radius as charger card
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.2),
@@ -1677,7 +1681,12 @@ Future<void> _updateMarkerIcons(String chargerId) async {
           ],
         ),
         child: Padding(
-          padding: EdgeInsets.all(screenWidth * 0.03),
+          padding:EdgeInsets.only(
+          left: screenWidth * 0.01,
+          top: screenHeight * 0.02,
+          bottom: screenHeight * 0.02,
+          right: screenWidth * 0.01, // Add right padding for all cards
+        ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1721,189 +1730,247 @@ Future<void> _updateMarkerIcons(String chargerId) async {
     );
   }
   
-  Future<Map<String, String>> _calculateDurationAndDistance(LatLng start, LatLng end) async {
-  final String url =
-      'https://maps.googleapis.com/maps/api/directions/json?origin=${start.latitude},${start.longitude}&destination=${end.latitude},${end.longitude}&key=$apiKey';
 
-  final response = await http.get(Uri.parse(url));
+  Widget _buildChargerCard(
+      BuildContext context,
+      String landmark,
+      String chargerId,
+      LatLng position,
+      String distance,
+      ) {
+    // Get screen size
 
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> data = json.decode(response.body);
-    if (data['routes'].isNotEmpty) {
-      final String duration = data['routes'][0]['legs'][0]['duration']['text'];
-      final String distance = data['routes'][0]['legs'][0]['distance']['text'];
-      print("distance: $distance");
-      return {'duration': duration, 'distance': distance};
-    } else {
-      return {'duration': "Duration not available", 'distance': "Distance not available"};
-    }
-  } else {
-    throw Exception('Failed to fetch duration and distance');
-  }
-}
+    // Get the charger from the list based on chargerId
+    final charger = availableChargers.firstWhere(
+          (c) => c['charger_id'] == chargerId,
+      orElse: () => null,
+    );
 
-Widget _buildChargerCard(
-  BuildContext context,
-  String landmark,
-  String chargerId,
-  // String model,
-  // String status,
-  // String time,
-  // String price,
-  // int connectorId,
-  // String accessType,
-  // String chargerType,
-  LatLng position,
-  String distance,
-) {
-  // Get screen size
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
+    // Get the address directly from the charger object (fetched once)
+    String placeName = charger?['address'] ?? 'Unknown Address';
+    String address = charger?['address'] ?? 'Unknown Address';
+    placeName = truncateText(placeName, 79);
+    landmark = truncateText(landmark, 20);
 
-  // Get the charger from the list based on chargerId
-  final charger = availableChargers.firstWhere(
-    (c) => c['charger_id'] == chargerId,
-    orElse: () => null,
-  );
-
-  // Get the address directly from the charger object (fetched once)
-  String placeName = charger?['address'] ?? 'Unknown Address';
-  String address = charger?['address'] ?? 'Unknown Address';
-  placeName = truncateText(placeName, 79);
-  landmark = truncateText(landmark, 20);
-
-  return GestureDetector(
-    onTap: () {
-      if (charger != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChargerConnectorPage(
-              userId: widget.userId,
-              address: address,
-              position: position,
-              username: widget.username,
-              email: widget.email,
-            ),
-          ),
-        );
-      }
-    },
-    child: Stack(
-      children: [
-        Container(
-          width: screenWidth * 0.9,
-          height: screenHeight * 0.15,
-          margin: EdgeInsets.only(
-              right: screenWidth * 0.05,
-              top: screenHeight * 0.11,
-              bottom: screenHeight * 0.03),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0E0E0E),
-            borderRadius: BorderRadius.circular(screenWidth * 0.03),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                spreadRadius: 2,
-                blurRadius: 5,
-                offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        if (charger != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChargerConnectorPage(
+                userId: widget.userId,
+                address: address,
+                position: position,
+                username: widget.username,
+                email: widget.email,
               ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(screenWidth * 0.03),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                '📍 $landmark...',
-                                style: TextStyle(
-                                  fontSize: screenWidth * 0.037,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+            ),
+          );
+        }
+      },
+      child: Stack(
+        children: [
+          Container(
+            width: MediaQuery.of(context).size.width * 0.9, // Use MediaQuery for width
+            margin: EdgeInsets.only(
+              right: MediaQuery.of(context).size.width * 0.05,
+              // bottom: MediaQuery.of(context).size.height * 0.02,
+              top: MediaQuery.of(context).size.height * 0.04,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0E0E0E),
+              borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.03),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.03),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min, // Allow the column to grow based on content
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Landmark and Place Name
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '📍 $landmark',
+                              style: TextStyle(
+                                fontSize: MediaQuery.of(context).size.width * 0.037,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
-                            ],
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              placeName,
+                              style: TextStyle(
+                                fontSize: MediaQuery.of(context).size.width * 0.033,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5), // Space before the distance container
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        vertical: MediaQuery.of(context).size.height * 0.008,
+                        horizontal: MediaQuery.of(context).size.width * 0.03,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1C1C1C), // Dark background to match the card
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min, // Only take up as much space as needed
+                        children: [
+                          Icon(
+                            Icons.directions,
+                            color: const Color(0xFF4CAF50), // Lime green color for the icon
+                            size: MediaQuery.of(context).size.width * 0.04,
                           ),
-                          const SizedBox(height: 5),
-                          Text(
-                            placeName,
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.033,
-                              color: Colors.white70,
+                          const SizedBox(width: 4), // Space between icon and text
+                          Flexible( // Use Flexible to avoid overflow
+                            child: Text(
+                              distance,
+                              style: TextStyle(
+                                fontSize: MediaQuery.of(context).size.width * 0.032,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFFB2FF59), // Light green color for distance text
+                              ),
+                              overflow: TextOverflow.ellipsis, // Prevent overflow
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        SlantedLabel(distance: distance), // Pass distance as a string
-      ],
-    ),
-  );
-}
-
-Widget _buildChargerListContainer() {
-  return Expanded(
-    child: Container(
-      margin: const EdgeInsets.only(bottom: 5),
-      child: Column(
-        children: [
-          if (isChargerAvailable)
-            Expanded(
-              child: _buildChargerList(), // Render charger list if available
-            ),
         ],
       ),
-    ),
-  );
-}
+    );
 
-Widget _buildChargerList() {
-  List<Widget> chargerCards = [];
-  Set<String> chargerIds = {}; // Track charger IDs to avoid duplicates
-  Set<String> uniqueLocations = {}; // Track unique lat/long combinations
-  chargerIdsList.clear(); // Clear previous IDs to avoid duplicates
-  isChargerAvailable = false; // Reset the flag initially
 
-  // Show shimmer if the data is still loading
-  if (recentSessions.isEmpty && availableChargers.isEmpty) {
-    // Data is still loading, show shimmer
-    for (var i = 0; i < 3; i++) {
-      chargerCards.add(_buildShimmerCard());
-    }
-  } else {
-    // Data is loaded, show the actual charger cards
-    if (activeFilter == 'Previously Used') {
-      for (var session in recentSessions) {
-        String chargerId = session['details']['charger_id']?.trim() ?? 'Unknown ID';
-        double chargerLatitude = double.parse(session['details']['lat'] ?? '0');
-        double chargerLongitude = double.parse(session['details']['long'] ?? '0');
-        String locationKey = '$chargerLatitude,$chargerLongitude';
 
-        if (!chargerIds.contains(chargerId) && !uniqueLocations.contains(locationKey)) {
+  }
+
+
+  Widget _buildChargerListContainer() {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 5),
+        child: Column(
+          children: [
+          if (isLoading)
+          // Show shimmer effect when data is loading
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: List.generate(3, (index) => _buildShimmerCard()), // Display 3 shimmer cards
+                ),
+              ),
+            )
+            else if (isChargerAvailable)
+            // Render the actual charger list if data is loaded and chargers are available
+              Expanded(
+                child: _buildChargerList(),
+              )
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  Widget _buildChargerList() {
+    List<Widget> chargerCards = [];
+    Set<String> chargerIds = {}; // Track charger IDs to avoid duplicates
+    Set<String> uniqueLocations = {}; // Track unique lat/long combinations
+    chargerIdsList.clear(); // Clear previous IDs to avoid duplicates
+    isChargerAvailable = false; // Reset the flag initially
+
+    // Check if data is loading and show shimmer if true
+    if (isLoading) {
+      // Data is still loading, show shimmer cards
+      for (var i = 0; i < 3; i++) {
+        chargerCards.add(_buildShimmerCard());
+      }
+    } else {
+      // Data is loaded, show the actual charger cards
+      if (activeFilter == 'Previously Used') {
+        for (var session in recentSessions) {
+          String chargerId = session['details']['charger_id']?.trim() ?? 'Unknown ID';
+          double chargerLatitude = double.parse(session['details']['lat'] ?? '0');
+          double chargerLongitude = double.parse(session['details']['long'] ?? '0');
+          String locationKey = '$chargerLatitude,$chargerLongitude';
+
+          if (!chargerIds.contains(chargerId) && !uniqueLocations.contains(locationKey)) {
+            LatLng referencePosition = _currentSelectedLocation != null
+                ? LatLng(
+              double.parse(_currentSelectedLocation!['latitude']),
+              double.parse(_currentSelectedLocation!['longitude']),
+            )
+                : (_currentPosition ?? _center);
+
+            // Calculate distance as a string
+            double distanceInKm = _calculateDistance(
+              referencePosition.latitude,
+              referencePosition.longitude,
+              chargerLatitude,
+              chargerLongitude,
+            );
+
+            String distanceText = "${distanceInKm.toStringAsFixed(2)} km";
+
+            chargerIds.add(chargerId);
+            uniqueLocations.add(locationKey);
+            chargerIdsList.add(chargerId); // Add to the separate list
+            chargerCards.add(
+              _buildChargerCard(
+                context,
+                session['details']['landmark'] ?? 'Unknown location',
+                chargerId,
+                LatLng(chargerLatitude, chargerLongitude),
+                distanceText, // Pass distance as a string
+              ),
+            );
+            isChargerAvailable = true; // Set the flag to true
+          }
+        }
+      } else if (activeFilter == 'All Chargers') {
+        for (var charger in availableChargers) {
+          String chargerId = charger['charger_id']?.trim() ?? 'Unknown ID';
+          double chargerLatitude = double.parse(charger['lat'] ?? '0');
+          double chargerLongitude = double.parse(charger['long'] ?? '0');
+          String locationKey = '$chargerLatitude,$chargerLongitude';
+
           LatLng referencePosition = _currentSelectedLocation != null
               ? LatLng(
-                  double.parse(_currentSelectedLocation!['latitude']),
-                  double.parse(_currentSelectedLocation!['longitude']),
-                )
+            double.parse(_currentSelectedLocation!['latitude']),
+            double.parse(_currentSelectedLocation!['longitude']),
+          )
               : (_currentPosition ?? _center);
 
-          // Calculate distance as a string
           double distanceInKm = _calculateDistance(
             referencePosition.latitude,
             referencePosition.longitude,
@@ -1913,109 +1980,53 @@ Widget _buildChargerList() {
 
           String distanceText = "${distanceInKm.toStringAsFixed(2)} km";
 
-          chargerIds.add(chargerId);
-          uniqueLocations.add(locationKey);
-          chargerIdsList.add(chargerId); // Add to the separate list
-          chargerCards.add(
-            _buildChargerCard(
-              context,
-              session['details']['landmark'] ?? 'Unknown location',
-              chargerId,
-              // session['details']['model'] ?? 'Unknown Model',
-              // session['status']['charger_status'] ?? 'Unknown Status',
-              // formatTimestamp(session['status']['timestamp']),
-              // session['unit_price']?.toString() ?? 'Unknown Price',
-              // session['status']['connector_id'] ?? 0,
-              // session['details']['charger_accessibility']?.toString() ?? 'Unknown',
-              // session['details']['charger_type'] ?? 'Unknown Type',
-              LatLng(chargerLatitude, chargerLongitude),
-              distanceText, // Pass distance as a string
-            ),
-          );
-            isChargerAvailable = true; // Set the flag to true
-        }
-      }
-    } else if (activeFilter == 'All Chargers') {
-      for (var charger in availableChargers) {
-        String chargerId = charger['charger_id']?.trim() ?? 'Unknown ID';
-        double chargerLatitude = double.parse(charger['lat'] ?? '0');
-        double chargerLongitude = double.parse(charger['long'] ?? '0');
-        String locationKey = '$chargerLatitude,$chargerLongitude';
+          if (distanceInKm <= 100.0) {
+            if (!chargerIds.contains(chargerId) && !uniqueLocations.contains(locationKey)) {
+              chargerIds.add(chargerId);
+              uniqueLocations.add(locationKey);
+              chargerIdsList.add(chargerId);
 
-        LatLng referencePosition = _currentSelectedLocation != null
-            ? LatLng(
-                double.parse(_currentSelectedLocation!['latitude']),
-                double.parse(_currentSelectedLocation!['longitude']),
-              )
-            : (_currentPosition ?? _center);
+              var statusList = charger['status'] ?? [null];
+              if (statusList.isNotEmpty) {
+                var status = statusList.first;
 
-        double distanceInKm = _calculateDistance(
-          referencePosition.latitude,
-          referencePosition.longitude,
-          chargerLatitude,
-          chargerLongitude,
-        );
-
-        String distanceText = "${distanceInKm.toStringAsFixed(2)} km";
-
-        if (distanceInKm <= 100.0) {
-          if (!chargerIds.contains(chargerId) && !uniqueLocations.contains(locationKey)) {
-            chargerIds.add(chargerId);
-            uniqueLocations.add(locationKey);
-            chargerIdsList.add(chargerId);
-
-            var statusList = charger['status'] ?? [null];
-            if (statusList.isNotEmpty) {
-              var status = statusList.first;
-
-              chargerCards.add(
-                _buildChargerCard(
-                  context,
-                  charger['landmark'] ?? 'Unknown location',
-                  chargerId,
-                  // charger['model'] ?? 'Unknown Model',
-                  // status == null
-                  //     ? "Not yet received"
-                  //     : status['charger_status'] ?? 'Unknown Status',
-                  // status == null
-                  //     ? "Not yet received"
-                  //     : formatTimestamp(status['timestamp']),
-                  // charger['unit_price']?.toString() ?? 'Unknown Price',
-                  // status == null
-                  //     ? 0
-                  //     : status['connector_id'] ?? 'Unknown Last Updated',
-                  // charger['charger_accessibility']?.toString() ?? 'Unknown',
-                  // charger['charger_type'] ?? 'Unknown Type',
-                  LatLng(chargerLatitude, chargerLongitude),
-                  distanceText, // Pass distance as a string
-                ),
-              );
-              isChargerAvailable = true; // Set the flag to true if at least one charger is available
+                chargerCards.add(
+                  _buildChargerCard(
+                    context,
+                    charger['landmark'] ?? 'Unknown location',
+                    chargerId,
+                    LatLng(chargerLatitude, chargerLongitude),
+                    distanceText, // Pass distance as a string
+                  ),
+                );
+                isChargerAvailable = true; // Set the flag to true if at least one charger is available
+              }
             }
           }
         }
       }
     }
+
+    return Expanded(
+      child: PageView.builder(
+        controller: _pageController,
+        scrollDirection: Axis.horizontal,
+        itemCount: chargerCards.length,
+        onPageChanged: (index) {
+          String chargerId = chargerIdsList[index];
+          _onChargerCardChanged(chargerId);
+        },
+        itemBuilder: (context, index) {
+          return chargerCards[index];
+        },
+      ),
+    );
   }
 
-  return Expanded(
-    child: PageView.builder(
-      controller: _pageController,
-      scrollDirection: Axis.horizontal,
-      itemCount: chargerCards.length,
-      onPageChanged: (index) {
-        String chargerId = chargerIdsList[index];
-        _onChargerCardChanged(chargerId);
-      },
-      itemBuilder: (context, index) {
-        return chargerCards[index];
-      },
-    ),
-  );
-}
 
 
-void _onChargerCardChanged(String chargerId) {
+
+  void _onChargerCardChanged(String chargerId) {
   print("_onChargerCardChanged $chargerId");
 
   // Cancel any existing debounce timers
@@ -2087,11 +2098,15 @@ void _onChargerCardChanged(String chargerId) {
 class ConnectorSelectionDialog extends StatefulWidget {
   final Map<String, dynamic> chargerData;
   final Function(int, int) onConnectorSelected;
-
+  final String username;
+  final int? userId;
+  final String email;
+  final Map<String, dynamic>? selectedLocation; // Accept the selected location
+  
   const ConnectorSelectionDialog({
     super.key,
     required this.chargerData,
-    required this.onConnectorSelected,
+    required this.onConnectorSelected, required this.username, this.userId, required this.email, this.selectedLocation,
   });
 
   @override
@@ -2115,155 +2130,165 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
     }
     return 'Unknown';
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: const BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Select Connector',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+@override
+Widget build(BuildContext context) {
+  return Container(
+    padding: const EdgeInsets.all(16.0),
+    decoration: const BoxDecoration(
+      color: Colors.black,
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Select Connector',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
-              IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          CustomGradientDivider(),
-          const SizedBox(height: 20),
-
-          // Connector Grid
-          GridView.builder(
-            shrinkWrap: true,
-            itemCount: widget.chargerData.keys
-                .where((key) => key.startsWith('connector_'))
-                .length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 3,
             ),
-            itemBuilder: (BuildContext context, int index) {
-              int connectorId = index + 1;
-              String connectorKey = 'connector_${connectorId}_type';
-
-              if (!widget.chargerData.containsKey(connectorKey) ||
-                  widget.chargerData[connectorKey] == null) {
-                return const SizedBox.shrink();
-              }
-
-              int connectorType = widget.chargerData[connectorKey];
-
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedConnector = connectorId;
-                    selectedConnectorType = connectorType;
-                  });
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: selectedConnector == connectorId
-                        ? Colors.green
-                        : Colors.grey[800],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          connectorType == 1
-                              ? Icons.power // socket icon
-                              : Icons.ev_station, // gun connector icon
-                          color: connectorType == 1
-                              ? Colors.green // Socket icon color
-                              : Colors.red, // Gun connector icon color
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _getConnectorTypeName(connectorType),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          ' - [ $connectorId ]',
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () {
+                // Navigate to HomePage without disrupting other content
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HomePage(
+                      selectedLocation: widget.selectedLocation,
+                      username: widget.username,
+                      userId: widget.userId,
+                      email: widget.email,
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          // Continue Button
-          ElevatedButton(
-            onPressed: _isFormValid()
-                ? () {
-                    if (selectedConnector != null &&
-                        selectedConnectorType != null) {
-                      widget.onConnectorSelected(
-                          selectedConnector!, selectedConnectorType!);
-                      Navigator.of(context).pop();
-                    }
-                  }
-                : null,
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                (Set<WidgetState> states) {
-                  if (states.contains(WidgetState.disabled)) {
-                    return Colors.green.withOpacity(0.2);
-                  }
-                  return const Color(0xFF1C8B40);
-                },
-              ),
-              minimumSize:
-                  WidgetStateProperty.all(const Size(double.infinity, 50)),
-              shape: WidgetStateProperty.all(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              elevation: WidgetStateProperty.all(0),
+                );
+              },
             ),
-            child:
-                const Text('Continue', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-}
+          ],
+        ),
+        const SizedBox(height: 10),
+        CustomGradientDivider(),
+        const SizedBox(height: 20),
 
+        // Connector Grid
+        GridView.builder(
+          shrinkWrap: true,
+          itemCount: widget.chargerData.keys
+              .where((key) => key.startsWith('connector_'))
+              .length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 3,
+          ),
+          itemBuilder: (BuildContext context, int index) {
+            int connectorId = index + 1;
+            String connectorKey = 'connector_${connectorId}_type';
+
+            if (!widget.chargerData.containsKey(connectorKey) ||
+                widget.chargerData[connectorKey] == null) {
+              return const SizedBox.shrink();
+            }
+
+            int connectorType = widget.chargerData[connectorKey];
+
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  selectedConnector = connectorId;
+                  selectedConnectorType = connectorType;
+                });
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: selectedConnector == connectorId
+                      ? Colors.green
+                      : Colors.grey[800],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        connectorType == 1
+                            ? Icons.power // socket icon
+                            : Icons.ev_station, // gun connector icon
+                        color: connectorType == 1
+                            ? Colors.green // Socket icon color
+                            : Colors.red, // Gun connector icon color
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _getConnectorTypeName(connectorType),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        ' - [ $connectorId ]',
+                        style: const TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 20),
+        // Continue Button
+        ElevatedButton(
+          onPressed: _isFormValid()
+              ? () {
+                  // Dismiss the keyboard when the button is pressed
+                  FocusScope.of(context).unfocus();
+                  
+                  if (selectedConnector != null && selectedConnectorType != null) {
+                    widget.onConnectorSelected(selectedConnector!, selectedConnectorType!);
+                                      FocusScope.of(context).unfocus();
+
+                    Navigator.of(context).pop();
+                  }
+                }
+              : null,
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.resolveWith<Color>(
+              (Set<MaterialState> states) {
+                if (states.contains(MaterialState.disabled)) {
+                  return Colors.green.withOpacity(0.2);
+                }
+                return const Color(0xFF1C8B40);
+              },
+            ),
+            minimumSize: MaterialStateProperty.all(const Size(double.infinity, 50)),
+            shape: MaterialStateProperty.all(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            elevation: MaterialStateProperty.all(0),
+          ),
+          child: const Text('Charge now', style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    ),
+  );
+}
+}
 class SlantedLabel extends StatelessWidget {
   final String? distance;
 
@@ -2564,6 +2589,77 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
         Icons.bolt_sharp, // Charging icon
         color: Colors.green, // Set the icon color
         size: 200, // Adjust the size as needed
+      ),
+    );
+  }
+}
+
+
+class ErrorDetails extends StatelessWidget {
+  final String? errorData;
+  final String username;
+  final int? userId;
+  final String email;
+  final Map<String, dynamic>? selectedLocation; // Accept the selected location
+  
+  const ErrorDetails({Key? key, required this.errorData, required this.username, this.userId, required this.email, this.selectedLocation}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center, // Center the content
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Error Details',
+                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () {
+
+                  // Use Navigator.push to add the new page without disrupting other content
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HomePage(
+                        selectedLocation: selectedLocation, // Pass the consistent selectedLocation
+                        username: username,
+                        userId: userId,
+                        email: email,
+                      ),
+                    ),
+                  );
+                  // Close the QR code scanner page and return to the Home Page
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10), // Add spacing between the header and the green line
+          CustomGradientDivider(),
+          const SizedBox(height: 20), // Add spacing between the green line and the icon
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 70,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            errorData ?? 'An unknown error occurred.',
+            style: const TextStyle(color: Colors.white70, fontSize: 20),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 30),
+        ],
       ),
     );
   }

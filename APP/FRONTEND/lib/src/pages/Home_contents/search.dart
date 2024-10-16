@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:ev_app/src/pages/home.dart';
 import 'package:ev_app/src/service/location.dart';
@@ -35,7 +34,9 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
   List<Map<String, String>> recentLocations = [];
   List<Map<String, Object>> filteredLocations = [];
   LatLng? _currentPosition;
-bool _isLoading = false; // Add this variable to manage loading state
+  bool _isLoading = false; // Add this variable to manage loading state
+  bool _isLoadingBolt = false; // Add this variable to manage loading state
+  bool _isDialogShown = false;
 
   // Initialize recent locations from SharedPreferences
   @override
@@ -69,62 +70,64 @@ bool _isLoading = false; // Add this variable to manage loading state
     }
   }
 
-void _oncurrentLocationSelected(Map<String, dynamic> location) {
-  // Convert latitude and longitude to strings to ensure consistency
-  final selectedLocation = {
-    'name': location['name'],
-    'address': location['address'],
-    'latitude': location['latitude'].toString(), // Ensure it's a string
-    'longitude': location['longitude'].toString(), // Ensure it's a string
-  };
+  void _oncurrentLocationSelected(Map<String, dynamic> location) {
+    // Convert latitude and longitude to strings to ensure consistency
+    final selectedLocation = {
+      'name': location['name'],
+      'address': location['address'],
+      'latitude': location['latitude'].toString(), // Ensure it's a string
+      'longitude': location['longitude'].toString(), // Ensure it's a string
+    };
 
-  // Pass the selected location to the callback
-  widget.onLocationSelected(selectedLocation);
+    // Pass the selected location to the callback
+    widget.onLocationSelected(selectedLocation);
 
-  print("_currentSelectedLocation $selectedLocation");
+    print("_currentSelectedLocation $selectedLocation");
 
-  // Use Navigator.push to add the new page without disrupting other content
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => HomePage(
-        selectedLocation: selectedLocation, // Pass the consistent selectedLocation
-        username: widget.username,
-        userId: widget.userId,
-        email: widget.email,
+    // Use Navigator.push to add the new page without disrupting other content
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomePage(
+          selectedLocation:
+              selectedLocation, // Pass the consistent selectedLocation
+          username: widget.username,
+          userId: widget.userId,
+          email: widget.email,
+        ),
       ),
-    ),
-  );
-}
-void _onLocationSelected(Map<String, dynamic> location) {
-  // Convert latitude and longitude to strings to ensure consistency
-  final selectedLocation = {
-    'name': location['name'],
-    'address': location['address'],
-    'latitude': location['latitude'].toString(), // Ensure it's a string
-    'longitude': location['longitude'].toString(), // Ensure it's a string
-  };
+    );
+  }
 
-  // Pass the selected location to the callback
-  widget.onLocationSelected(selectedLocation);
+  void _onLocationSelected(Map<String, dynamic> location) {
+    // Convert latitude and longitude to strings to ensure consistency
+    final selectedLocation = {
+      'name': location['name'],
+      'address': location['address'],
+      'latitude': location['latitude'].toString(), // Ensure it's a string
+      'longitude': location['longitude'].toString(), // Ensure it's a string
+    };
 
-  _saveRecentLocation(location); // Save selected location to recent
-  print("_currentSelectedLocation $selectedLocation");
+    // Pass the selected location to the callback
+    widget.onLocationSelected(selectedLocation);
 
-  // Use Navigator.push to add the new page without disrupting other content
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => HomePage(
-        selectedLocation: selectedLocation, // Pass the consistent selectedLocation
-        username: widget.username,
-        userId: widget.userId,
-        email: widget.email,
+    _saveRecentLocation(location); // Save selected location to recent
+    print("_currentSelectedLocation $selectedLocation");
+
+    // Use Navigator.push to add the new page without disrupting other content
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomePage(
+          selectedLocation:
+              selectedLocation, // Pass the consistent selectedLocation
+          username: widget.username,
+          userId: widget.userId,
+          email: widget.email,
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Future<void> _loadRecentLocations() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -264,85 +267,103 @@ void _onLocationSelected(Map<String, dynamic> location) {
     }
   }
 
-
-void _filterLocations(String query) async {
-  // Clear previous filtered locations when query is empty
-  if (query.isEmpty) {
-    setState(() {
-      filteredLocations = [];
-      _isLoading = false; // Set loading to false if no query
-    });
-    return; // Exit early
-  }
-
-  // Set loading to true before fetching locations
-  setState(() {
-    _isLoading = true;
-  });
-
-  // Fetch locations based on the query
-  List<Map<String, dynamic>> locations = await fetchLocations(query);
-
-  setState(() {
-    // Print the filtered locations
-    for (var location in locations) {
-      print('Name: ${location['name']}');
-      print('Address: ${location['address']}');
-      print('Latitude: ${location['latitude']}');
-      print('Longitude: ${location['longitude']}');
-      print(''); // Just for better formatting
-    }
-
-    // Update the filtered locations
-    filteredLocations = locations.map((location) {
-      return {
-        'name': location['name'] as String,
-        'address': location['address'] as String,
-        'latitude': location['latitude'] as double,
-        'longitude': location['longitude'] as double,
-      };
-    }).toList();
-
-    // Set loading to false after fetching locations
-    _isLoading = false;
-  });
-}
-
-  
-Future<void> _getCurrentLocation() async {
-  try {
- 
-    // Fetch the current location if permission is granted
-    LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
-    print("_onMapCreated currentLocation $currentLocation");
-
-    if (currentLocation != null) {
-      // Update the current position
+  void _filterLocations(String query) async {
+    // Clear previous filtered locations when query is empty
+    if (query.isEmpty) {
       setState(() {
-        _currentPosition = currentLocation;
+        filteredLocations = [];
+        _isLoading = false; // Set loading to false if no query
       });
-
-      // Call the _onLocationSelected function with the current location data
-      _oncurrentLocationSelected({
-        'name': 'Current Location',
-        'address': 'Your Current Address', // You can customize this as needed
-        'latitude': currentLocation.latitude.toString(),
-        'longitude': currentLocation.longitude.toString(),
-      });
-
-  
-    } else {
-      print('Current location could not be determined.');
+      return; // Exit early
     }
-  } catch (e) {
-    print('Error occurred while fetching the current location: $e');
+
+    // Set loading to true before fetching locations
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Fetch locations based on the query
+    List<Map<String, dynamic>> locations = await fetchLocations(query);
+
+    setState(() {
+      // Print the filtered locations
+      for (var location in locations) {
+        print('Name: ${location['name']}');
+        print('Address: ${location['address']}');
+        print('Latitude: ${location['latitude']}');
+        print('Longitude: ${location['longitude']}');
+        print(''); // Just for better formatting
+      }
+
+      // Update the filtered locations
+      filteredLocations = locations.map((location) {
+        return {
+          'name': location['name'] as String,
+          'address': location['address'] as String,
+          'latitude': location['latitude'] as double,
+          'longitude': location['longitude'] as double,
+        };
+      }).toList();
+
+      // Set loading to false after fetching locations
+      _isLoading = false;
+    });
   }
-}
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      // Fetch the current location if permission is granted
+      LatLng? currentLocation =
+          await LocationService.instance.getCurrentLocation();
+      print("_onMapCreated currentLocation $currentLocation");
+
+      if (currentLocation != null) {
+        // Update the current position
+        setState(() {
+          _currentPosition = currentLocation;
+        });
+
+        // Call the _onLocationSelected function with the current location data
+        _oncurrentLocationSelected({
+          'name': 'Current Location',
+          'address': 'Your Current Address', // You can customize this as needed
+          'latitude': currentLocation.latitude.toString(),
+          'longitude': currentLocation.longitude.toString(),
+        });
+      } else {
+        print('Current location could not be determined.');
+      }
+    } catch (e) {
+      print('Error occurred while fetching the current location: $e');
+    }
+  }
+
+  void _showsDialog() {
+    // Show the loading animation
+    showDialog(
+      context: context,
+      barrierDismissible:
+          false, // Prevents dismissing the dialog by tapping outside
+      builder: (BuildContext context) {
+        return Center(
+          child: SizedBox(
+            child: _AnimatedChargingIcon(),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isSmallScreen = width < 600;
+
+    // Use Future.microtask to avoid calling setState during build
+    if (_isLoadingBolt && !_isDialogShown) {
+      _isDialogShown = true; // Add this variable
+      Future.microtask(() => _showsDialog());
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -369,8 +390,6 @@ Future<void> _getCurrentLocation() async {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: isSmallScreen ? 8.0 : 16.0),
-
-              // Charger ID Search Field
               TextField(
                 controller: _chargerIdController,
                 decoration: InputDecoration(
@@ -379,12 +398,34 @@ Future<void> _getCurrentLocation() async {
                   prefixIcon: const Icon(Icons.ev_station, color: Colors.green),
                   suffixIcon: IconButton(
                     icon: const Icon(
-                      Icons.clear,
+                      Icons.search,
                       color: Colors.white70,
                       size: 23,
                     ),
                     onPressed: () {
-                      _chargerIdController.clear();
+                      // Dismiss the keyboard
+                      FocusScope.of(context).unfocus();
+                      // Delay for 1 second before executing further logic
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        if (_chargerIdController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please enter a Charger ID.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          setState(() {
+                            _isLoadingBolt = false;
+                            _isDialogShown = false; // Reset dialog shown status
+                          });
+                        } else {
+                          setState(() {
+                            _isLoadingBolt = true;
+                          });
+
+                          _searchChargerId(_chargerIdController.text);
+                        }
+                      });
                     },
                   ),
                   border: OutlineInputBorder(
@@ -394,7 +435,31 @@ Future<void> _getCurrentLocation() async {
                   hintText: 'Search by ChargerID...',
                   hintStyle: const TextStyle(color: Colors.grey),
                 ),
-                onSubmitted: _searchChargerId,
+                onSubmitted: (value) {
+                  // Dismiss the keyboard
+                  FocusScope.of(context).unfocus();
+
+                  setState(() {
+                    _isLoadingBolt = true;
+                  });
+
+                  Future.delayed(const Duration(seconds: 1), () {
+                    if (value.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a Charger ID.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      setState(() {
+                        _isLoadingBolt = false;
+                        _isDialogShown = false; // Reset dialog shown status
+                      });
+                    } else {
+                      _searchChargerId(value);
+                    }
+                  });
+                },
                 cursorColor: const Color(0xFF1ED760),
               ),
               SizedBox(height: isSmallScreen ? 8.0 : 16.0),
@@ -459,6 +524,11 @@ Future<void> _getCurrentLocation() async {
                     icon: const Icon(Icons.clear,
                         color: Colors.white70, size: 23),
                     onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      Future.delayed(const Duration(milliseconds: 500));
+
+                      // Add a delay of 500 milliseconds before unfocusing the text field
+                      // Clear the text field and filtered locations first
                       _locationController.clear();
                       setState(() {
                         filteredLocations = [];
@@ -474,9 +544,13 @@ Future<void> _getCurrentLocation() async {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SizedBox(height: 13), // Space between the indicator and text
-                      Text('Fetching locations...', style: TextStyle(fontSize: 16,  color: Colors.orangeAccent)),
-                      SizedBox(height: 10), // Space between the indicator and text
+                      SizedBox(
+                          height: 13), // Space between the indicator and text
+                      Text('Fetching locations...',
+                          style: TextStyle(
+                              fontSize: 16, color: Colors.orangeAccent)),
+                      SizedBox(
+                          height: 10), // Space between the indicator and text
                     ],
                   ),
                 ),
@@ -528,20 +602,29 @@ Future<void> _getCurrentLocation() async {
                   },
                 ),
               const SizedBox(height: 10),
-             ElevatedButton.icon(
-              onPressed: _getCurrentLocation, // Call the function here
-              icon: const Icon(Icons.my_location,color: Colors.white,), // Icon for current location
-              label: const Text('Current location',style: TextStyle(color: Colors.white,fontSize: 18),),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, // Set the button color to green
-                minimumSize: const Size(double.infinity, 50), // Full width button and set height
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8), // Optional: Rounded corners
+              ElevatedButton.icon(
+                onPressed: _getCurrentLocation, // Call the function here
+                icon: const Icon(
+                  Icons.my_location,
+                  color: Colors.white,
+                ), // Icon for current location
+                label: const Text(
+                  'Current location',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Colors.green, // Set the button color to green
+                  minimumSize: const Size(
+                      double.infinity, 50), // Full width button and set height
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(8), // Optional: Rounded corners
+                  ),
                 ),
               ),
-),  
 
-                 const SizedBox(height: 10),
+              const SizedBox(height: 10),
               Padding(
                 padding: EdgeInsets.symmetric(
                     vertical: isSmallScreen ? 4.0 : 8.0, horizontal: 5),
@@ -658,6 +741,78 @@ Future<void> _getCurrentLocation() async {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AnimatedChargingIcon extends StatefulWidget {
+  @override
+  __AnimatedChargingIconState createState() => __AnimatedChargingIconState();
+}
+
+class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _slideAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..forward(); // Start the animation
+
+    // Slide animation for moving the bolt icon vertically downwards
+    _slideAnimation = Tween<double>(begin: -130.0, end: 60.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Opacity animation for smooth fading in and out
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        // Reset the animation to start from the top when it reaches the bottom
+        _controller.reset();
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value), // Move vertically
+          child: Opacity(
+            opacity: _opacityAnimation.value,
+            child: child,
+          ),
+        );
+      },
+      child: const Icon(
+        Icons.bolt_sharp, // Charging icon
+        color: Colors.green, // Set the icon color
+        size: 200, // Adjust the size as needed
       ),
     );
   }

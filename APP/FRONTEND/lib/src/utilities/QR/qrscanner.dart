@@ -74,7 +74,7 @@ class _QRViewExampleState extends State<QRViewExample> {
           top: 45,
           left: 10,
           child: IconButton(
-            icon: Icon(Icons.close, color: Colors.white, size: 35),
+            icon: const Icon(Icons.close, color: Colors.white, size: 35),
             onPressed: () {
               Navigator.pushReplacement(
                 context,
@@ -96,7 +96,7 @@ class _QRViewExampleState extends State<QRViewExample> {
             future: controller?.getFlashStatus(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
+                return const CircularProgressIndicator();
               } else {
                 bool isFlashOn = snapshot.data == true;
                 return IconButton(
@@ -244,7 +244,7 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
           ),
         );
       },
-      child: Icon(
+      child: const Icon(
         Icons.bolt_sharp, // Charging icon
         color: Colors.green, // Set the icon color
         size: 200, // Adjust the size as needed
