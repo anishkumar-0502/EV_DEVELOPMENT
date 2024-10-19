@@ -76,7 +76,6 @@ Timer? _debounceTimer;
       _currentSelectedLocation = widget.selectedLocation;
     _checkLocationPermission(); // Check permissions on initialization
   // Prioritize moving to the selected location
-
     _updateMarkers();
     activeFilter = 'All Chargers';
     fetchAllChargers();
@@ -90,7 +89,6 @@ void dispose() {
   _positionStreamSubscription?.cancel(); // Cancel the position stream subscription
   super.dispose(); // Call the super class dispose method
 }
-
 
 // Define the method to check and request location permissions
   Future<void> _checkLocationPermission() async {
@@ -127,16 +125,6 @@ void dispose() {
     // Do nothing if permission is denied; no alert is shown
     _isCheckingPermission = false;
   }
-
-void _resetSelectedLocationAndFetchCurrent() {
-  setState(() {
-    _currentSelectedLocation = null;
-    _markers.removeWhere((marker) => marker.markerId.value == 'selected_location');
-  });
-
-  _getCurrentLocation();
-}
-
 
 
   Future<void> _getCurrentLocation() async {
@@ -211,6 +199,242 @@ void _resetSelectedLocationAndFetchCurrent() {
       });
     }
   }
+
+// // Define the method to check and request location permissions AND
+//   Future<void> _checkLocationPermission() async {
+//     if (_isCheckingPermission) return; // Prevent multiple permission checks
+
+//     _isCheckingPermission = true;
+
+//     // Load the saved flag from SharedPreferences
+//     SharedPreferences prefs = await SharedPreferences.getInstance();
+//     bool locationPromptClosed = prefs.getBool('LocationPromptClosed') ?? false;
+
+//     // If the user has closed the dialog before, don't show it again
+//     if (locationPromptClosed) {
+//       _isCheckingPermission = false;
+//       return;
+//     }
+
+//     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+//     if (!serviceEnabled) {
+//       // Show the location services dialog
+//       await _showLocationServicesDialog();
+//       _isCheckingPermission = false;
+//       return;
+//     }
+
+//     // Request location permission
+//     PermissionStatus permission = await Permission.location.request();
+//     if (permission.isGranted) {
+//       await _getCurrentLocation();
+//       // Reset the flag, because location is now enabled
+//       await prefs.setBool('LocationPromptClosed', false);
+//     }
+
+//     // Do nothing if permission is denied; no alert is shown
+//     _isCheckingPermission = false;
+//   }
+
+
+
+//   Future<void> _getCurrentLocation() async {
+//     // If a location fetch is already in progress, don't start a new one
+//     if (_isFetchingLocation) return;
+
+//     setState(() {
+//       _isFetchingLocation = true;
+//     });
+    
+//   // if (_currentSelectedLocation != null ){
+//   //   setState(() {
+//   //     _currentSelectedLocation = null;
+//   //   });
+//   // }
+
+//     try {
+//       // Ensure location services are enabled and permission is granted before fetching location
+//       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+//       if (!serviceEnabled) {
+//         await _showLocationServicesDialog();
+//         return;
+//       }
+
+//       PermissionStatus permission = await Permission.location.status;
+//       if (permission.isDenied) {
+//         await _showPermissionDeniedDialog();
+//         return;
+//       } else if (permission.isPermanentlyDenied) {
+//         await _showPermanentlyDeniedDialog();
+//         return;
+//       }
+
+//       // Fetch the current location if permission is granted
+//       LatLng? currentLocation =
+//           await LocationService.instance.getCurrentLocation();
+//       print("_onMapCreated currentLocation $currentLocation");
+
+//       if (currentLocation != null) {
+//         // Update the current position
+//         setState(() {
+//           _currentPosition = currentLocation;
+//         });
+
+//         // Smoothly animate the camera to the new position if the mapController is available
+//         if (mapController != null) {
+//           await mapController!.animateCamera(
+//             CameraUpdate.newCameraPosition(
+//               CameraPosition(
+//                 target: _currentPosition!,
+//                 zoom: 18.0, // Adjust zoom level as needed
+//                 tilt: 45.0, // Add a tilt for a 3D effect
+//                 // bearing:
+//                 //     _previousBearing ?? 0, // Use previous bearing if available
+//               ),
+//             ),
+//           );
+//         }
+
+//         // Update the current location marker on the map
+//         _updateMarkers();
+//         fetchAllChargers();
+//         // await _updateCurrentLocationMarker(_previousBearing ?? 0);
+//       } else {
+//         print('Current location could not be determined.');
+//       }
+//     } catch (e) {
+//       print('Error occurred while fetching the current location: $e');
+//     } finally {
+//       setState(() {
+//         _isFetchingLocation = false;
+//       });
+//     }
+//   }
+
+
+// Future<void> _checkLocationPermission() async {
+//   if (_isCheckingPermission) return; // Prevent multiple permission checks
+
+//   _isCheckingPermission = true;
+
+//   // Load the saved flag from SharedPreferences
+//   SharedPreferences prefs = await SharedPreferences.getInstance();
+//   bool locationPromptClosed = prefs.getBool('LocationPromptClosed') ?? false;
+
+//   // If the user has closed the dialog before, don't show it again
+//   if (locationPromptClosed) {
+//     _isCheckingPermission = false;
+//     return;
+//   }
+
+//   // Check if location services are enabled
+//   bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+//   if (!serviceEnabled) {
+//     // Show the location services dialog
+//     await _showLocationServicesDialog();
+//     _isCheckingPermission = false;
+//     return;
+//   }
+//     print("Granted $_currentPosition");
+
+//   // Check the current location permission status
+//     PermissionStatus permission = await Permission.location.request();
+
+//   if (permission.isGranted) {
+//     print("Granted $_currentPosition");
+//     // Fetch the current location if permission is granted
+//     await _getCurrentLocation();
+//     await prefs.setBool('LocationPromptClosed', false); // Reset the flag
+//   } else if (permission.isDenied || permission.isRestricted) {
+//         print("not Granted $_currentPosition");
+
+//     // If the permission is denied or restricted, save the flag
+//     await prefs.setBool('LocationPromptClosed', true);
+//     await _showPermissionDeniedDialog(); // Show the dialog only when denied
+//   } else if (permission.isPermanentlyDenied) {
+//             print("not Granted isPermanentlyDenied $_currentPosition");
+
+//     // If permission is permanently denied, show a dialog to guide the user
+//     await _showPermanentlyDeniedDialog();
+//   }
+//     print("Granted $_currentPosition");
+
+//   _isCheckingPermission = false;
+// }
+
+// Future<void> _getCurrentLocation() async {
+//   // If a location fetch is already in progress, don't start a new one
+//   if (_isFetchingLocation) return;
+
+//   setState(() {
+//     _isFetchingLocation = true;
+//   });
+
+//   try {
+//     // Ensure location services are enabled before fetching location
+//     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+//     if (!serviceEnabled) {
+//       await _showLocationServicesDialog();
+//       return;
+//     }
+
+//     // Check the permission status again before fetching the location
+//     PermissionStatus permission = await Permission.locationWhenInUse.status;
+//     if (permission.isDenied || permission.isRestricted) {
+//       await _showPermissionDeniedDialog();
+//       return;
+//     } else if (permission.isPermanentlyDenied) {
+//       await _showPermanentlyDeniedDialog();
+//       return;
+//     }
+
+//     // Proceed with fetching the location
+//     LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
+//     print("_onMapCreated currentLocation: $currentLocation");
+
+//     if (currentLocation != null) {
+//       // Update the current position
+//       setState(() {
+//         _currentPosition = currentLocation;
+//       });
+
+//       // Smoothly animate the camera to the new position if the mapController is available
+//       if (mapController != null) {
+//         await mapController!.animateCamera(
+//           CameraUpdate.newCameraPosition(
+//             CameraPosition(
+//               target: _currentPosition!,
+//               zoom: 18.0, // Adjust zoom level as needed
+//               tilt: 45.0, // Add a tilt for a 3D effect
+//             ),
+//           ),
+//         );
+//       }
+
+//       // Update the current location marker on the map
+//       _updateMarkers();
+//       fetchAllChargers();
+//     } else {
+//       print('Current location could not be determined.');
+//     }
+//   } catch (e) {
+//     print('Error occurred while fetching the current location: $e');
+//   } finally {
+//     setState(() {
+//       _isFetchingLocation = false;
+//     });
+//   }
+// }
+
+void _resetSelectedLocationAndFetchCurrent() {
+  setState(() {
+    _currentSelectedLocation = null;
+    _markers.removeWhere((marker) => marker.markerId.value == 'selected_location');
+  });
+
+  _getCurrentLocation();
+}
+
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
@@ -384,7 +608,7 @@ void _resetSelectedLocationAndFetchCurrent() {
                   Expanded(
                     // Prevent text overflow
                     child: Text(
-                      "Permission Denied",
+                      "Permission Denied permanently",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -440,19 +664,21 @@ Future<void> _onMapCreated(GoogleMapController controller) async {
   mapController?.setMapStyle(mapStyle);
 
   await Future.delayed(const Duration(seconds: 1));
+    print("_onMapCreated _onMapCreated _currentPosition 1 $_currentPosition");
 
-  print("_currentSelectedLocation: $_currentSelectedLocation");
+  print("_onMapCreated _onMapCreated _currentSelectedLocation:1  $_currentSelectedLocation");
 
 
 
   // Check if the current position is available
-  if (_currentPosition != null) {
-    print("_onMapCreated  _currentPosition  $_currentPosition");
+  if (_currentPosition != null || _currentSelectedLocation != null ) {
+    print("_onMapCreated _onMapCreated _currentPosition 2 $_currentPosition");
+      print("_onMapCreated _onMapCreated _currentSelectedLocation: 2 $_currentSelectedLocation");
+
     // Zoom to 100km radius around the current location
     _animateTo100kmRadius();
-    _updateMarkers(); // Update markers if needed
   } else {
-    print("_onMapCreated: Current position is null");
+    print("_onMapCreated: _onMapCreated Current position is null");
     // Optionally handle the case where the current position is not available
     // _animateTo100kmRadius();
   }
@@ -612,53 +838,6 @@ Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
     }
   }
 
-  Future<BitmapDescriptor> _getIconWithOutline(
-      IconData iconData,
-      Color iconColor,
-      double size,
-      Color outlineColor,
-      double outlineWidth) async {
-    final pictureRecorder = ui.PictureRecorder();
-    final canvas = Canvas(pictureRecorder);
-
-    final paint = Paint()
-      ..color = outlineColor
-      ..style = PaintingStyle.fill;
-
-    final outlineRadius = size / 2 + outlineWidth;
-
-    // Draw the outline (a circle with the specified outline color)
-    canvas.drawCircle(
-      Offset(outlineRadius, outlineRadius),
-      outlineRadius,
-      paint,
-    );
-
-    // Draw the icon
-    final textPainter = TextPainter(textDirection: TextDirection.ltr)
-      ..text = TextSpan(
-        text: String.fromCharCode(iconData.codePoint),
-        style: TextStyle(
-          fontSize: size,
-          fontFamily: iconData.fontFamily,
-          color: iconColor,
-        ),
-      )
-      ..layout();
-
-    textPainter.paint(
-      canvas,
-      Offset(outlineWidth, outlineWidth),
-    );
-
-    final picture = pictureRecorder.endRecording();
-    final img = await picture.toImage(
-        (outlineRadius * 2).toInt(), (outlineRadius * 2).toInt());
-    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-    final buffer = byteData!.buffer.asUint8List();
-
-    return BitmapDescriptor.fromBytes(buffer);
-  }
 
   Future<BitmapDescriptor> _getIconFromAsset(String assetPath,
       {int width = 300, int height = 300}) async {
@@ -749,7 +928,9 @@ Future<String> _getAddressFromLatLng(double lat, double lng) async {
 
     return BitmapDescriptor.fromBytes(imageData);
   }
+  
 void _updateMarkers() async {
+  print("_updateMarkers: 1");
   if (_currentPosition != null) {
     // Fetch the dynamic bearing
     Position position = await Geolocator.getCurrentPosition(
@@ -774,19 +955,24 @@ void _updateMarkers() async {
 
   // Use a set to track unique positions to avoid duplicate markers
   Set<String> uniquePositions = {};
+  print("_updateMarkers: 2");
 
   // Iterate through available chargers
   for (var charger in availableChargers) {
     final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
     final lat = charger['lat'] != null ? double.tryParse(charger['lat']) : null;
     final lng = charger['long'] != null ? double.tryParse(charger['long']) : null;
+  print("_updateMarkers: 3");
 
     if (lat != null && lng != null) {
       // Create a unique key based on latitude and longitude
       String positionKey = '$lat,$lng';
+  print("_updateMarkers: 4");
 
       // Check if this position already exists
       if (uniquePositions.contains(positionKey)) {
+          print("_updateMarkers: 5");
+
         continue; // Skip adding a marker if this position is already tracked
       }
 
@@ -817,6 +1003,8 @@ void _updateMarkers() async {
           ),
         );
       });
+        print("_updateMarkers: 6");
+
     }
   }
 }
@@ -1168,41 +1356,26 @@ Future<void> fetchAllChargers() async {
     });
   }
 
-  Future<void> _updateCurrentLocationMarker(double bearing) async {
-    // Create a custom icon that reflects the current bearing
-    final currentLocationIcon = await _createCurrentLocationMarkerIcon(bearing);
-    print("_updateCurrentLocationMarker: $currentLocationIcon ");
-    setState(() {
-      // Remove any previous marker for the current location
-      _markers
-          .removeWhere((marker) => marker.markerId.value == 'current_location');
+void _animateTo100kmRadius() {
+  print("_onMapCreated _animateTo100kmRadius _currentSelectedLocation: 3  $_currentSelectedLocation");
+  print("_onMapCreated targetLocation _currentPosition: 4  $_currentPosition");
 
-      // Add a new marker with the updated location and rotation
-      _markers.add(
-        Marker(
-          markerId: const MarkerId('current_location'),
-          position: _currentPosition!,
-          icon: currentLocationIcon,
-          rotation: bearing,
-          anchor: const Offset(0.5, 0.5), // Center the icon
-        ),
-      );
-    });
-  }
-  
-  void _animateTo100kmRadius() {
-  print("_onMapCreated _animateTo100kmRadius _currentSelectedLocation:  $_currentSelectedLocation");
-
-  // Check if the current selected location is not null and the coordinates differ from the current position
-  if (_currentSelectedLocation != null ) {
+  // Check if the current selected location is not null
+  if (_currentSelectedLocation != null) {
     double selectedLatitude = double.parse(_currentSelectedLocation!['latitude'].toString());
     double selectedLongitude = double.parse(_currentSelectedLocation!['longitude'].toString());
 
     // Create a LatLng object for the target location
     final targetLocation = LatLng(selectedLatitude, selectedLongitude);
+    print("_onMapCreated targetLocation _currentSelectedLocation: 4  $_currentSelectedLocation");
 
-    // Check if the selected location and current position are not the same
-    if (_currentPosition != null && (selectedLatitude != _currentPosition!.latitude || selectedLongitude != _currentPosition!.longitude)) {
+    // If _currentPosition is null, set it to (0.0, 0.0)
+    _currentPosition ??= const LatLng(0.0, 0.0);
+
+    // Now check if the selected location and current position are different
+    if (selectedLatitude != _currentPosition!.latitude || selectedLongitude != _currentPosition!.longitude) {
+      print("_onMapCreated targetLocation _currentSelectedLocation: 5  $_currentSelectedLocation");
+
       // Create a new marker for the selected location
       Marker newMarker = Marker(
         markerId: const MarkerId("selected_location"),
@@ -1218,21 +1391,23 @@ Future<void> fetchAllChargers() async {
         _markers.clear(); // Clear previous markers
         _markers.add(newMarker); // Add the new marker
       });
-
       // Animate the camera to fit the 100km radius around the selected location
       _animateToBounds(targetLocation);
       return; // Return early to skip animating to the current position
     }
   }
 
-  // If there is no selected location and the current position is available
+  // If there is no selected location or the current position is available
   if (_currentPosition != null) {
+    print("_onMapCreated _animateTo100kmRadius _currentPosition: 6  $_currentPosition");
+
     // Animate the camera to fit the 100km radius around the current position
     _animateToBounds(_currentPosition!);
   } else {
     print("Current position is null, cannot animate to bounds.");
   }
 }
+
 
 
 void _animateToBounds(LatLng centerLocation) {

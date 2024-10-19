@@ -1,7 +1,5 @@
 // alert_banner.dart
-import 'package:ev_app/src/pages/home.dart';
 import 'package:flutter/material.dart';
-import '../Seperater/gradientPainter.dart';
 
 class AlertBanner extends StatelessWidget {
   final String message;
@@ -29,6 +27,7 @@ class AlertBanner extends StatelessWidget {
     );
   }
 }
+
 class SussessBanner extends StatelessWidget {
   final String message;
   final Color backgroundColor;

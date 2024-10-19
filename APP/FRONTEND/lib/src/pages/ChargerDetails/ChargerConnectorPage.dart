@@ -52,6 +52,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
     'charger_type': '',
     'last_used_time': '',
     'unit_price': 0.0,
+    "status": '',
   };
 
   @override
@@ -150,6 +151,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
           return lat == widget.position.latitude &&
               long == widget.position.longitude;
         }).toList();
+        print("filteredChargerData $filteredChargerData");
 
         // Create a list to hold unique chargers with addresses
         List<Map<String, dynamic>> uniqueChargers = [];
@@ -187,9 +189,23 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
 
             // Determine accessibility
             final isPrivate = charger['charger_accessibility'] ==
-                2; // Assuming 1 means private
+                2; // Assuming 1 means public
 
-            // Add the charger with the fetched address, formatted status timestamp, and accessibility status to the unique list
+            // Extract and update charger status
+            String chargerStatus = 'Not yet updated';
+            if (charger['status'] != null &&
+                charger['status'] is List &&
+                charger['status'].isNotEmpty) {
+              final status = charger['status'].firstWhere(
+                (status) => status['charger_status'] != null,
+                orElse: () => null,
+              );
+              if (status != null) {
+                chargerStatus = status['charger_status'];
+              }
+            }
+
+            // Add the charger with the fetched address, formatted status timestamp, accessibility status, and charger status to the unique list
             uniqueChargers.add({
               'charger_id': chargerId,
               'charger_type': charger['charger_type'] ?? 'Unknown Type',
@@ -198,6 +214,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
               'unit_price': charger['unit_price'] ?? 0.0,
               'address': address, // Store the fetched address
               'is_private': isPrivate, // Store the accessibility
+              'status': chargerStatus, // Store the charger status
             });
           }
         }
@@ -210,11 +227,13 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
           // Optional: Set the first charger as the sample charger data
           if (uniqueChargers.isNotEmpty) {
             final firstCharger = uniqueChargers.first;
+            print("firstCharger $firstCharger");
             charger = {
               'charger_id': firstCharger['charger_id'] ?? 'Unknown ID',
               'charger_type': firstCharger['charger_type'] ?? 'Unknown Type',
               'last_used_time': firstCharger['last_used_time'] ?? ' - ',
               'unit_price': firstCharger['unit_price'] ?? 0.0,
+              'status': firstCharger['status'] ?? 'Unknown',
             };
           }
         });
@@ -528,6 +547,41 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
     }
   }
 
+  Color getStatusColor(String? status) {
+    switch (status) {
+      case 'Available':
+        return Colors.green;
+      case 'Preparing':
+        return Colors.orange;
+      case 'Charging':
+        return Colors.orange;
+      case 'Finishing':
+        return Colors.orange;
+      case 'Unavailable':
+        return Colors.red;
+      default:
+        return Colors
+            .white54; // Default color for other statuses or if not updated
+    }
+  }
+
+  String getStatusText(String? status) {
+    switch (status) {
+      case 'Available':
+        return 'Available';
+      case 'Preparing':
+        return 'Busy';
+      case 'Charging':
+        return 'Busy';
+      case 'Finishing':
+        return 'Busy';
+      case 'Unavailable':
+        return 'Unavailable';
+      default:
+        return 'Not yet updated';
+    }
+  }
+
   Widget _buildChargerDetails(
       double screenWidth, Map<String, dynamic> charger) {
     return Card(
@@ -615,17 +669,11 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
             const SizedBox(height: 3),
             Row(
               children: [
-                Icon(
-                  Icons.currency_rupee,
-                  color: Colors.yellowAccent,
-                  size: screenWidth * 0.04,
-                ),
-                const SizedBox(width: 4),
                 Text(
-                  '${charger['unit_price'] ?? 'N/A'}/kWh',
+                  getStatusText(charger['status']),
                   style: TextStyle(
                     fontSize: screenWidth * 0.04,
-                    color: Colors.white54,
+                    color: getStatusColor(charger['status']),
                   ),
                 ),
                 const Spacer(),
@@ -639,6 +687,24 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
                 ),
               ],
             ),
+            Row(
+              children: [
+                Icon(
+                  Icons.currency_rupee,
+                  color: Colors.yellowAccent,
+                  size: screenWidth * 0.04,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${charger['unit_price'] ?? 'N/A'}/kWh',
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.04,
+                    color: Colors.white54,
+                  ),
+                ),
+              ],
+            ),
+
             const SizedBox(height: 7),
             CustomGradientDivider(),
             const SizedBox(height: 5),

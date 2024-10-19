@@ -9,6 +9,7 @@ import '../../utilities/User_Model/ImageProvider.dart'; // Import the UserImageP
 import 'Terms_&_Condition/tc.dart'; // Import your TermsPage
 import 'Privacy_&_Policy/pp.dart'; // Import your PrivacyPolicyPage
 import 'Account/Account.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfilePage extends StatefulWidget {
   final String username;
@@ -26,6 +27,7 @@ class _ProfilePageState extends State<ProfilePage> {
   int? phoneNo;
   String? password;
   int _selectedTileIndex = -1; // Index of the selected tile
+  String _version = '1.0.3'; // Default value, in case fetching fails
 
   @override
   void initState() {
@@ -34,8 +36,8 @@ class _ProfilePageState extends State<ProfilePage> {
     email = widget.email;
     final userImageProvider = Provider.of<UserImageProvider>(context, listen: false);
     userImageProvider.loadImage(); // Load user image when the profile page is initialized
-  }
 
+  }
 
 
   Future<void> _logout() async {
@@ -346,9 +348,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
                             child: Column(
                               children: [
-                                const Text(
-                                  'Version : alpha 1.0.1 ',
-                                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                                  Text(
+                                  'Version: "alpha $_version"',
+                                  style: const TextStyle(color: Colors.white70, fontSize: 12),
                                 ),
                                 RichText(
                                   text: const TextSpan(

@@ -161,10 +161,25 @@ class _WalletPageState extends State<WalletPage> {
         body: json.encode({'amount': amount, 'currency': currency}),
       );
       await Future.delayed(const Duration(seconds: 2));
+        var data = json.decode(response.body);
 
+        print("WalletResponse: $data");
       // Check if the response is successful
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
+        ////LIVE
+        // Map<String, dynamic> options = {
+        //   'key': 'rzp_live_TFodb8l3ihW2nM',
+        //   'amount': data['amount'],
+        //   'currency': data['currency'],
+        //   'name': 'EV Power',
+        //   'description': 'Wallet Recharge',
+        //   'order_id': data['id'],
+        //   'prefill': {'name': username},
+        //   'theme': {'color': '#3399cc'},
+        // };
+        
+        //TEST
         Map<String, dynamic> options = {
           'key': 'rzp_test_dcep4q6wzcVYmr',
           'amount': data['amount'],
@@ -175,12 +190,11 @@ class _WalletPageState extends State<WalletPage> {
           'prefill': {'name': username},
           'theme': {'color': '#3399cc'},
         };
-
         _lastPaymentAmount = amount; // Store the amount
 
         // Open the Razorpay payment gateway
         _razorpay.open(options);
-      } else {
+      }else {
         // Handle non-200 responses here
         throw Exception('Failed to create order: ${response.statusCode}');
       }
@@ -191,14 +205,14 @@ class _WalletPageState extends State<WalletPage> {
       //   context: context,
       //   builder: (BuildContext context) {
       //     return AlertDialog(
-      //       title: Text('Payment Error'),
-      //       content: Text('An error occurred while processing your payment. Please try again.'),
+      //       title: const Text('Payment Error'),
+      //       content: const Text('An error occurred while processing your payment. Please try again.'),
       //       actions: [
       //         TextButton(
       //           onPressed: () {
       //             Navigator.of(context).pop();
       //           },
-      //           child: Text('OK'),
+      //           child: const Text('OK'),
       //         ),
       //       ],
       //     );
@@ -210,7 +224,6 @@ class _WalletPageState extends State<WalletPage> {
       });
     }
   }
-
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     String? username = widget.username;
@@ -281,7 +294,7 @@ void _showAlertBanner(String message) {
     });
 
     // Simulate a delay or asynchronous operation if needed
-    Future.delayed(Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       setState(() {
         isLoading = false; // End loading
       });
@@ -527,11 +540,11 @@ void _showAlertBanner(String message) {
                     const SizedBox(height: 8),
                     // Conditional error message
                     if (walletBalance != null && walletBalance! < 100)
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(Icons.error_outline, color: Colors.red, size: 18), // Error icon
-                          const SizedBox(width: 8), // Space between icon and text
-                          const Text(
+                          Icon(Icons.error_outline, color: Colors.red, size: 18), // Error icon
+                          SizedBox(width: 8), // Space between icon and text
+                          Text(
                             'Maintain min balance of ₹100 for optimal charging.',
                             style: TextStyle(color: Colors.red, fontSize: 10),
                           ),
@@ -571,10 +584,10 @@ void _showAlertBanner(String message) {
                             decoration: InputDecoration(
                               border: InputBorder.none,
                               hintText: 'Enter amount',
-                              hintStyle: TextStyle(color: Colors.white54),
+                              hintStyle: const TextStyle(color: Colors.white54),
                               errorText: _errorMessage,
                             ),
-                            keyboardType: TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             inputFormatters: <TextInputFormatter>[
                               CustomTextInputFormatter(
                                 _calculateRemainingBalance(),
@@ -677,11 +690,11 @@ void _showAlertBanner(String message) {
                           title: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              const Row(
                                 children: [
-                                  const Icon(Icons.error_outline, color: Colors.red, size: 25),
-                                  const SizedBox(width: 10),
-                                  const Text(
+                                  Icon(Icons.error_outline, color: Colors.red, size: 25),
+                                  SizedBox(width: 10),
+                                  Text(
                                     "Error",
                                     style: TextStyle(color: Colors.white, fontSize: 18),
                                   ),
@@ -953,9 +966,9 @@ class PaymentFailureModal extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            paymentError['message'] ?? 'Unknown error occurred.',
-            style: const TextStyle(fontSize: 16, color: Colors.white70),
+          const Text(
+            'Transaction failed unexpectedly',
+            style: TextStyle(fontSize: 16, color: Colors.white70),
           ),
           const SizedBox(height: 24),
           Container(
@@ -996,7 +1009,7 @@ class PaymentFailureModal extends StatelessWidget {
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),
               subtitle: Text(
-                '${paymentError['transactionId'] ?? ''}',
+                '${paymentError['transactionId'] ?? ' - '}',
                 style: const TextStyle(fontSize: 16, color: Colors.white70),
               ),
             ),

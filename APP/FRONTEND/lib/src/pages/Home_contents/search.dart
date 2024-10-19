@@ -567,6 +567,52 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     }
   }
 
+// Future<void> _getCurrentLocation() async {
+//   try {
+//     // Ensure location services are enabled and permission is granted before fetching location
+//     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+//     if (!serviceEnabled) {
+//       await _showLocationServicesDialog();
+//       return;
+//     }
+
+//     PermissionStatus permission = await Permission.location.status;
+//     if (permission.isDenied || permission.isRestricted) {
+//       // iOS handles denied and restricted permissions differently
+//       await _showPermissionDeniedDialog();
+//       return;
+//     } else if (permission.isPermanentlyDenied) {
+//       // iOS doesn't have this state, so this is primarily for Android
+//       await _showPermanentlyDeniedDialog();
+//       return;
+//     }
+
+//     // Fetch the current location if permission is granted
+//     LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
+//     print("_onMapCreated currentLocation $currentLocation");
+
+//     if (currentLocation != null) {
+//       // Update the current position
+//       setState(() {
+//         _currentPosition = currentLocation;
+//       });
+
+//       // Call the _onLocationSelected function with the current location data
+//       _oncurrentLocationSelected({
+//         'name': 'Current Location',
+//         'address': 'Your Current Address', // You can customize this as needed
+//         'latitude': currentLocation.latitude.toString(),
+//         'longitude': currentLocation.longitude.toString(),
+//       });
+//     } else {
+//       print('Current location could not be determined.');
+//     }
+//   } catch (e) {
+//     print('Error occurred while fetching the current location: $e');
+//   }
+// }
+
+
   void _showsDialog() {
     // Show the loading animation
     showDialog(

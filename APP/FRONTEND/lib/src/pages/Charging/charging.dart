@@ -612,6 +612,7 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
           setState(() {
             charging = false;
           });
+          toggleBatteryScreen();
           stopTimeout();
           setIsStarted(false);
           isStartButtonEnabled = true;
@@ -659,6 +660,7 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
           setState(() {
             charging = false;
           });
+          toggleBatteryScreen();
           startTimeout();
           setIsStarted(false);
         } else if (chargerStatus == 'Charging') {
@@ -817,6 +819,8 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
     channel = WebSocketChannel.connect(
       // Uri.parse('ws://122.166.210.142:8566'),
       Uri.parse('ws://122.166.210.142:7002'),
+        // Uri.parse('ws://192.168.1.7:7050'),
+
     );
 
     channel.stream.listen(
