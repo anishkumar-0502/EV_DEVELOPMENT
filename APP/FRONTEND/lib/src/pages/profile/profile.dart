@@ -27,7 +27,7 @@ class _ProfilePageState extends State<ProfilePage> {
   int? phoneNo;
   String? password;
   int _selectedTileIndex = -1; // Index of the selected tile
-  String _version = '1.0.3'; // Default value, in case fetching fails
+  final String _version = '1.0.6'; // Default value, in case fetching fails
 
   @override
   void initState() {
@@ -349,7 +349,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             child: Column(
                               children: [
                                   Text(
-                                  'Version: "alpha $_version"',
+                                  'Version: alpha $_version ',
                                   style: const TextStyle(color: Colors.white70, fontSize: 12),
                                 ),
                                 RichText(

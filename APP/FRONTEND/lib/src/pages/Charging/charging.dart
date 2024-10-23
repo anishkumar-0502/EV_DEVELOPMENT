@@ -284,7 +284,7 @@ Widget _buildLoadingIndicator() {
       handleAlertLoadingStart(context);
 
     // Introduce a 3-second delay before sending the request
-    await Future.delayed(const Duration(seconds: 5));
+    await Future.delayed(const Duration(seconds: 4));
 
       var url = Uri.parse('http://122.166.210.142:4444/charging/getUpdatedCharingDetails');
       var body = {
@@ -681,7 +681,7 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
           await updateSessionPriceToUser(widget.connector_id);
         } else if (chargerStatus == 'Faulted' || chargerStatus ==  'SuspendedEV' ) {
           setIsStarted(false);
-          setState(() {
+          setState(() async {
             charging = false;
             isLoading = false; // Stop loading if it was still running
             toggleBatteryScreen();
@@ -690,6 +690,12 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
               showErrorDialog(context);
               setCheckFault(true);
             }
+          });
+
+               // Clear the TagIDStatus after 3 seconds
+          Future.delayed(const Duration(seconds: 3), () async {
+                await updateSessionPriceToUser(widget.connector_id);
+
           });
           print("checkout: $checkFault");
         } else if (chargerStatus == 'Unavailable') {
@@ -770,7 +776,7 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
         setIsStarted(false);
         setState(() {
           charging = false;
-          isLoading = false; // Stop loading if it was still running
+          //isLoading = false; // Stop loading if it was still running
         });
         currentTime = formatTimestamp(DateTime.now());
         print("StopTransaction");

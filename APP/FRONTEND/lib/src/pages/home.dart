@@ -189,7 +189,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final _pageOptions = [
       HomeContent(username: widget.username, userId: widget.userId, email: widget.email, selectedLocation: widget.selectedLocation),
-      WalletPage(username: widget.username, userId: widget.userId, ),
+      WalletPage(username: widget.username, userId: widget.userId, email: widget.email ),
       HistoryPage(username: widget.username, userId: widget.userId),
       ProfilePage(username: widget.username, userId: widget.userId, email: widget.email),
     ];

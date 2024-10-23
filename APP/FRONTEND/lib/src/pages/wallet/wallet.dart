@@ -11,7 +11,9 @@ import '../../utilities/Seperater/gradientPainter.dart';
 class WalletPage extends StatefulWidget {
   final String username;
   final int? userId;
-  const WalletPage({super.key, required this.username, this.userId});
+    final String email;
+
+  const WalletPage({super.key, required this.username, this.userId, required this.email});
 
   @override
   State<WalletPage> createState() => _WalletPageState();
@@ -89,6 +91,7 @@ class _WalletPageState extends State<WalletPage> {
 
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
+        print("dataaaa $data");
         if (data['data'] != null) {
           setState(() {
             walletBalance = data['data'].toDouble(); // Set wallet balance
@@ -149,6 +152,7 @@ class _WalletPageState extends State<WalletPage> {
   void handlePayment(double amount) async {
     String? username = widget.username;
     const String currency = 'INR';
+    int? user_Id= widget.userId;
 
     setState(() {
       showAlertLoading = true; // Show loading overlay
@@ -158,15 +162,17 @@ class _WalletPageState extends State<WalletPage> {
       var response = await http.post(
         Uri.parse('http://122.166.210.142:4444/wallet/createOrder'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'amount': amount, 'currency': currency}),
+        body: json.encode({'amount': amount, 'currency': currency , 'userId' : user_Id }),
       );
       await Future.delayed(const Duration(seconds: 2));
         var data = json.decode(response.body);
+        print("dataa: $data");
 
         print("WalletResponse: $data");
       // Check if the response is successful
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
+        print("dataa: $data");
         ////LIVE
         // Map<String, dynamic> options = {
         //   'key': 'rzp_live_TFodb8l3ihW2nM',
@@ -196,28 +202,14 @@ class _WalletPageState extends State<WalletPage> {
         _razorpay.open(options);
       }else {
         // Handle non-200 responses here
-        throw Exception('Failed to create order: ${response.statusCode}');
+        final errorData = json.decode(response.body);
+        final errorDatas =  errorData['message'];
+         print("WalletResponse ododod 2: $errorDatas");
+
+        showErrorDialog(context, errorData['message']);
       }
     } catch (error) {
       print('Error during payment: $error');
-      // Optionally, show an error dialog to inform the user
-      // showDialog(
-      //   context: context,
-      //   builder: (BuildContext context) {
-      //     return AlertDialog(
-      //       title: const Text('Payment Error'),
-      //       content: const Text('An error occurred while processing your payment. Please try again.'),
-      //       actions: [
-      //         TextButton(
-      //           onPressed: () {
-      //             Navigator.of(context).pop();
-      //           },
-      //           child: const Text('OK'),
-      //         ),
-      //       ],
-      //     );
-      //   },
-      // );
     } finally {
       setState(() {
         showAlertLoading = false; // Hide loading overlay after payment process
@@ -225,6 +217,25 @@ class _WalletPageState extends State<WalletPage> {
     }
   }
 
+  void showErrorDialog(BuildContext context, String message) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.black,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: MediaQuery.of(context).viewInsets,
+          child: ErrorDetails(
+              errorData: message,
+              username: widget.username,
+              email: widget.email,
+              userId: widget.userId),
+        );
+      },
+    ).then((_) {});
+  }
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     String? username = widget.username;
 
@@ -1247,6 +1258,77 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
         Icons.bolt_sharp, // Charging icon
         color: Colors.green, // Set the icon color
         size: 200, // Adjust the size as needed
+      ),
+    );
+  }
+}
+
+class ErrorDetails extends StatelessWidget {
+  final String? errorData;
+  final String username;
+  final int? userId;
+  final String email;
+  final Map<String, dynamic>? selectedLocation; // Accept the selected location
+
+  const ErrorDetails(
+      {Key? key,
+      required this.errorData,
+      required this.username,
+      this.userId,
+      required this.email,
+      this.selectedLocation})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center, // Center the content
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Error Details',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () {
+                  // Use Navigator.push to add the new page without disrupting other content
+                  Navigator.pop(context);
+                  // Close the QR code scanner page and return to the Home Page
+                },
+              ),
+            ],
+          ),
+          const SizedBox(
+              height: 10), // Add spacing between the header and the green line
+          CustomGradientDivider(),
+          const SizedBox(
+              height: 20), // Add spacing between the green line and the icon
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 70,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            errorData ?? 'An unknown error occurred.',
+            style: const TextStyle(color: Colors.white70, fontSize: 20),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 30),
+        ],
       ),
     );
   }

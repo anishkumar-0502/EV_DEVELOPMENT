@@ -77,6 +77,11 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
   }
 
   void showErrorDialog(BuildContext context, String message) {
+     setState(() {
+      isSearching = false;
+              isLoading = false; // Set loading to false on error
+
+      });
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -176,7 +181,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
             if (charger['status'] != null &&
                 charger['status'] is List &&
                 charger['status'].isNotEmpty) {
-              // Assuming the status array contains timestamp information
+              // Assuming the status array contains timestamp inf
               final status = charger['status'].firstWhere(
                 (status) => status['timestamp'] != null,
                 orElse: () => null,
@@ -274,111 +279,124 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
       return timestamp; // Or 'Invalid date' if you want to handle improperly formatted strings
     }
   }
+@override
+Widget build(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final String location = widget.address;
+  final LatLng position = widget.position;
 
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final String location = widget.address;
-    final LatLng position = widget.position;
+  return Scaffold(
+    body: Stack(
+      children: [
+        // The main content of the page
+        Column(
+          children: [
+            Stack(
+              children: [
+                Container(
+                  height: 250.0,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.black,
+                  ),
+                  child: Image.asset(
+                    'assets/Image/Connecter_bg.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: 30,
+                  left: 10,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+                Positioned(
+                  top: 30,
+                  right: 10,
+                  child: IconButton(
+                    icon: const Icon(Icons.share, color: Colors.black),
+                    onPressed: () {
+                      // Extract latitude and longitude from the position variable
+                      double latitude = position.latitude;
+                      double longitude = position.longitude;
 
-    return Scaffold(
-      body: Column(
-        children: [
-          Stack(
-            children: [
-              Container(
-                height: 250.0,
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Colors.black,
-                ),
-                child: Image.asset(
-                  'assets/Image/Connecter_bg.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Positioned(
-                top: 30,
-                left: 10,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ),
-              Positioned(
-                top: 30,
-                right: 10,
-                child: IconButton(
-                  icon: const Icon(Icons.share, color: Colors.black),
-                  onPressed: () {
-                    // Extract latitude and longitude from the position variable
-                    double latitude = position.latitude;
-                    double longitude = position.longitude;
+                      // Create the shareable message with a Google Maps link
+                      String message =
+                          "Explore the EV POWER for seamless EV charging experience!\n\n"
+                          "Location: $location\n\n"
+                          "Charge your EV now!\n"
+                          "Check the location on the map: https://www.google.com/maps/search/?api=1&query=$latitude,$longitude";
 
-                    // Create the shareable message with a Google Maps link
-                    String message =
-                        "Explore the EV POWER for seamless EV charging experience!\n\n"
-                        "Location: $location\n\n"
-                        "Charge your EV now!\n"
-                        "Check the location on the map: https://www.google.com/maps/search/?api=1&query=$latitude,$longitude";
-
-                    // Share the message
-                    Share.share(message);
-                  },
+                      // Share the message
+                      Share.share(message);
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.address,
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.04,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white70,
+              ],
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.address,
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white70,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Text(
-                        "Open Now",
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.04,
-                          color: Colors.green,
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Text(
+                          "Open Now",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.04,
+                            color: Colors.green,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        "24 Hours",
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.04,
-                          color: Colors.grey[700],
+                        const SizedBox(width: 10),
+                        Text(
+                          "24 Hours",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.04,
+                            color: Colors.grey[700],
+                          ),
                         ),
-                      ),
-                      const Spacer(),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  _buildNavigationBar(screenWidth),
-                  const SizedBox(height: 10),
-                  CustomGradientDivider(),
-                  _buildContent(screenWidth),
-                ],
+                        const Spacer(),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _buildNavigationBar(screenWidth),
+                    const SizedBox(height: 10),
+                    CustomGradientDivider(),
+                    _buildContent(screenWidth),
+                  ],
+                ),
               ),
             ),
+          ],
+        ),
+        // Conditionally render the loading overlay if `isSearching` is true
+        if (isSearching)
+          Container(
+            color: Colors.black.withOpacity(0.5), // Semi-transparent background
+            child: Center(
+              child: _AnimatedChargingIcon(), // Loading indicator
+            ),
           ),
-        ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
+
 
   Widget _buildContent(double screenWidth) {
     // Calculate the available height
@@ -463,7 +481,24 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
       showErrorDialog(context, 'Internal server error ');
     }
   }
+  void showloadingpage() {
+     setState(() {
+      isSearching = false;
+      });
 
+    showDialog(
+      context: context,
+      barrierDismissible:
+          false, // Prevents dismissing the dialog by tapping outside
+      builder: (BuildContext context) {
+        return Center(
+          child: SizedBox(
+            child: _AnimatedChargingIcon(),
+          ),
+        );
+      },
+    );
+  }
   Future<Map<String, dynamic>?> handleSearchRequest(
       String searchChargerID) async {
     if (isSearching) return null;
@@ -479,23 +514,10 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
       isSearching = true;
     });
 
-    // Show the loading animation
-    showDialog(
-      context: context,
-      barrierDismissible:
-          false, // Prevents dismissing the dialog by tapping outside
-      builder: (BuildContext context) {
-        return Center(
-          child: SizedBox(
-            child: _AnimatedChargingIcon(),
-          ),
-        );
-      },
-    );
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/searchCharger'),
+        Uri.parse('http://122.166.210.142:4444/SearchCharger'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -503,7 +525,6 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
           'user_id': widget.userId,
         }),
       );
-
       // Optional: Delay to show the loading animation for a bit longer if needed
       await Future.delayed(const Duration(seconds: 2));
 
@@ -515,21 +536,20 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
         });
 
         // Dismiss the loading animation
-        if (mounted) Navigator.of(context).pop();
+        // if (mounted) Navigator.of(context).pop();
 
         // Return the successful response data
         return data;
       } else {
         final errorData = json.decode(response.body);
+        final errorDatas =  errorData['message'];
+         print("ododod 2: $errorDatas");
+
         showErrorDialog(context, errorData['message']);
-        setState(() {
-          isSearching = false;
-        });
 
         // Dismiss the loading animation
-        if (mounted) Navigator.of(context).pop();
+        // if (mounted) Navigator.of(context).pop();
 
-        return {'error': true, 'message': errorData['message']};
       }
     } catch (error) {
       showErrorDialog(context, 'Internal server error');
@@ -545,6 +565,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
         });
       }
     }
+    return null;
   }
 
   Color getStatusColor(String? status) {
@@ -559,6 +580,8 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
         return Colors.orange;
       case 'Unavailable':
         return Colors.red;
+      case 'Faulted':
+        return Colors.red;
       default:
         return Colors
             .white54; // Default color for other statuses or if not updated
@@ -569,6 +592,8 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
     switch (status) {
       case 'Available':
         return 'Available';
+      case 'Faulted':
+        return 'Faulted';
       case 'Preparing':
         return 'Busy';
       case 'Charging':
@@ -648,6 +673,21 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
               children: [
                 Row(
                   children: [
+                                    Text(
+                  getStatusText(charger['status']),
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.04,
+                    color: getStatusColor(charger['status']),
+                  ),
+                ),
+
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 3),
+            Row(
+              children: [
                     Icon(
                       Icons.access_time, // Clock icon
                       size: screenWidth * 0.04, // Adjust the size as needed
@@ -662,20 +702,6 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
                         color: Colors.grey[400],
                       ),
                     ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 3),
-            Row(
-              children: [
-                Text(
-                  getStatusText(charger['status']),
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.04,
-                    color: getStatusColor(charger['status']),
-                  ),
-                ),
                 const Spacer(),
                 Text(
                   charger['charger_type'] ?? 'Unknown Type',
@@ -723,6 +749,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
                 ),
                 onPressed: () async {
                   final data = await handleSearchRequest(charger['charger_id']);
+                  print("connectorIdconnectorId data $data" );
                   if (data != null && !data.containsKey('error')) {
                     if (mounted) {
                       showModalBottomSheet(
@@ -1013,6 +1040,211 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
         Icons.bolt_sharp, // Charging icon
         color: Colors.green, // Set the icon color
         size: 200, // Adjust the size as needed
+      ),
+    );
+  }
+}
+
+class ConnectorSelectionDialog extends StatefulWidget {
+  final Map<String, dynamic> chargerData;
+  final Function(int, int) onConnectorSelected;
+  final String username;
+  final int? userId;
+  final String email;
+  final Map<String, dynamic>? selectedLocation; // Accept the selected location
+
+  const ConnectorSelectionDialog({
+    super.key,
+    required this.chargerData,
+    required this.onConnectorSelected,
+    required this.username,
+    this.userId,
+    required this.email,
+    this.selectedLocation,
+  });
+
+  @override
+  _ConnectorSelectionDialogState createState() =>
+      _ConnectorSelectionDialogState();
+}
+
+class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
+  int? selectedConnector;
+  int? selectedConnectorType;
+
+  bool _isFormValid() {
+    return selectedConnector != null && selectedConnectorType != null;
+  }
+
+  String _getConnectorTypeName(int connectorType) {
+    if (connectorType == 1) {
+      return 'Socket';
+    } else if (connectorType == 2) {
+      return 'Gun';
+    }
+    return 'Unknown';
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    // Get the screen size using MediaQuery
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 400;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        vertical: 16.0,
+        horizontal: isSmallScreen ? 12.0 : 16.0,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min, // Ensures it takes minimum space
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Select Connector',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isSmallScreen ? 18 : 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          CustomGradientDivider(),
+          const SizedBox(height: 20),
+
+          // Connector Grid
+  GridView.builder(
+  shrinkWrap: true, // Prevents unnecessary space
+  physics: const NeverScrollableScrollPhysics(),
+  itemCount: widget.chargerData.keys
+      .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
+      .length,
+  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+    crossAxisCount: 2,
+    mainAxisSpacing: 10,
+    crossAxisSpacing: 10,
+    childAspectRatio: 3,
+  ),
+  itemBuilder: (BuildContext context, int index) {
+    // Fetch the available connector keys dynamically
+    List<String> connectorKeys = widget.chargerData.keys
+        .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
+        .toList();
+
+    String connectorKey = connectorKeys[index]; // Use the key directly
+    int connectorId = index + 1; // Still keep the numbering for display purposes
+    int? connectorType = widget.chargerData[connectorKey];
+
+    if (connectorType == null) {
+      return const SizedBox.shrink(); // Skip if there's no valid connector
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedConnector = connectorId;
+          selectedConnectorType = connectorType;
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: selectedConnector == connectorId
+              ? Colors.green
+              : Colors.grey[800],
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                connectorType == 1 ? Icons.power : Icons.ev_station,
+                color: connectorType == 1 ? Colors.green : Colors.red,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _getConnectorTypeName(connectorType),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isSmallScreen ? 14 : 16,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                ' - [ $connectorId ]',
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isSmallScreen ? 14 : 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  },
+),
+
+          const SizedBox(height: 10), // Adjust this spacing as needed
+
+          // Continue Button
+          ElevatedButton(
+            onPressed: _isFormValid()
+                ? () {
+                    if (selectedConnector != null &&
+                        selectedConnectorType != null) {
+                      widget.onConnectorSelected(
+                          selectedConnector!, selectedConnectorType!);
+                      Navigator.of(context).pop();
+                    }
+                  }
+                : null,
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.disabled)) {
+                    return Colors.green.withOpacity(0.2);
+                  }
+                  return const Color(0xFF1C8B40);
+                },
+              ),
+              minimumSize: MaterialStateProperty.all(
+                Size(double.infinity, isSmallScreen ? 45 : 50),
+              ),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              elevation: MaterialStateProperty.all(0),
+            ),
+            child: Text(
+              'Continue',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: isSmallScreen ? 14 : 16,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -56,7 +56,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   StreamSubscription<Position>? _positionStreamSubscription;
   bool _isFetchingLocation = false; // Ensure initialization
   LatLng? _previousPosition;
-bool isChargerAvailable = false; // Flag to track if any charger is available
+  bool isChargerAvailable = false; // Flag to track if any charger is available
   bool _isCheckingPermission =
       false; // Flag to prevent repeated permission checks
   bool LocationEnabled = false;
@@ -66,29 +66,30 @@ bool isChargerAvailable = false; // Flag to track if any charger is available
   Map<String, String> _addressCache = {};
   GoogleMapController? _mapController;
   List<String> chargerIdsList = [];
-bool _isAnimationInProgress = false;
-CancelableOperation? _currentAnimationOperation;
-Timer? _debounceTimer;
+  bool _isAnimationInProgress = false;
+  CancelableOperation? _currentAnimationOperation;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
-      _currentSelectedLocation = widget.selectedLocation;
+    _currentSelectedLocation = widget.selectedLocation;
     _checkLocationPermission(); // Check permissions on initialization
-  // Prioritize moving to the selected location
+    // Prioritize moving to the selected location
     _updateMarkers();
     activeFilter = 'All Chargers';
     fetchAllChargers();
     _startLiveTracking(); // Start live tracking
   }
 
-@override
-void dispose() {
-  // Cancel any active stream subscriptions
+  @override
+  void dispose() {
+    // Cancel any active stream subscriptions
 
-  _positionStreamSubscription?.cancel(); // Cancel the position stream subscription
-  super.dispose(); // Call the super class dispose method
-}
+    _positionStreamSubscription
+        ?.cancel(); // Cancel the position stream subscription
+    super.dispose(); // Call the super class dispose method
+  }
 
 // Define the method to check and request location permissions
   Future<void> _checkLocationPermission() async {
@@ -126,7 +127,6 @@ void dispose() {
     _isCheckingPermission = false;
   }
 
-
   Future<void> _getCurrentLocation() async {
     // If a location fetch is already in progress, don't start a new one
     if (_isFetchingLocation) return;
@@ -134,12 +134,12 @@ void dispose() {
     setState(() {
       _isFetchingLocation = true;
     });
-    
-  // if (_currentSelectedLocation != null ){
-  //   setState(() {
-  //     _currentSelectedLocation = null;
-  //   });
-  // }
+
+    // if (_currentSelectedLocation != null ){
+    //   setState(() {
+    //     _currentSelectedLocation = null;
+    //   });
+    // }
 
     try {
       // Ensure location services are enabled and permission is granted before fetching location
@@ -236,8 +236,6 @@ void dispose() {
 //     _isCheckingPermission = false;
 //   }
 
-
-
 //   Future<void> _getCurrentLocation() async {
 //     // If a location fetch is already in progress, don't start a new one
 //     if (_isFetchingLocation) return;
@@ -245,7 +243,7 @@ void dispose() {
 //     setState(() {
 //       _isFetchingLocation = true;
 //     });
-    
+
 //   // if (_currentSelectedLocation != null ){
 //   //   setState(() {
 //   //     _currentSelectedLocation = null;
@@ -310,7 +308,6 @@ void dispose() {
 //       });
 //     }
 //   }
-
 
 // Future<void> _checkLocationPermission() async {
 //   if (_isCheckingPermission) return; // Prevent multiple permission checks
@@ -426,15 +423,15 @@ void dispose() {
 //   }
 // }
 
-void _resetSelectedLocationAndFetchCurrent() {
-  setState(() {
-    _currentSelectedLocation = null;
-    _markers.removeWhere((marker) => marker.markerId.value == 'selected_location');
-  });
+  void _resetSelectedLocationAndFetchCurrent() {
+    setState(() {
+      _currentSelectedLocation = null;
+      _markers.removeWhere(
+          (marker) => marker.markerId.value == 'selected_location');
+    });
 
-  _getCurrentLocation();
-}
-
+    _getCurrentLocation();
+  }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
@@ -655,106 +652,82 @@ void _resetSelectedLocationAndFetchCurrent() {
       },
     );
   }
+
   // Updated _onMapCreated function
-Future<void> _onMapCreated(GoogleMapController controller) async {
-  mapController = controller;
+  Future<void> _onMapCreated(GoogleMapController controller) async {
+    mapController = controller;
 
-  // Load and set the map style
-  String mapStyle = await rootBundle.loadString('assets/Map/map.json');
-  mapController?.setMapStyle(mapStyle);
+    // Load and set the map style
+    String mapStyle = await rootBundle.loadString('assets/Map/map.json');
+    mapController?.setMapStyle(mapStyle);
 
-  await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 1));
     print("_onMapCreated _onMapCreated _currentPosition 1 $_currentPosition");
 
-  print("_onMapCreated _onMapCreated _currentSelectedLocation:1  $_currentSelectedLocation");
+    print(
+        "_onMapCreated _onMapCreated _currentSelectedLocation:1  $_currentSelectedLocation");
 
+    // Check if the current position is available
+    if (_currentPosition != null || _currentSelectedLocation != null) {
+      print("_onMapCreated _onMapCreated _currentPosition 2 $_currentPosition");
+      print(
+          "_onMapCreated _onMapCreated _currentSelectedLocation: 2 $_currentSelectedLocation");
 
-
-  // Check if the current position is available
-  if (_currentPosition != null || _currentSelectedLocation != null ) {
-    print("_onMapCreated _onMapCreated _currentPosition 2 $_currentPosition");
-      print("_onMapCreated _onMapCreated _currentSelectedLocation: 2 $_currentSelectedLocation");
-
-    // Zoom to 100km radius around the current location
-    _animateTo100kmRadius();
-  } else {
-    print("_onMapCreated: _onMapCreated Current position is null");
-    // Optionally handle the case where the current position is not available
-    // _animateTo100kmRadius();
+      // Zoom to 100km radius around the current location
+      _animateTo100kmRadius();
+    } else {
+      print("_onMapCreated: _onMapCreated Current position is null");
+      // Optionally handle the case where the current position is not available
+      // _animateTo100kmRadius();
+    }
   }
-}
 
-Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
-  setState(() {
-    _selectedPosition = position;
-    areMapButtonsEnabled = true;
-  });
+  Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
+    setState(() {
+      _selectedPosition = position;
+      areMapButtonsEnabled = true;
+    });
 
-  // Change the marker icon to the selected icon
-  BitmapDescriptor newIcon =
-      await _getIconFromAsset('assets/icons/EV_location_green.png');
-  BitmapDescriptor defaultIcon =
-      await _getIconFromAssetred('assets/icons/EV_location_red.png');
+    // Change the marker icon to the selected icon
+    BitmapDescriptor newIcon =
+        await _getIconFromAsset('assets/icons/EV_location_green.png');
+    BitmapDescriptor defaultIcon =
+        await _getIconFromAssetred('assets/icons/EV_location_red.png');
 
-  setState(() {
-    // Revert the previous marker icon to default if it exists
-    if (_previousMarkerId != null) {
+    setState(() {
+      // Revert the previous marker icon to default if it exists
+      if (_previousMarkerId != null) {
+        _markers = _markers.map((marker) {
+          if (marker.markerId == _previousMarkerId) {
+            return marker.copyWith(iconParam: defaultIcon);
+          }
+          return marker;
+        }).toSet();
+      }
+
+      // Update the icon for the newly selected marker
       _markers = _markers.map((marker) {
-        if (marker.markerId == _previousMarkerId) {
-          return marker.copyWith(iconParam: defaultIcon);
+        if (marker.markerId == markerId) {
+          _previousMarkerId = marker.markerId;
+          return marker.copyWith(iconParam: newIcon);
         }
         return marker;
       }).toSet();
-    }
+    });
 
-    // Update the icon for the newly selected marker
-    _markers = _markers.map((marker) {
-      if (marker.markerId == markerId) {
-        _previousMarkerId = marker.markerId;
-        return marker.copyWith(iconParam: newIcon);
-      }
-      return marker;
-    }).toSet();
-  });
+    // Find the index of the charger card based on the marker ID
+    int cardIndex = chargerIdsList.indexWhere((id) => id == markerId.value);
 
-  // Find the index of the charger card based on the marker ID
-  int cardIndex = chargerIdsList.indexWhere((id) => id == markerId.value);
-
-  // Scroll to the corresponding charger card if it exists
-  if (cardIndex != -1) {
-    _pageController.animateToPage(
-      cardIndex,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-}
-
-  /// Function to move the camera smoothly to a new position
-  Future<void> _smoothlyMoveCamera(LatLng newPosition) async {
-    if (mapController != null && _currentPosition != null) {
-      LatLng startPosition = _currentPosition!;
-      LatLng endPosition = newPosition;
-
-      double totalSteps = 50; // The number of steps for smooth movement
-      double stepDuration = 100; // Duration in milliseconds between each step
-
-      for (int i = 1; i <= totalSteps; i++) {
-        double latitude = startPosition.latitude +
-            (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
-        double longitude = startPosition.longitude +
-            (endPosition.longitude - startPosition.longitude) *
-                (i / totalSteps);
-        LatLng intermediatePosition = LatLng(latitude, longitude);
-
-        await mapController!.animateCamera(
-          CameraUpdate.newLatLng(intermediatePosition),
-        );
-
-        await Future.delayed(Duration(milliseconds: stepDuration.toInt()));
-      }
+    // Scroll to the corresponding charger card if it exists
+    if (cardIndex != -1) {
+      _pageController.animateToPage(
+        cardIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     }
   }
+
 
   Future<void> _smoothlyMoveCameraForChargerMarker(
       LatLng startPosition, LatLng endPosition) async {
@@ -838,7 +811,6 @@ Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
     }
   }
 
-
   Future<BitmapDescriptor> _getIconFromAsset(String assetPath,
       {int width = 300, int height = 300}) async {
     final byteData = await rootBundle.load(assetPath);
@@ -881,29 +853,30 @@ Future<void> _onMarkerTapped(MarkerId markerId, LatLng position) async {
     return BitmapDescriptor.fromBytes(resizedBytes);
   }
 
-Future<String> _getAddressFromLatLng(double lat, double lng) async {
-  try {
-    // Use a geocoding API, like Google Geocoding API
-    // Replace YOUR_API_KEY with your actual Google Maps API key
-    final response = await http.get(
-      Uri.parse('https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey'),
-    );
+  Future<String> _getAddressFromLatLng(double lat, double lng) async {
+    try {
+      // Use a geocoding API, like Google Geocoding API
+      // Replace YOUR_API_KEY with your actual Google Maps API key
+      final response = await http.get(
+        Uri.parse(
+            'https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey'),
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['results'].isNotEmpty) {
-        return data['results'][0]['formatted_address'];
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['results'].isNotEmpty) {
+          return data['results'][0]['formatted_address'];
+        } else {
+          return 'Unknown Address';
+        }
       } else {
-        return 'Unknown Address';
+        throw Exception('Failed to fetch address');
       }
-    } else {
-      throw Exception('Failed to fetch address');
+    } catch (e) {
+      print(e);
+      return 'Unknown Address';
     }
-  } catch (e) {
-    print(e);
-    return 'Unknown Address';
   }
-}
 
   Future<BitmapDescriptor> _createCurrentLocationMarkerIcon(
       double bearing) async {
@@ -928,87 +901,93 @@ Future<String> _getAddressFromLatLng(double lat, double lng) async {
 
     return BitmapDescriptor.fromBytes(imageData);
   }
-  
-void _updateMarkers() async {
-  print("_updateMarkers: 1");
-  if (_currentPosition != null) {
-    // Fetch the dynamic bearing
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.bestForNavigation,
-    );
-    final double bearing = position.heading; // Get the current bearing
 
-    // Update the current location marker with the custom marker icon and bearing
-    final currentLocationIcon = await _createCurrentLocationMarkerIcon(bearing);
+  void _updateMarkers() async {
+    print("_updateMarkers: 1");
+    print("_updateMarkers: 1 $_currentPosition");
+    print("_updateMarkers: 1 $_currentSelectedLocation");
+    print("_updateMarkers Available Chargers:1 $availableChargers");
 
-    setState(() {
-      _markers.add(
-        Marker(
-          markerId: const MarkerId('current_location'),
-          position: _currentPosition!,
-          icon: currentLocationIcon,
-          infoWindow: const InfoWindow(title: 'Your Location'),
-        ),
-      );
-    });
-  }
+    // Use a set to track unique positions to avoid duplicate markers
+    Set<String> uniquePositions = {};
+    print("_updateMarkers: 2");
 
-  // Use a set to track unique positions to avoid duplicate markers
-  Set<String> uniquePositions = {};
-  print("_updateMarkers: 2");
+    // Iterate through available chargers
+    for (var charger in availableChargers) {
+      final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
+      final lat =
+          charger['lat'] != null ? double.tryParse(charger['lat']) : null;
+      final lng =
+          charger['long'] != null ? double.tryParse(charger['long']) : null;
+      print("_updateMarkers: 3");
 
-  // Iterate through available chargers
-  for (var charger in availableChargers) {
-    final chargerId = charger['charger_id'] ?? 'Unknown Charger ID';
-    final lat = charger['lat'] != null ? double.tryParse(charger['lat']) : null;
-    final lng = charger['long'] != null ? double.tryParse(charger['long']) : null;
-  print("_updateMarkers: 3");
+      if (lat != null && lng != null) {
+        // Create a unique key based on latitude and longitude
+        String positionKey = '$lat,$lng';
+        print("_updateMarkers: 4");
 
-    if (lat != null && lng != null) {
-      // Create a unique key based on latitude and longitude
-      String positionKey = '$lat,$lng';
-  print("_updateMarkers: 4");
-
-      // Check if this position already exists
-      if (uniquePositions.contains(positionKey)) {
+        // Check if this position already exists
+        if (uniquePositions.contains(positionKey)) {
           print("_updateMarkers: 5");
 
-        continue; // Skip adding a marker if this position is already tracked
+          continue; // Skip adding a marker if this position is already tracked
+        }
+
+        // Add the position to the set of unique positions
+        uniquePositions.add(positionKey);
+
+        // Fetch the address
+        String fullAddress = await _getAddressFromLatLng(lat, lng);
+
+        // Trim the address if it's longer than 20 characters
+        String trimmedAddress = fullAddress.length > 20
+            ? '${fullAddress.substring(0, 20)}...'
+            : fullAddress;
+
+        BitmapDescriptor chargerIcon =
+            await _getIconFromAssetred('assets/icons/EV_location_red.png');
+        setState(() {
+          _markers.add(
+            Marker(
+              markerId: MarkerId(chargerId),
+              position: LatLng(lat, lng),
+              icon: chargerIcon,
+              infoWindow: InfoWindow(
+                title: trimmedAddress,
+              ),
+              onTap: () {
+                _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
+              },
+            ),
+          );
+        });
+        print("_updateMarkers: 6");
       }
+    }
 
-      // Add the position to the set of unique positions
-      uniquePositions.add(positionKey);
+    if (_currentPosition != null || _currentSelectedLocation != null) {
+      // Fetch the dynamic bearing
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.bestForNavigation,
+      );
+      final double bearing = position.heading; // Get the current bearing
 
-    // Fetch the address
-    String fullAddress = await _getAddressFromLatLng(lat, lng);
+      // Update the current location marker with the custom marker icon and bearing
+      final currentLocationIcon =
+          await _createCurrentLocationMarkerIcon(bearing);
 
-    // Trim the address if it's longer than 20 characters
-    String trimmedAddress = fullAddress.length > 20
-        ? '${fullAddress.substring(0, 20)}...'
-        : fullAddress;
-
-      BitmapDescriptor chargerIcon = await _getIconFromAssetred('assets/icons/EV_location_red.png');
       setState(() {
         _markers.add(
           Marker(
-            markerId: MarkerId(chargerId),
-            position: LatLng(lat, lng),
-            icon: chargerIcon,
-          infoWindow: InfoWindow(
-            title: trimmedAddress,
-          ),
-            onTap: () {
-              _onMarkerTapped(MarkerId(chargerId), LatLng(lat, lng));
-            },
+            markerId: const MarkerId('current_location'),
+            position: _currentPosition!,
+            icon: currentLocationIcon,
+            infoWindow: const InfoWindow(title: 'Your Location'),
           ),
         );
       });
-        print("_updateMarkers: 6");
-
     }
   }
-}
-
 
   Future<Map<String, dynamic>?> handleSearchRequest(
       String searchChargerID) async {
@@ -1060,7 +1039,10 @@ void _updateMarkers() async {
                 onConnectorSelected: (connectorId, connectorType) {
                   updateConnectorUser(
                       searchChargerID, connectorId, connectorType);
-                  }, username: widget.username, email: widget.email, userId: widget.userId,
+                },
+                username: widget.username,
+                email: widget.email,
+                userId: widget.userId,
               ),
             );
           },
@@ -1223,7 +1205,11 @@ void _updateMarkers() async {
       builder: (BuildContext context) {
         return Padding(
           padding: MediaQuery.of(context).viewInsets,
-          child: ErrorDetails(errorData: message, username: widget.username, email: widget.email, userId: widget.userId),
+          child: ErrorDetails(
+              errorData: message,
+              username: widget.username,
+              email: widget.email,
+              userId: widget.userId),
         );
       },
     ).then((_) {});
@@ -1272,65 +1258,65 @@ void _updateMarkers() async {
     }
   }
 
-Future<void> fetchAllChargers() async {
-  // Set loading state to true
-  setState(() {
-    isLoading = true;
-    availableChargers.clear(); // Clear previous chargers if needed
-  });
+  Future<void> fetchAllChargers() async {
+    // Set loading state to true
+    setState(() {
+      isLoading = true;
+      availableChargers.clear(); // Clear previous chargers if needed
+    });
 
-  try {
-    final response = await http.post(
-      Uri.parse('http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'user_id': widget.userId}),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse(
+            'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'user_id': widget.userId}),
+      );
 
-    final data = json.decode(response.body);
+      final data = json.decode(response.body);
 
-    // Check if the response is successful
-    if (response.statusCode == 200) {
-      final List<dynamic> chargerData = data['data'] ?? [];
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        final List<dynamic> chargerData = data['data'] ?? [];
 
-      // Fetch addresses for each charger and store in a new field
-      for (var charger in chargerData) {
-        final lat = double.parse(charger['lat'] ?? '0');
-        final long = double.parse(charger['long'] ?? '0');
-        final chargerId = charger['charger_id'] ?? 'Unknown ID';
+        // Fetch addresses for each charger and store in a new field
+        for (var charger in chargerData) {
+          final lat = double.parse(charger['lat'] ?? '0');
+          final long = double.parse(charger['long'] ?? '0');
+          final chargerId = charger['charger_id'] ?? 'Unknown ID';
 
-        // Fetch address only if it's not already fetched
-        if (charger['address'] == null) {
-          String address = await _getPlaceName(LatLng(lat, long), chargerId);
-          charger['address'] = address; // Store the fetched address
+          // Fetch address only if it's not already fetched
+          if (charger['address'] == null) {
+            String address = await _getPlaceName(LatLng(lat, long), chargerId);
+            charger['address'] = address; // Store the fetched address
+          }
         }
+
+        // Update available chargers and filter
+        setState(() {
+          availableChargers = chargerData;
+          activeFilter = 'All Chargers';
+          isLoading = false; // Set loading to false after data is set
+        });
+        _buildChargerList();
+
+        _updateMarkers(); // Update markers after setting the chargers
+      } else {
+        // Handle error response
+        final errorData = json.decode(response.body);
+        showErrorDialog(context, errorData['message']);
+        setState(() {
+          isLoading = false; // Set loading to false on error
+        });
       }
-
-      // Update available chargers and filter
-      setState(() {
-        availableChargers = chargerData;
-        activeFilter = 'All Chargers';
-        isLoading = false; // Set loading to false after data is set
-      });
-    _buildChargerList();
-
-      _updateMarkers(); // Update markers after setting the chargers
-    } else {
-      // Handle error response
-      final errorData = json.decode(response.body);
-      showErrorDialog(context, errorData['message']);
+    } catch (error) {
+      print('Internal server error: $error');
+      // Handle general errors
       setState(() {
         isLoading = false; // Set loading to false on error
       });
     }
-  } catch (error) {
-    print('Internal server error: $error');
-    // Handle general errors
-    setState(() {
-      isLoading = false; // Set loading to false on error
-    });
   }
-}
-
 
 // Helper function to load an image from bytes
   Future<ui.Image> loadImageFromBytes(Uint8List imgBytes) async {
@@ -1356,161 +1342,171 @@ Future<void> fetchAllChargers() async {
     });
   }
 
-void _animateTo100kmRadius() {
-  print("_onMapCreated _animateTo100kmRadius _currentSelectedLocation: 3  $_currentSelectedLocation");
-  print("_onMapCreated targetLocation _currentPosition: 4  $_currentPosition");
+  void _animateTo100kmRadius() {
+    print(
+        "_onMapCreated _animateTo100kmRadius _currentSelectedLocation: 3  $_currentSelectedLocation");
+    print(
+        "_onMapCreated targetLocation _currentPosition: 4  $_currentPosition");
 
-  // Check if the current selected location is not null
-  if (_currentSelectedLocation != null) {
-    double selectedLatitude = double.parse(_currentSelectedLocation!['latitude'].toString());
-    double selectedLongitude = double.parse(_currentSelectedLocation!['longitude'].toString());
+    // Check if the current selected location is not null
+    if (_currentSelectedLocation != null) {
+      double selectedLatitude =
+          double.parse(_currentSelectedLocation!['latitude'].toString());
+      double selectedLongitude =
+          double.parse(_currentSelectedLocation!['longitude'].toString());
+
+      // Create a LatLng object for the target location
+      final targetLocation = LatLng(selectedLatitude, selectedLongitude);
+      print(
+          "_onMapCreated targetLocation _currentSelectedLocation: 4  $_currentSelectedLocation");
+
+      // If _currentPosition is null, set it to (0.0, 0.0)
+      _currentPosition ??= const LatLng(0.0, 0.0);
+
+      // Now check if the selected location and current position are different
+      if (selectedLatitude != _currentPosition!.latitude ||
+          selectedLongitude != _currentPosition!.longitude) {
+        print(
+            "_onMapCreated targetLocation _currentSelectedLocation: 5  $_currentSelectedLocation");
+
+        // Create a new marker for the selected location
+        Marker newMarker = Marker(
+          markerId: const MarkerId("selected_location"),
+          position: targetLocation,
+          infoWindow: InfoWindow(
+            title: _currentSelectedLocation!['name'],
+            snippet: _currentSelectedLocation!['address'],
+          ),
+        );
+
+        // Clear existing markers and add the new marker
+        setState(() {
+          _markers.clear(); // Clear previous markers
+          _markers.add(newMarker); // Add the new marker
+        });
+        // Animate the camera to fit the 100km radius around the selected location
+        _animateToBounds(targetLocation);
+        return; // Return early to skip animating to the current position
+      }
+    }
+
+    // If there is no selected location or the current position is available
+    if (_currentPosition != null) {
+      print(
+          "_onMapCreated _animateTo100kmRadius _currentPosition: 6  $_currentPosition");
+
+      // Animate the camera to fit the 100km radius around the current position
+      _animateToBounds(_currentPosition!);
+    } else {
+      print("Current position is null, cannot animate to bounds.");
+    }
+  }
+
+  void _animateToBounds(LatLng centerLocation) {
+    if (mapController == null) {
+      print("mapController is null, cannot animate camera.");
+      return;
+    }
+
+    // Calculate bounds for a 100km radius
+    double radiusInKm = 10.0;
+    double kmInLat = 0.009; // Approximate value for 1 km in latitude
+    double kmInLng = 0.009 /
+        cos(centerLocation.latitude * pi / 180.0); // Adjust based on latitude
+
+    final LatLng southWest = LatLng(
+      centerLocation.latitude - (radiusInKm * kmInLat),
+      centerLocation.longitude - (radiusInKm * kmInLng),
+    );
+
+    final LatLng northEast = LatLng(
+      centerLocation.latitude + (radiusInKm * kmInLat),
+      centerLocation.longitude + (radiusInKm * kmInLng),
+    );
+
+    // Create the LatLngBounds
+    LatLngBounds bounds =
+        LatLngBounds(southwest: southWest, northeast: northEast);
+
+    // Animate the camera to fit the bounds
+    try {
+      mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
+    } catch (e) {
+      print("Error occurred while animating camera: $e");
+    }
+  }
+
+  void _moveToLocationOnMap(Map<String, dynamic> location) async {
+    double selectedLatitude = double.parse(location['latitude'].toString());
+    double selectedLongitude = double.parse(location['longitude'].toString());
 
     // Create a LatLng object for the target location
     final targetLocation = LatLng(selectedLatitude, selectedLongitude);
-    print("_onMapCreated targetLocation _currentSelectedLocation: 4  $_currentSelectedLocation");
 
-    // If _currentPosition is null, set it to (0.0, 0.0)
-    _currentPosition ??= const LatLng(0.0, 0.0);
-
-    // Now check if the selected location and current position are different
-    if (selectedLatitude != _currentPosition!.latitude || selectedLongitude != _currentPosition!.longitude) {
-      print("_onMapCreated targetLocation _currentSelectedLocation: 5  $_currentSelectedLocation");
-
-      // Create a new marker for the selected location
-      Marker newMarker = Marker(
-        markerId: const MarkerId("selected_location"),
-        position: targetLocation,
-        infoWindow: InfoWindow(
-          title: _currentSelectedLocation!['name'],
-          snippet: _currentSelectedLocation!['address'],
-        ),
-      );
-
-      // Clear existing markers and add the new marker
-      setState(() {
-        _markers.clear(); // Clear previous markers
-        _markers.add(newMarker); // Add the new marker
-      });
-      // Animate the camera to fit the 100km radius around the selected location
-      _animateToBounds(targetLocation);
-      return; // Return early to skip animating to the current position
-    }
-  }
-
-  // If there is no selected location or the current position is available
-  if (_currentPosition != null) {
-    print("_onMapCreated _animateTo100kmRadius _currentPosition: 6  $_currentPosition");
-
-    // Animate the camera to fit the 100km radius around the current position
-    _animateToBounds(_currentPosition!);
-  } else {
-    print("Current position is null, cannot animate to bounds.");
-  }
-}
-
-
-
-void _animateToBounds(LatLng centerLocation) {
-  if (mapController == null) {
-    print("mapController is null, cannot animate camera.");
-    return;
-  }
-
-  // Calculate bounds for a 100km radius
-  double radiusInKm = 10.0;
-  double kmInLat = 0.009; // Approximate value for 1 km in latitude
-  double kmInLng = 0.009 / cos(centerLocation.latitude * pi / 180.0); // Adjust based on latitude
-
-  final LatLng southWest = LatLng(
-    centerLocation.latitude - (radiusInKm * kmInLat),
-    centerLocation.longitude - (radiusInKm * kmInLng),
-  );
-
-  final LatLng northEast = LatLng(
-    centerLocation.latitude + (radiusInKm * kmInLat),
-    centerLocation.longitude + (radiusInKm * kmInLng),
-  );
-
-  // Create the LatLngBounds
-  LatLngBounds bounds = LatLngBounds(southwest: southWest, northeast: northEast);
-
-  // Animate the camera to fit the bounds
-  try {
-    mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
-  } catch (e) {
-    print("Error occurred while animating camera: $e");
-  }
-}
-
-
-void _moveToLocationOnMap(Map<String, dynamic> location) async{
-  double selectedLatitude = double.parse(location['latitude'].toString());
-  double selectedLongitude = double.parse(location['longitude'].toString());
-
-  // Create a LatLng object for the target location
-  final targetLocation = LatLng(selectedLatitude, selectedLongitude);
-
-  // Create a new marker for the selected location
-  Marker newMarker = Marker(
-    markerId: const MarkerId("selected_location"),
-    position: targetLocation,
-    infoWindow: InfoWindow(
-      title: location['name'], 
-      snippet: location['address'], 
-    ),
-  );
-
-  // Clear existing markers and add the new marker
-  setState(() {
-    _markers.clear(); // Clear previous markers
-    _markers.add(newMarker); // Add the new marker
-  });
-
-  // Get the current position of the map (if needed)
-  LatLng currentPosition = _currentPosition ?? const LatLng(0, 0); // Default to (0,0) if unknown
-
-  // Smoothly animate the camera to the target location from the current position
-  // if (currentPosition != targetLocation) {
-  print("_onMapCreated currentPosition: $currentPosition, targetLocation: $targetLocation");
-    _animateCamera(currentPosition, targetLocation);
-  // } else {
-  //   _mapController?.animateCamera(
-  //     CameraUpdate.newLatLngZoom(targetLocation, 15.0), // Adjust zoom level if needed
-  //   );
-  // }
-}
-
-void _animateCamera(LatLng from, LatLng to) {
-  const int steps = 30; // Number of steps in the animation
-  const Duration duration = Duration(seconds: 2); // Total duration of the animation
-  Timer.periodic(duration ~/ steps, (timer) {
-    // Calculate the interpolation factor
-    double t = timer.tick / steps;
-    if (t > 1) {
-      timer.cancel();
-      t = 1; // Clamp t to 1 to avoid overflow
-    }
-    
-    // Interpolate the latitude and longitude
-    double interpolatedLat = from.latitude + (to.latitude - from.latitude) * t;
-    double interpolatedLng = from.longitude + (to.longitude - from.longitude) * t;
-
-    // Move the camera to the interpolated position
-    _mapController?.animateCamera(
-      CameraUpdate.newLatLng(LatLng(interpolatedLat, interpolatedLng)),
+    // Create a new marker for the selected location
+    Marker newMarker = Marker(
+      markerId: const MarkerId("selected_location"),
+      position: targetLocation,
+      infoWindow: InfoWindow(
+        title: location['name'],
+        snippet: location['address'],
+      ),
     );
 
-    // If we reach the end of the animation, zoom into the final location
-    if (t == 1) {
+    // Clear existing markers and add the new marker
+    setState(() {
+      _markers.clear(); // Clear previous markers
+      _markers.add(newMarker); // Add the new marker
+    });
+
+    // Get the current position of the map (if needed)
+    LatLng currentPosition =
+        _currentPosition ?? const LatLng(0, 0); // Default to (0,0) if unknown
+
+    // Smoothly animate the camera to the target location from the current position
+    // if (currentPosition != targetLocation) {
+    print(
+        "_onMapCreated currentPosition: $currentPosition, targetLocation: $targetLocation");
+    _animateCamera(currentPosition, targetLocation);
+    // } else {
+    //   _mapController?.animateCamera(
+    //     CameraUpdate.newLatLngZoom(targetLocation, 15.0), // Adjust zoom level if needed
+    //   );
+    // }
+  }
+
+  void _animateCamera(LatLng from, LatLng to) {
+    const int steps = 30; // Number of steps in the animation
+    const Duration duration =
+        Duration(seconds: 2); // Total duration of the animation
+    Timer.periodic(duration ~/ steps, (timer) {
+      // Calculate the interpolation factor
+      double t = timer.tick / steps;
+      if (t > 1) {
+        timer.cancel();
+        t = 1; // Clamp t to 1 to avoid overflow
+      }
+
+      // Interpolate the latitude and longitude
+      double interpolatedLat =
+          from.latitude + (to.latitude - from.latitude) * t;
+      double interpolatedLng =
+          from.longitude + (to.longitude - from.longitude) * t;
+
+      // Move the camera to the interpolated position
       _mapController?.animateCamera(
-        CameraUpdate.newLatLngZoom(to, 15.0), // Final zoom to the selected location
+        CameraUpdate.newLatLng(LatLng(interpolatedLat, interpolatedLng)),
       );
-    }
-  });
-}
 
-
-
+      // If we reach the end of the animation, zoom into the final location
+      if (t == 1) {
+        _mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(
+              to, 15.0), // Final zoom to the selected location
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1635,54 +1631,68 @@ void _animateCamera(LatLng from, LatLng to) {
                     horizontal: screenWidth * 0.04, // Adjust horizontal padding
                     vertical: screenHeight * 0.01, // Adjust vertical padding
                   ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: activeFilter == 'All Chargers'
-                                ? Colors.blue
-                                : const Color(0xFF0E0E0E),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // "All Chargers" Button
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: activeFilter == 'All Chargers'
+                                  ? Colors.blue
+                                  : const Color(0xFF0E0E0E),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                activeFilter = 'All Chargers';
+                              });
+                              fetchAllChargers();
+                            },
+                            icon: const Icon(Icons.ev_station,
+                                color: Colors.white),
+                            label: const Text(
+                              'All Chargers',
+                              style: TextStyle(color: Colors.white),
                             ),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              activeFilter = 'All Chargers';
-                            });
-                            fetchAllChargers();
-                          },
-                          icon:
-                              const Icon(Icons.ev_station, color: Colors.white),
-                          label: const Text('All Chargers',
-                              style: TextStyle(color: Colors.white)),
-                        ),
-                        SizedBox(
-                            width: screenWidth *
-                                0.03), // Adjust spacing between buttons
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: activeFilter == 'Previously Used'
-                                ? Colors.blue
-                                : const Color(0xFF0E0E0E),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              activeFilter = 'Previously Used';
-                            });
-                            fetchRecentSessionDetails();
-                          },
-                          icon: const Icon(Icons.history, color: Colors.white),
-                          label: const Text('Previously Used',
-                              style: TextStyle(color: Colors.white)),
-                        ),
-                      ],
+                          SizedBox(
+                              width: screenWidth *
+                                  0.03), // Spacing between buttons
+
+                          // Additional buttons can be added here if needed
+                          // Example: Previously Used Button (uncomment if required)
+                          /*
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: activeFilter == 'Previously Used'
+                  ? Colors.blue
+                  : const Color(0xFF0E0E0E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            onPressed: () {
+              setState(() {
+                activeFilter = 'Previously Used';
+              });
+              fetchRecentSessionDetails();
+            },
+            icon: const Icon(Icons.history, color: Colors.white),
+            label: const Text(
+              'Previously Used',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+          SizedBox(width: screenWidth * 0.03), // Spacing between buttons
+          */
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -1767,35 +1777,35 @@ void _animateCamera(LatLng from, LatLng to) {
     return R * c; // Distance in km
   }
 
-Future<void> _updateMarkerIcons(String chargerId) async {
-  BitmapDescriptor newIcon =
-      await _getIconFromAsset('assets/icons/EV_location_green.png');
-  BitmapDescriptor defaultIcon =
-      await _getIconFromAsset('assets/icons/EV_location_red.png');
+  Future<void> _updateMarkerIcons(String chargerId) async {
+    BitmapDescriptor newIcon =
+        await _getIconFromAsset('assets/icons/EV_location_green.png');
+    BitmapDescriptor defaultIcon =
+        await _getIconFromAsset('assets/icons/EV_location_red.png');
 
-  setState(() {
-    // Change the icon of the previously selected marker back to default
-    if (_previousMarkerId != null) {
+    setState(() {
+      // Change the icon of the previously selected marker back to default
+      if (_previousMarkerId != null) {
+        _markers = _markers.map((marker) {
+          if (marker.markerId == _previousMarkerId) {
+            return marker.copyWith(iconParam: defaultIcon);
+          }
+          return marker;
+        }).toSet();
+      }
+
+      // Update the icon for the currently selected charger marker and show its InfoWindow
       _markers = _markers.map((marker) {
-        if (marker.markerId == _previousMarkerId) {
-          return marker.copyWith(iconParam: defaultIcon);
+        if (marker.markerId.value == chargerId) {
+          _previousMarkerId = marker.markerId;
+          mapController!.showMarkerInfoWindow(
+              marker.markerId); // Show InfoWindow automatically
+          return marker.copyWith(iconParam: newIcon);
         }
         return marker;
       }).toSet();
-    }
-
-    // Update the icon for the currently selected charger marker and show its InfoWindow
-    _markers = _markers.map((marker) {
-      if (marker.markerId.value == chargerId) {
-        _previousMarkerId = marker.markerId;
-        mapController!.showMarkerInfoWindow(marker.markerId); // Show InfoWindow automatically
-        return marker.copyWith(iconParam: newIcon);
-      }
-      return marker;
-    }).toSet();
-  });
-}
-
+    });
+  }
 
   Future<String> _getPlaceName(LatLng position, String chargerId) async {
     // Check if the address is already cached
@@ -1838,8 +1848,7 @@ Future<void> _updateMarkerIcons(String chargerId) async {
           right: screenWidth * 0.013,
           top: screenHeight * 0.03,
           bottom: screenHeight * 0.05,
-          left:screenHeight * 0.03, // Add extra left margin for the first card
-
+          left: screenHeight * 0.03, // Add extra left margin for the first card
         ),
         decoration: BoxDecoration(
           color: const Color(0xFF0E0E0E),
@@ -1855,12 +1864,12 @@ Future<void> _updateMarkerIcons(String chargerId) async {
           ],
         ),
         child: Padding(
-          padding:EdgeInsets.only(
-          left: screenWidth * 0.01,
-          top: screenHeight * 0.02,
-          bottom: screenHeight * 0.02,
-          right: screenWidth * 0.01, // Add right padding for all cards
-        ),
+          padding: EdgeInsets.only(
+            left: screenWidth * 0.01,
+            top: screenHeight * 0.02,
+            bottom: screenHeight * 0.02,
+            right: screenWidth * 0.01, // Add right padding for all cards
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1903,20 +1912,19 @@ Future<void> _updateMarkerIcons(String chargerId) async {
       ),
     );
   }
-  
 
   Widget _buildChargerCard(
-      BuildContext context,
-      String landmark,
-      String chargerId,
-      LatLng position,
-      String distance,
-      ) {
+    BuildContext context,
+    String landmark,
+    String chargerId,
+    LatLng position,
+    String distance,
+  ) {
     // Get screen size
 
     // Get the charger from the list based on chargerId
     final charger = availableChargers.firstWhere(
-          (c) => c['charger_id'] == chargerId,
+      (c) => c['charger_id'] == chargerId,
       orElse: () => null,
     );
 
@@ -1946,7 +1954,8 @@ Future<void> _updateMarkerIcons(String chargerId) async {
       child: Stack(
         children: [
           Container(
-            width: MediaQuery.of(context).size.width * 0.9, // Use MediaQuery for width
+            width: MediaQuery.of(context).size.width *
+                0.9, // Use MediaQuery for width
             margin: EdgeInsets.only(
               right: MediaQuery.of(context).size.width * 0.05,
               // bottom: MediaQuery.of(context).size.height * 0.02,
@@ -1954,7 +1963,8 @@ Future<void> _updateMarkerIcons(String chargerId) async {
             ),
             decoration: BoxDecoration(
               color: const Color(0xFF0E0E0E),
-              borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.03),
+              borderRadius: BorderRadius.circular(
+                  MediaQuery.of(context).size.width * 0.03),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.2),
@@ -1968,7 +1978,8 @@ Future<void> _updateMarkerIcons(String chargerId) async {
               padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.03),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min, // Allow the column to grow based on content
+                mainAxisSize: MainAxisSize
+                    .min, // Allow the column to grow based on content
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1981,7 +1992,8 @@ Future<void> _updateMarkerIcons(String chargerId) async {
                             Text(
                               '📍 $landmark',
                               style: TextStyle(
-                                fontSize: MediaQuery.of(context).size.width * 0.037,
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.037,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
@@ -1990,7 +2002,8 @@ Future<void> _updateMarkerIcons(String chargerId) async {
                             Text(
                               placeName,
                               style: TextStyle(
-                                fontSize: MediaQuery.of(context).size.width * 0.033,
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.033,
                                 color: Colors.white70,
                               ),
                             ),
@@ -1999,7 +2012,8 @@ Future<void> _updateMarkerIcons(String chargerId) async {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 5), // Space before the distance container
+                  const SizedBox(
+                      height: 5), // Space before the distance container
                   Align(
                     alignment: Alignment.centerRight,
                     child: Container(
@@ -2008,27 +2022,35 @@ Future<void> _updateMarkerIcons(String chargerId) async {
                         horizontal: MediaQuery.of(context).size.width * 0.03,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1C1C1C), // Dark background to match the card
+                        color: const Color(
+                            0xFF1C1C1C), // Dark background to match the card
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min, // Only take up as much space as needed
+                        mainAxisSize: MainAxisSize
+                            .min, // Only take up as much space as needed
                         children: [
                           Icon(
                             Icons.directions,
-                            color: const Color(0xFF4CAF50), // Lime green color for the icon
+                            color: const Color(
+                                0xFF4CAF50), // Lime green color for the icon
                             size: MediaQuery.of(context).size.width * 0.04,
                           ),
-                          const SizedBox(width: 4), // Space between icon and text
-                          Flexible( // Use Flexible to avoid overflow
+                          const SizedBox(
+                              width: 4), // Space between icon and text
+                          Flexible(
+                            // Use Flexible to avoid overflow
                             child: Text(
                               distance,
                               style: TextStyle(
-                                fontSize: MediaQuery.of(context).size.width * 0.032,
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.032,
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFFB2FF59), // Light green color for distance text
+                                color: const Color(
+                                    0xFFB2FF59), // Light green color for distance text
                               ),
-                              overflow: TextOverflow.ellipsis, // Prevent overflow
+                              overflow:
+                                  TextOverflow.ellipsis, // Prevent overflow
                             ),
                           ),
                         ],
@@ -2042,11 +2064,7 @@ Future<void> _updateMarkerIcons(String chargerId) async {
         ],
       ),
     );
-
-
-
   }
-
 
   Widget _buildChargerListContainer() {
     return Expanded(
@@ -2054,18 +2072,21 @@ Future<void> _updateMarkerIcons(String chargerId) async {
         margin: const EdgeInsets.only(bottom: 5),
         child: Column(
           children: [
-          if (isLoading)
-          // Show shimmer effect when data is loading
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: List.generate(3, (index) => _buildShimmerCard()), // Display 3 shimmer cards
+            if (isLoading)
+              // Show shimmer effect when data is loading
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: List.generate(
+                        3,
+                        (index) =>
+                            _buildShimmerCard()), // Display 3 shimmer cards
+                  ),
                 ),
-              ),
-            )
+              )
             else if (isChargerAvailable)
-            // Render the actual charger list if data is loaded and chargers are available
+              // Render the actual charger list if data is loaded and chargers are available
               Expanded(
                 child: _buildChargerList(),
               )
@@ -2073,135 +2094,122 @@ Future<void> _updateMarkerIcons(String chargerId) async {
         ),
       ),
     );
-  }
+  }Widget _buildChargerList() {
+  List<Widget> chargerCards = [];
+  Set<String> chargerIds = {}; // Track charger IDs to avoid duplicates
+  Set<String> uniqueLocations = {}; // Track unique lat/long combinations
+  chargerIdsList.clear(); // Clear previous IDs to avoid duplicates
+  isChargerAvailable = false; // Reset the flag initially
 
+  List<Map<String, dynamic>> chargersWithDistance = []; // To store charger data with distance
 
-  Widget _buildChargerList() {
-    List<Widget> chargerCards = [];
-    Set<String> chargerIds = {}; // Track charger IDs to avoid duplicates
-    Set<String> uniqueLocations = {}; // Track unique lat/long combinations
-    chargerIdsList.clear(); // Clear previous IDs to avoid duplicates
-    isChargerAvailable = false; // Reset the flag initially
-
-    // Check if data is loading and show shimmer if true
-    if (isLoading) {
-      // Data is still loading, show shimmer cards
-      for (var i = 0; i < 3; i++) {
-        chargerCards.add(_buildShimmerCard());
-      }
-    } else {
-      // Data is loaded, show the actual charger cards
-      if (activeFilter == 'Previously Used') {
-        for (var session in recentSessions) {
-          String chargerId = session['details']['charger_id']?.trim() ?? 'Unknown ID';
-          double chargerLatitude = double.parse(session['details']['lat'] ?? '0');
-          double chargerLongitude = double.parse(session['details']['long'] ?? '0');
-          String locationKey = '$chargerLatitude,$chargerLongitude';
-
-          if (!chargerIds.contains(chargerId) && !uniqueLocations.contains(locationKey)) {
-            LatLng referencePosition = _currentSelectedLocation != null
-                ? LatLng(
-              double.parse(_currentSelectedLocation!['latitude']),
-              double.parse(_currentSelectedLocation!['longitude']),
-            )
-                : (_currentPosition ?? _center);
-
-            // Calculate distance as a string
-            double distanceInKm = _calculateDistance(
-              referencePosition.latitude,
-              referencePosition.longitude,
-              chargerLatitude,
-              chargerLongitude,
-            );
-
-            String distanceText = "${distanceInKm.toStringAsFixed(2)} km";
-
-            chargerIds.add(chargerId);
-            uniqueLocations.add(locationKey);
-            chargerIdsList.add(chargerId); // Add to the separate list
-            chargerCards.add(
-              _buildChargerCard(
-                context,
-                session['details']['landmark'] ?? 'Unknown location',
-                chargerId,
-                LatLng(chargerLatitude, chargerLongitude),
-                distanceText, // Pass distance as a string
-              ),
-            );
-            isChargerAvailable = true; // Set the flag to true
-          }
-        }
-      } else if (activeFilter == 'All Chargers') {
-        for (var charger in availableChargers) {
-          String chargerId = charger['charger_id']?.trim() ?? 'Unknown ID';
-          double chargerLatitude = double.parse(charger['lat'] ?? '0');
-          double chargerLongitude = double.parse(charger['long'] ?? '0');
-          String locationKey = '$chargerLatitude,$chargerLongitude';
-
-          LatLng referencePosition = _currentSelectedLocation != null
-              ? LatLng(
+  // Check if data is loading and show shimmer if true
+  if (isLoading) {
+    // Data is still loading, show shimmer cards
+    for (var i = 0; i < 3; i++) {
+      chargerCards.add(_buildShimmerCard());
+    }
+  } else {
+    LatLng referencePosition = _currentSelectedLocation != null
+        ? LatLng(
             double.parse(_currentSelectedLocation!['latitude']),
             double.parse(_currentSelectedLocation!['longitude']),
           )
-              : (_currentPosition ?? _center);
+        : (_currentPosition ?? _center); // Get reference position for distance calculation
 
-          double distanceInKm = _calculateDistance(
-            referencePosition.latitude,
-            referencePosition.longitude,
-            chargerLatitude,
-            chargerLongitude,
-          );
+    // Process based on the active filter
+    List<dynamic> chargersToProcess = activeFilter == 'Previously Used'
+        ? recentSessions
+        : availableChargers;
 
-          String distanceText = "${distanceInKm.toStringAsFixed(2)} km";
+    for (var charger in chargersToProcess) {
+      String chargerId = activeFilter == 'Previously Used'
+          ? charger['details']['charger_id']?.trim() ?? 'Unknown ID'
+          : charger['charger_id']?.trim() ?? 'Unknown ID';
 
-          if (distanceInKm <= 100.0) {
-            if (!chargerIds.contains(chargerId) && !uniqueLocations.contains(locationKey)) {
-              chargerIds.add(chargerId);
-              uniqueLocations.add(locationKey);
-              chargerIdsList.add(chargerId);
+      double chargerLatitude = activeFilter == 'Previously Used'
+          ? double.parse(charger['details']['lat'] ?? '0')
+          : double.parse(charger['lat'] ?? '0');
+      double chargerLongitude = activeFilter == 'Previously Used'
+          ? double.parse(charger['details']['long'] ?? '0')
+          : double.parse(charger['long'] ?? '0');
 
-              var statusList = charger['status'] ?? [null];
-              if (statusList.isNotEmpty) {
-                var status = statusList.first;
+      String locationKey = '$chargerLatitude,$chargerLongitude';
 
-                chargerCards.add(
-                  _buildChargerCard(
-                    context,
-                    charger['landmark'] ?? 'Unknown location',
-                    chargerId,
-                    LatLng(chargerLatitude, chargerLongitude),
-                    distanceText, // Pass distance as a string
-                  ),
-                );
-                isChargerAvailable = true; // Set the flag to true if at least one charger is available
-              }
-            }
-          }
+      // Avoid duplicates based on charger ID and unique lat/long
+      if (!chargerIds.contains(chargerId) &&
+          !uniqueLocations.contains(locationKey)) {
+        double distanceInKm = _calculateDistance(
+          referencePosition.latitude,
+          referencePosition.longitude,
+          chargerLatitude,
+          chargerLongitude,
+        );
+
+        if (distanceInKm <= 100.0) { // Limit results within 100km
+          chargerIds.add(chargerId);
+          uniqueLocations.add(locationKey);
+          chargerIdsList.add(chargerId); // Add charger ID to the separate list
+
+          // Store charger data along with distance for sorting
+          chargersWithDistance.add({
+            'chargerId': chargerId,
+            'latitude': chargerLatitude,
+            'longitude': chargerLongitude,
+            'distance': distanceInKm,
+            'chargerData': charger, // Store entire charger data to pass to _buildChargerCard
+          });
         }
       }
     }
 
-    return Expanded(
-      child: PageView.builder(
-        controller: _pageController,
-        scrollDirection: Axis.horizontal,
-        itemCount: chargerCards.length,
-        onPageChanged: (index) {
-          String chargerId = chargerIdsList[index];
-          _onChargerCardChanged(chargerId);
-        },
-        itemBuilder: (context, index) {
-          return chargerCards[index];
-        },
-      ),
-    );
+    // Sort the chargers by distance
+    chargersWithDistance.sort((a, b) => a['distance'].compareTo(b['distance']));
+
+    // Build the charger cards based on sorted data
+    for (var chargerInfo in chargersWithDistance) {
+      String distanceText = "${chargerInfo['distance'].toStringAsFixed(2)} km";
+      var charger = chargerInfo['chargerData'];
+
+      chargerCards.add(
+        _buildChargerCard(
+          context,
+          activeFilter == 'Previously Used'
+              ? charger['details']['landmark'] ?? 'Unknown location'
+              : charger['landmark'] ?? 'Unknown location',
+          chargerInfo['chargerId'],
+          LatLng(chargerInfo['latitude'], chargerInfo['longitude']),
+          distanceText, // Pass distance as a string
+        ),
+      );
+      isChargerAvailable = true; // Set flag to true if at least one charger is available
+    }
   }
 
+  return Expanded(
+    child: PageView.builder(
+      controller: _pageController,
+      scrollDirection: Axis.horizontal,
+      itemCount: chargerCards.length,
+      onPageChanged: (index) {
+        // Fetch corresponding charger info from sorted list
+        var chargerInfo = chargersWithDistance[index];
+        String chargerId = chargerInfo['chargerId'];
+        double latitude = chargerInfo['latitude'];
+        double longitude = chargerInfo['longitude'];
+        
+        // Call _onChargerCardChanged with relevant data
+        _onChargerCardChanged(chargerId, LatLng(latitude, longitude), chargerInfo['distance']);
+      },
+      itemBuilder: (context, index) {
+        return chargerCards[index];
+      },
+    ),
+  );
+}
 
-
-
-  void _onChargerCardChanged(String chargerId) {
-  print("_onChargerCardChanged $chargerId");
+void _onChargerCardChanged(String chargerId, LatLng chargerPosition, double distance) {
+  print("_onChargerCardChanged: $chargerId, Distance: $distance km");
 
   // Cancel any existing debounce timers
   _debounceTimer?.cancel();
@@ -2215,50 +2223,45 @@ Future<void> _updateMarkerIcons(String chargerId) async {
     );
 
     if (charger != null) {
-      double? lat = double.tryParse(charger['lat']);
-      double? lng = double.tryParse(charger['long']);
+      // The latitude and longitude are now passed directly as `chargerPosition`
+      if (mapController != null) {
+        LatLng startPosition = _selectedPosition ?? _currentPosition ?? _center;
 
-      if (lat != null && lng != null) {
-        LatLng chargerPosition = LatLng(lat, lng);
+        // If an animation is in progress, cancel it before starting a new one
+        if (_isAnimationInProgress) {
+          _currentAnimationOperation?.cancel();
+        }
 
-        if (mapController != null) {
-          LatLng startPosition = _selectedPosition ?? _currentPosition ?? _center;
+        _isAnimationInProgress = true;
 
-          // If an animation is in progress, cancel it before starting a new one
-          if (_isAnimationInProgress) {
-            _currentAnimationOperation?.cancel();
+        // Wrap the animation in a CancelableOperation
+        _currentAnimationOperation = CancelableOperation.fromFuture(
+          _smoothlyMoveCameraForChargerMarker(startPosition, chargerPosition),
+        );
+
+        try {
+          await _currentAnimationOperation!.value;
+
+          // Animation completed, update state
+          if (mounted) {
+            setState(() {
+              _selectedPosition = chargerPosition;
+              areMapButtonsEnabled = true; // Enable map buttons
+
+              // Update marker icons, using chargerId
+              _updateMarkerIcons(chargerId);
+            });
           }
-
-          _isAnimationInProgress = true;
-
-          // Wrap the animation in a CancelableOperation
-          _currentAnimationOperation = CancelableOperation.fromFuture(
-            _smoothlyMoveCameraForChargerMarker(startPosition, chargerPosition),
-          );
-
-          try {
-            await _currentAnimationOperation!.value;
-
-            // Animation completed, update state
-            if (mounted) {
-              setState(() {
-                _selectedPosition = chargerPosition;
-                areMapButtonsEnabled = true; // Enable map buttons
-
-                // Update marker icons
-                _updateMarkerIcons(charger['charger_id']);
-              });
-            }
-          } catch (e) {
-            print("Animation was cancelled or failed: $e");
-          } finally {
-            _isAnimationInProgress = false;
-          }
+        } catch (e) {
+          print("Animation was cancelled or failed: $e");
+        } finally {
+          _isAnimationInProgress = false;
         }
       }
     }
   });
 }
+
 
 // Truncate text if it's longer than the max length
   String truncateText(String text, int maxLength) {
@@ -2276,11 +2279,15 @@ class ConnectorSelectionDialog extends StatefulWidget {
   final int? userId;
   final String email;
   final Map<String, dynamic>? selectedLocation; // Accept the selected location
-  
+
   const ConnectorSelectionDialog({
     super.key,
     required this.chargerData,
-    required this.onConnectorSelected, required this.username, this.userId, required this.email, this.selectedLocation,
+    required this.onConnectorSelected,
+    required this.username,
+    this.userId,
+    required this.email,
+    this.selectedLocation,
   });
 
   @override
@@ -2304,165 +2311,184 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
     }
     return 'Unknown';
   }
-@override
-Widget build(BuildContext context) {
-  return Container(
-    padding: const EdgeInsets.all(16.0),
-    decoration: const BoxDecoration(
-      color: Colors.black,
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Header
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Select Connector',
+  
+  @override
+  Widget build(BuildContext context) {
+    // Get the screen size using MediaQuery
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 400;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        vertical: 16.0,
+        horizontal: isSmallScreen ? 12.0 : 16.0,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min, // Ensures it takes minimum space
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Select Connector',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isSmallScreen ? 18 : 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () {
+                   Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HomePage(
+                        selectedLocation: widget.selectedLocation,
+                        username: widget.username,
+                        userId: widget.userId,
+                        email: widget.email,
+                      ),
+                    ),
+                  );
+                  
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          CustomGradientDivider(),
+          const SizedBox(height: 20),
+
+          // Connector Grid
+  GridView.builder(
+  shrinkWrap: true, // Prevents unnecessary space
+  physics: const NeverScrollableScrollPhysics(),
+  itemCount: widget.chargerData.keys
+      .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
+      .length,
+  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+    crossAxisCount: 2,
+    mainAxisSpacing: 10,
+    crossAxisSpacing: 10,
+    childAspectRatio: 3,
+  ),
+  itemBuilder: (BuildContext context, int index) {
+    // Fetch the available connector keys dynamically
+    List<String> connectorKeys = widget.chargerData.keys
+        .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
+        .toList();
+
+    String connectorKey = connectorKeys[index]; // Use the key directly
+    int connectorId = index + 1; // Still keep the numbering for display purposes
+    int? connectorType = widget.chargerData[connectorKey];
+
+    if (connectorType == null) {
+      return const SizedBox.shrink(); // Skip if there's no valid connector
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedConnector = connectorId;
+          selectedConnectorType = connectorType;
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: selectedConnector == connectorId
+              ? Colors.green
+              : Colors.grey[800],
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                connectorType == 1 ? Icons.power : Icons.ev_station,
+                color: connectorType == 1 ? Colors.green : Colors.red,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _getConnectorTypeName(connectorType),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isSmallScreen ? 14 : 16,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                ' - [ $connectorId ]',
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isSmallScreen ? 14 : 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  },
+),
+
+          const SizedBox(height: 10), // Adjust this spacing as needed
+
+          // Continue Button
+          ElevatedButton(
+            onPressed: _isFormValid()
+                ? () {
+                    if (selectedConnector != null &&
+                        selectedConnectorType != null) {
+                      widget.onConnectorSelected(
+                          selectedConnector!, selectedConnectorType!);
+                      Navigator.of(context).pop();
+                    }
+                  }
+                : null,
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.disabled)) {
+                    return Colors.green.withOpacity(0.2);
+                  }
+                  return const Color(0xFF1C8B40);
+                },
+              ),
+              minimumSize: MaterialStateProperty.all(
+                Size(double.infinity, isSmallScreen ? 45 : 50),
+              ),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              elevation: MaterialStateProperty.all(0),
+            ),
+            child: Text(
+              'Continue',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontSize: isSmallScreen ? 14 : 16,
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: () {
-                // Navigate to HomePage without disrupting other content
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HomePage(
-                      selectedLocation: widget.selectedLocation,
-                      username: widget.username,
-                      userId: widget.userId,
-                      email: widget.email,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        CustomGradientDivider(),
-        const SizedBox(height: 20),
-
-        // Connector Grid
-        GridView.builder(
-          shrinkWrap: true,
-          itemCount: widget.chargerData.keys
-              .where((key) => key.startsWith('connector_'))
-              .length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 3,
           ),
-          itemBuilder: (BuildContext context, int index) {
-            int connectorId = index + 1;
-            String connectorKey = 'connector_${connectorId}_type';
-
-            if (!widget.chargerData.containsKey(connectorKey) ||
-                widget.chargerData[connectorKey] == null) {
-              return const SizedBox.shrink();
-            }
-
-            int connectorType = widget.chargerData[connectorKey];
-
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  selectedConnector = connectorId;
-                  selectedConnectorType = connectorType;
-                });
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: selectedConnector == connectorId
-                      ? Colors.green
-                      : Colors.grey[800],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        connectorType == 1
-                            ? Icons.power // socket icon
-                            : Icons.ev_station, // gun connector icon
-                        color: connectorType == 1
-                            ? Colors.green // Socket icon color
-                            : Colors.red, // Gun connector icon color
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _getConnectorTypeName(connectorType),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        ' - [ $connectorId ]',
-                        style: const TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 20),
-        // Continue Button
-        ElevatedButton(
-          onPressed: _isFormValid()
-              ? () {
-                  // Dismiss the keyboard when the button is pressed
-                  FocusScope.of(context).unfocus();
-                  
-                  if (selectedConnector != null && selectedConnectorType != null) {
-                    widget.onConnectorSelected(selectedConnector!, selectedConnectorType!);
-                                      FocusScope.of(context).unfocus();
-
-                    Navigator.of(context).pop();
-                  }
-                }
-              : null,
-          style: ButtonStyle(
-            backgroundColor: MaterialStateProperty.resolveWith<Color>(
-              (Set<MaterialState> states) {
-                if (states.contains(MaterialState.disabled)) {
-                  return Colors.green.withOpacity(0.2);
-                }
-                return const Color(0xFF1C8B40);
-              },
-            ),
-            minimumSize: MaterialStateProperty.all(const Size(double.infinity, 50)),
-            shape: MaterialStateProperty.all(
-              RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            elevation: MaterialStateProperty.all(0),
-          ),
-          child: const Text('Charge now', style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
-}
+
+
 class SlantedLabel extends StatelessWidget {
   final String? distance;
 
@@ -2493,7 +2519,7 @@ class SlantedLabel extends StatelessWidget {
             child: Text(
               "$distance",
               style: TextStyle(
-                color:  Colors.green ,
+                color: Colors.green,
                 fontWeight: FontWeight.normal,
                 fontSize: screenWidth * 0.03, // Adjusted for screen width
               ),
@@ -2641,7 +2667,6 @@ class _CurrentLocationMarkerState extends State<CurrentLocationMarker>
 
   @override
   void dispose() {
-    
     _controller.dispose();
     super.dispose();
   }
@@ -2768,15 +2793,21 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
   }
 }
 
-
 class ErrorDetails extends StatelessWidget {
   final String? errorData;
   final String username;
   final int? userId;
   final String email;
   final Map<String, dynamic>? selectedLocation; // Accept the selected location
-  
-  const ErrorDetails({Key? key, required this.errorData, required this.username, this.userId, required this.email, this.selectedLocation}) : super(key: key);
+
+  const ErrorDetails(
+      {Key? key,
+      required this.errorData,
+      required this.username,
+      this.userId,
+      required this.email,
+      this.selectedLocation})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -2795,18 +2826,21 @@ class ErrorDetails extends StatelessWidget {
             children: [
               const Text(
                 'Error Details',
-                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
               ),
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () {
-
-                  // Use Navigator.push to add the new page without disrupting other content
+                onPressed: () {
+                  // Use Navigator.push to add the new page without disrupting other content  
+                                  // Navigate to HomePage without disrupting other content
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => HomePage(
-                        selectedLocation: selectedLocation, // Pass the consistent selectedLocation
+                        selectedLocation: selectedLocation,
                         username: username,
                         userId: userId,
                         email: email,
@@ -2818,9 +2852,11 @@ class ErrorDetails extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10), // Add spacing between the header and the green line
+          const SizedBox(
+              height: 10), // Add spacing between the header and the green line
           CustomGradientDivider(),
-          const SizedBox(height: 20), // Add spacing between the green line and the icon
+          const SizedBox(
+              height: 20), // Add spacing between the green line and the icon
           const Icon(
             Icons.error_outline,
             color: Colors.red,

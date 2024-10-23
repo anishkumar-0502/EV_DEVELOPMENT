@@ -47,31 +47,190 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     super.initState();
     _loadRecentLocations();
   }
+void showErrorDialog(BuildContext context, String message) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    isDismissible: false,
+    enableDrag: false,
+    backgroundColor: Colors.black,
+    builder: (BuildContext context) {
+      return Padding(
+        padding: MediaQuery.of(context).viewInsets,
+        child: ErrorDetails(
+          errorData: message,
+          username: widget.username,
+          email: widget.email,
+          userId: widget.userId,
+        ),
+      );
+    },
+  );
+}
 
-  void _searchChargerId(String chargerId) async {
-    if (chargerId.isEmpty) {
-      // Handle empty charger ID input
-      return;
-    }
+Future<void> updateConnectorUser(String searchChargerID, int connectorId, int connectorType) async {
 
-    final result = await widget.handleSearchRequest(chargerId);
+  try {
+    final response = await http.post(
+      Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'searchChargerID': searchChargerID,
+        'Username': widget.username,
+        'user_id': widget.userId,
+        'connector_id': connectorId,
+      }),
+    );
 
-    if (result != null && result.containsKey('error') && !result['error']) {
-      // If search is successful, prepare location data
-      final location = {
-        'name': result['chargerName']?.toString() ??
-            'Unknown Charger', // Ensure value is a String
-        'address': result['chargerAddress']?.toString() ??
-            '', // Ensure value is a String
-      };
-
-      // Call the onLocationSelected method to locate the charger on the map
-      _onLocationSelected(location);
+    if (response.statusCode == 200) {
+      // Navigate to Charging page on success
+      Navigator.pop(context);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Charging(
+            searchChargerID: searchChargerID,
+            username: widget.username,
+            userId: widget.userId,
+            connector_id: connectorId,
+            connector_type: connectorType,
+            email: widget.email,
+          ),
+        ),
+      );
     } else {
-      // Handle error cases
-      print('Error in search: ${result?['message']}');
+      final errorData = json.decode(response.body);
+      showErrorDialog(context, errorData['message']);
     }
+  } catch (error) {
+    showErrorDialog(context, 'Internal server error');
+  // } finally {
+  //   setState(() {
+  //         _isLoadingBolt = false;
+  //         _isDialogShown = false; // Reset dialog shown status
+  //   });
   }
+}
+
+Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async {
+  if (_isLoadingBolt) return null; // Prevent multiple requests at once
+
+  if (searchChargerID.isEmpty) {
+    showErrorDialog(context, 'Please enter a charger ID.');
+    return {'error': true, 'message': 'Charger ID is empty'};
+  }
+
+  setState(() {
+    _isLoadingBolt = true; // Start loading when search begins
+  });
+
+  try {
+    final response = await http.post(
+      Uri.parse('http://122.166.210.142:4444/searchCharger'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'searchChargerID': searchChargerID,
+        'Username': widget.username,
+        'user_id': widget.userId,
+      }),
+    );
+
+    // Add artificial delay to simulate loading if needed
+    await Future.delayed(const Duration(seconds: 2));
+      // Check if charger ID is valid
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final chargerDatas = data['socketGunConfig'];
+            print("_searchChargerId data $chargerDatas");
+
+        setState(() {
+          _isLoadingBolt = false;
+          _isDialogShown = false; // Reset dialog shown status
+
+        });
+      await Future.delayed(const Duration(seconds: 1));
+                  Navigator.pop(context);
+
+      // Show connector selection modal
+      await showModalBottomSheet(
+        
+        context: context,
+        isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
+        backgroundColor: Colors.black,
+        builder: (BuildContext context) {
+          return Padding(
+            padding: MediaQuery.of(context).viewInsets,
+            child: ConnectorSelectionDialog(
+              chargerData: data['socketGunConfig'] ?? {},
+              onConnectorSelected: (connectorId, connectorType) {
+
+                updateConnectorUser(searchChargerID, connectorId, connectorType);
+              },
+              username: widget.username,
+              email: widget.email,
+              userId: widget.userId,
+            ),
+          );
+        },
+      );
+      return data; // Return successful data
+    } else {
+          setState(() {
+          _isLoadingBolt = false;
+          _isDialogShown = false; // Reset dialog shown status
+    });
+                      Navigator.pop(context);
+
+      final errorData = json.decode(response.body);
+      showErrorDialog(context, errorData['message']);
+      return {'error': true, 'message': errorData['message']};
+    }
+  } catch (error) {
+        setState(() {
+          _isLoadingBolt = false;
+          _isDialogShown = false; // Reset dialog shown status
+    });
+                      Navigator.pop(context);
+
+    showErrorDialog(context, 'Internal server error');
+    return {'error': true, 'message': 'Internal server error'};
+  } finally {
+    // setState(() {
+    //       _isLoadingBolt = false;
+    //       _isDialogShown = false; // Reset dialog shown status
+    // });
+  }
+}
+
+void _searchChargerId(String chargerId) async {
+  if (chargerId.isEmpty) {
+    // Handle empty charger ID input
+    showErrorDialog(context, 'Please enter a charger ID.');
+    return;
+  }
+
+  final result = await handleSearchRequest(chargerId);
+
+  print("_searchChargerId result $result");
+
+  if (result != null && result.containsKey('error') && !result['error']) {
+    // If search is successful, prepare location data
+    final location = {
+      'name': result['chargerName']?.toString() ?? 'Unknown Charger', // Ensure value is a String
+      'address': result['chargerAddress']?.toString() ?? '', // Ensure value is a String
+    };
+
+    // Call the onLocationSelected method to locate the charger on the map
+    _onLocationSelected(location);
+  } else {
+    // Handle error cases
+    print('Error in search: ${result?['message']}');
+  }
+}
+
+
 
   void _oncurrentLocationSelected(Map<String, dynamic> location) {
     // Convert latitude and longitude to strings to ensure consistency
@@ -677,31 +836,31 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                       color: Colors.white70,
                       size: 23,
                     ),
-                    onPressed: () {
-                      // Dismiss the keyboard
-                      FocusScope.of(context).unfocus();
-                      // Delay for 1 second before executing further logic
-                      Future.delayed(const Duration(milliseconds: 100), () {
-                        if (_chargerIdController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please enter a Charger ID.'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          setState(() {
-                            _isLoadingBolt = false;
-                            _isDialogShown = false; // Reset dialog shown status
-                          });
-                        } else {
-                          setState(() {
-                            _isLoadingBolt = true;
-                          });
+                      onPressed: () {
+                        // Dismiss the keyboard
+                        FocusScope.of(context).unfocus();
 
-                          _searchChargerId(_chargerIdController.text);
-                        }
-                      });
-                    },
+                        // Delay for 100 milliseconds before executing further logic
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          if (_chargerIdController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter a Charger ID.'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            setState(() {
+                              _isLoadingBolt = false;
+                              _isDialogShown = false; // Reset dialog shown status
+                            });
+                          } else {
+                     
+
+                            handleSearchRequest(_chargerIdController.text);
+                          }
+                        });
+                      },
+
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15),
@@ -714,11 +873,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                   // Dismiss the keyboard
                   FocusScope.of(context).unfocus();
 
-                  setState(() {
-                    _isLoadingBolt = true;
-                  });
-
-                  Future.delayed(const Duration(seconds: 1), () {
+                  Future.delayed(const Duration(milliseconds: 100), () {
                     if (value.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -731,7 +886,8 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                         _isDialogShown = false; // Reset dialog shown status
                       });
                     } else {
-                      _searchChargerId(value);
+               
+                      handleSearchRequest(value);
                     }
                   });
                 },
@@ -1088,6 +1244,282 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
         Icons.bolt_sharp, // Charging icon
         color: Colors.green, // Set the icon color
         size: 200, // Adjust the size as needed
+      ),
+    );
+  }
+}
+
+class ErrorDetails extends StatelessWidget {
+  final String? errorData;
+  final String username;
+  final int? userId;
+  final String email;
+  final Map<String, dynamic>? selectedLocation; // Accept the selected location
+
+  const ErrorDetails(
+      {Key? key,
+      required this.errorData,
+      required this.username,
+      this.userId,
+      required this.email,
+      this.selectedLocation})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center, // Center the content
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Error Details',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () {
+                  // Use Navigator.push to add the new page without disrupting other content  
+                  Navigator.pop(context);
+                  // Close the QR code scanner page and return to the Home Page
+                },
+              ),
+            ],
+          ),
+          const SizedBox(
+              height: 10), // Add spacing between the header and the green linea
+          CustomGradientDivider(),
+          const SizedBox(
+              height: 20), // Add spacing between the green line and the icon
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 70,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            errorData ?? 'An unknown error occurred.',
+            style: const TextStyle(color: Colors.white70, fontSize: 20),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+}
+
+class ConnectorSelectionDialog extends StatefulWidget {
+  final Map<String, dynamic> chargerData;
+  final Function(int, int) onConnectorSelected;
+  final String username;
+  final int? userId;
+  final String email;
+  final Map<String, dynamic>? selectedLocation; // Accept the selected location
+
+  const ConnectorSelectionDialog({
+    super.key,
+    required this.chargerData,
+    required this.onConnectorSelected,
+    required this.username,
+    this.userId,
+    required this.email,
+    this.selectedLocation,
+  });
+
+  @override
+  _ConnectorSelectionDialogState createState() =>
+      _ConnectorSelectionDialogState();
+}
+
+class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
+  int? selectedConnector;
+  int? selectedConnectorType;
+
+  bool _isFormValid() {
+    return selectedConnector != null && selectedConnectorType != null;
+  }
+
+  String _getConnectorTypeName(int connectorType) {
+    if (connectorType == 1) {
+      return 'Socket';
+    } else if (connectorType == 2) {
+      return 'Gun';
+    }
+    return 'Unknown';
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    // Get the screen size using MediaQuery
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 400;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        vertical: 16.0,
+        horizontal: isSmallScreen ? 12.0 : 16.0,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min, // Ensures it takes minimum space
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Select Connector',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isSmallScreen ? 18 : 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          CustomGradientDivider(),
+          const SizedBox(height: 20),
+
+          // Connector Grid
+  GridView.builder(
+  shrinkWrap: true, // Prevents unnecessary space
+  physics: const NeverScrollableScrollPhysics(),
+  itemCount: widget.chargerData.keys
+      .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
+      .length,
+  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+    crossAxisCount: 2,
+    mainAxisSpacing: 10,
+    crossAxisSpacing: 10,
+    childAspectRatio: 3,
+  ),
+  itemBuilder: (BuildContext context, int index) {
+    // Fetch the available connector keys dynamically
+    List<String> connectorKeys = widget.chargerData.keys
+        .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
+        .toList();
+
+    String connectorKey = connectorKeys[index]; // Use the key directly
+    int connectorId = index + 1; // Still keep the numbering for display purposes
+    int? connectorType = widget.chargerData[connectorKey];
+
+    if (connectorType == null) {
+      return const SizedBox.shrink(); // Skip if there's no valid connector
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedConnector = connectorId;
+          selectedConnectorType = connectorType;
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: selectedConnector == connectorId
+              ? Colors.green
+              : Colors.grey[800],
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                connectorType == 1 ? Icons.power : Icons.ev_station,
+                color: connectorType == 1 ? Colors.green : Colors.red,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _getConnectorTypeName(connectorType),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isSmallScreen ? 14 : 16,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                ' - [ $connectorId ]',
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isSmallScreen ? 14 : 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  },
+),
+
+          const SizedBox(height: 10), // Adjust this spacing as needed
+
+          // Continue Button
+          ElevatedButton(
+            onPressed: _isFormValid()
+                ? () {
+                    if (selectedConnector != null &&
+                        selectedConnectorType != null) {
+                      widget.onConnectorSelected(
+                          selectedConnector!, selectedConnectorType!);
+                      Navigator.of(context).pop();
+                    }
+                  }
+                : null,
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.disabled)) {
+                    return Colors.green.withOpacity(0.2);
+                  }
+                  return const Color(0xFF1C8B40);
+                },
+              ),
+              minimumSize: MaterialStateProperty.all(
+                Size(double.infinity, isSmallScreen ? 45 : 50),
+              ),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              elevation: MaterialStateProperty.all(0),
+            ),
+            child: Text(
+              'Continue',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: isSmallScreen ? 14 : 16,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

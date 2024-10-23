@@ -168,7 +168,10 @@ class _EditUserModalState extends State<EditUserModal> {
         final responseData = jsonDecode(response.body);
         final errorMessage = responseData['error_message'] ?? "Failed to update! No changes are made";
         _showAlertBanner(errorMessage);
-      } else {
+      } else if (response.statusCode == 404 ){
+        final errorMessage = responseData['error_message'] ?? "Failed to update! No changes are made";
+        _showAlertBanner(errorMessage);
+      }else {
         final errorMessage = " No Changes !! Check your credentials";
         _showAlertBanner(errorMessage);
       }

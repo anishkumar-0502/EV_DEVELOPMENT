@@ -145,7 +145,7 @@ if (initialisationError case final err?) {
           '/home': (context) => const SessionHandler(loggedIn: true),
           '/wallet': (context) {
             final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
-            return WalletPage(username: args['username'], userId: args['userId']);
+            return WalletPage(username: args['username'], userId: args['userId'], email: args['email_id'],);
           },
           '/transaction_details': (context) => TransactionDetailsWidget(
             transactionDetails: ModalRoute.of(context)?.settings.arguments as List<Map<String, dynamic>>,
