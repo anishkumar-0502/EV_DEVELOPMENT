@@ -838,10 +838,9 @@ void _searchChargerId(String chargerId) async {
                     ),
                       onPressed: () {
                         // Dismiss the keyboard
-                        FocusScope.of(context).unfocus();
 
                         // Delay for 100 milliseconds before executing further logic
-                        Future.delayed(const Duration(milliseconds: 100), () {
+                        Future.delayed(const Duration(milliseconds: 1000), () {
                           if (_chargerIdController.text.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -853,9 +852,8 @@ void _searchChargerId(String chargerId) async {
                               _isLoadingBolt = false;
                               _isDialogShown = false; // Reset dialog shown status
                             });
-                          } else {
-                     
-
+                          } else { 
+                            FocusScope.of(context).requestFocus(FocusNode()); // Ensure nothing has focus
                             handleSearchRequest(_chargerIdController.text);
                           }
                         });
@@ -872,7 +870,6 @@ void _searchChargerId(String chargerId) async {
                 onSubmitted: (value) {
                   // Dismiss the keyboard
                   FocusScope.of(context).unfocus();
-
                   Future.delayed(const Duration(milliseconds: 100), () {
                     if (value.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -886,7 +883,7 @@ void _searchChargerId(String chargerId) async {
                         _isDialogShown = false; // Reset dialog shown status
                       });
                     } else {
-               
+                      FocusScope.of(context).requestFocus(FocusNode()); // Ensure nothing has focus
                       handleSearchRequest(value);
                     }
                   });

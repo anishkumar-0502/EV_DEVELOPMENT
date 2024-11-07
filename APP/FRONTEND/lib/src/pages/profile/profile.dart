@@ -9,7 +9,6 @@ import '../../utilities/User_Model/ImageProvider.dart'; // Import the UserImageP
 import 'Terms_&_Condition/tc.dart'; // Import your TermsPage
 import 'Privacy_&_Policy/pp.dart'; // Import your PrivacyPolicyPage
 import 'Account/Account.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfilePage extends StatefulWidget {
   final String username;
@@ -27,7 +26,7 @@ class _ProfilePageState extends State<ProfilePage> {
   int? phoneNo;
   String? password;
   int _selectedTileIndex = -1; // Index of the selected tile
-  final String _version = '1.0.6'; // Default value, in case fetching fails
+  final String _version = '1.0.7'; // Default value, in case fetching fails
 
   @override
   void initState() {
