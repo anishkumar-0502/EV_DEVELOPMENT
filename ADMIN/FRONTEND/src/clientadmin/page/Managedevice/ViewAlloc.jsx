@@ -108,7 +108,7 @@ const ViewAlloc = ({ userInfo, handleLogout }) => {
                                                             <hr></hr>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Charger ID: <span style={{fontWeight:'normal'}}>{newDevice.charger_id ? newDevice.charger_id : '-'}</span></div>
@@ -125,7 +125,7 @@ const ViewAlloc = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Vendor: <span style={{fontWeight:'normal'}}>{newDevice.vendor ?  newDevice.vendor : '-'}</span></div>
@@ -142,7 +142,7 @@ const ViewAlloc = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Max Power: <span style={{fontWeight:'normal'}}>{newDevice.max_power ? newDevice.max_power : '-'}</span></div>
@@ -159,7 +159,7 @@ const ViewAlloc = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Type: <span style={{fontWeight:'normal'}}>{newDevice.type ?  newDevice.type : '-'}</span></div>
@@ -176,7 +176,7 @@ const ViewAlloc = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Short Description: <span style={{fontWeight:'normal'}}>{newDevice.short_description ? newDevice.short_description : '-'}</span></div>   
@@ -193,7 +193,7 @@ const ViewAlloc = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Wifi Password: <span style={{fontWeight:'normal'}}>{newDevice.wifi_password ? newDevice.wifi_password : '-'}</span></div>
@@ -210,7 +210,7 @@ const ViewAlloc = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Assigned Reseller Date: <span style={{fontWeight:'normal'}}>{newDevice.assigned_reseller_date ? formatTimestamp(newDevice.assigned_reseller_date) : '-'}</span></div>
@@ -227,7 +227,7 @@ const ViewAlloc = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Modified By: <span style={{fontWeight:'normal'}}>{newDevice.modified_by ? newDevice.modified_by : '-'}</span></div>
@@ -244,7 +244,7 @@ const ViewAlloc = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div> 
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Status: <span style={{fontWeight:'normal'}}>{newDevice.status === true ? <span className="text-success">Active</span> :  <span className="text-danger">DeActive</span>}</span></div>

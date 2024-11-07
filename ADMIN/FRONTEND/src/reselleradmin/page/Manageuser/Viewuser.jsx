@@ -104,11 +104,11 @@ const Viewuser = ({ userInfo, handleLogout }) => {
                                                 <div className="row">
                                                     <div className="col-12 col-xl-12">
                                                         <div style={{textAlign:'center'}}>
-                                                            <h4 className="card-title" style={{paddingTop:'10px'}}>User Details</h4>  
+                                                            <h4 className="card-title" style={{paddingTop:'10px'}}>Client User Details</h4>  
                                                             <hr></hr>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>User Name: <span style={{fontWeight:'normal'}}>{newUser.username ? newUser.username : '-'}</span></div>  
@@ -125,7 +125,7 @@ const Viewuser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Wallet Balance: <span style={{fontWeight:'normal'}}>{newUser.wallet_bal ? newUser.wallet_bal : '0'}</span></div>
@@ -142,7 +142,7 @@ const Viewuser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Created By: <span style={{fontWeight:'normal'}}>{newUser.created_by ? newUser.created_by : '-'}</span></div> 
@@ -159,7 +159,7 @@ const Viewuser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Modified Date: <span style={{fontWeight:'normal'}}>{newUser.modified_date ? formatTimestamp(newUser.modified_date) : '-'}</span></div>

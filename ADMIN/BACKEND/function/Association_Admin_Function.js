@@ -262,12 +262,8 @@ async function CreateUser(req, res, next) {
                 { email_id: email_id }
             ]
          });
-         if (existingUser) {
-            if (existingUser.email_id === email_id) {
-                return res.status(400).json({ message: 'Email ID already exists' });
-            } else if (existingUser.username === username) {
-                return res.status(400).json({ message: 'Username already exists' });
-            }
+        if (existingUser) {
+            return res.status(400).json({ message: 'Email ID already exists' });
         }
 
         // Use aggregation to fetch the highest user_id
@@ -339,7 +335,7 @@ async function UpdateUser(req, res, next) {
                     username: username,
                     phone_no: phone_no,
                     password: parseInt(password),
-                    wallet_bal: parseFloat(wallet_bal) || parseFloat(existingUser.wallet_bal), 
+                    wallet_bal: wallet_bal || existingUser.wallet_bal, 
                     modified_date: new Date(),
                     modified_by: modified_by,
                     status: status,
@@ -415,64 +411,37 @@ async function FetchAllocatedChargerByClientToAssociation(req) {
         const devicesCollection = db.collection("charger_details");
         const financeCollection = db.collection("finance_details");
 
+        // Fetch the finance details
+        const financeDetails = await financeCollection.findOne();
+        if (!financeDetails) {
+            throw new Error('No finance details found');
+        }
+
         // Fetch chargers assigned to the specified association_id
         const chargers = await devicesCollection.find({ assigned_association_id: association_id }).toArray();
 
-        if (!chargers.length) {
-            //throw new Error('No chargers found for the specified association');
-            const message = "No Charger's were found";
-            const status = 404;
-            return {message, status};
-        }
+        // Calculate total price per unit if finance details are present
+        const totalPercentage = [
+            financeDetails.app_charges,
+            financeDetails.other_charges,
+            financeDetails.parking_charges,
+            financeDetails.rent_charges,
+            financeDetails.open_a_eb_charges,
+            financeDetails.open_other_charges
+        ].reduce((sum, charge) => sum + parseFloat(charge || 0), 0);
 
-        // Fetch all finance details
-        const financeDetailsList = await financeCollection.find().toArray();
+        const pricePerUnit = parseFloat(financeDetails.eb_charges || 0);
+        const totalPrice = pricePerUnit + (pricePerUnit * totalPercentage / 100);
 
-        if (!financeDetailsList.length) {
-            //throw new Error('No finance details found');
-            const message = "No finance's were found";
-            const status = 404;
-            return {message, status};
-        }
+        const total_price = totalPrice.toFixed(2); // Format total price to 2 decimal places
 
-        // Create a map of finance details for quick lookup by finance_id
-        const financeDetailsMap = financeDetailsList.reduce((map, financeDetails) => {
-            map[financeDetails.finance_id] = financeDetails;
-            return map;
-        }, {});
-
-        // Calculate and append unit_price to each charger
-        const chargersWithUnitPrice = chargers.map(charger => {
-            const financeDetails = financeDetailsMap[charger.finance_id];
-
-            if (financeDetails) {
-                const totalPercentage = [
-                    financeDetails.app_charges,
-                    financeDetails.other_charges,
-                    financeDetails.parking_charges,
-                    financeDetails.rent_charges,
-                    financeDetails.open_a_eb_charges,
-                    financeDetails.open_other_charges
-                ].reduce((sum, charge) => sum + parseFloat(charge || 0), 0);
-
-                const pricePerUnit = parseFloat(financeDetails.eb_charges || 0);
-                const totalPrice = pricePerUnit + (pricePerUnit * totalPercentage / 100);
-                const total_price = totalPrice.toFixed(2); // Format to 2 decimal places
-
-                return {
-                    ...charger,
-                    unit_price: total_price
-                };
-            } else {
-                return {
-                    ...charger,
-                    unit_price: null // If no finance details found, set unit_price to null
-                };
-            }
-        });
+        // Append unit_price to each charger
+        const chargersWithUnitPrice = chargers.map(charger => ({
+            ...charger,
+            unit_price: total_price
+        }));
 
         return chargersWithUnitPrice; // Return the chargers with the unit price included
-
     } catch (error) {
         console.error(`Error fetching chargers: ${error.message}`);
         throw new Error('Failed to fetch chargers');
@@ -483,10 +452,10 @@ async function FetchAllocatedChargerByClientToAssociation(req) {
 //UpdateDevice 
 async function UpdateDevice(req, res, next) {
     try {
-        const { modified_by, charger_id, charger_accessibility , wifi_username, wifi_password,lat, long, landmark} = req.body;
+        const { modified_by, charger_id, charger_accessibility , wifi_username, wifi_password,lat, long} = req.body;
         // Validate the input
-        if (!modified_by || !charger_id || !charger_accessibility || !wifi_username || !wifi_password || !lat || !long || !landmark) {
-            return res.status(400).json({ message: 'All the fields are required' });
+        if (!modified_by || !charger_id || !charger_accessibility || !wifi_username || !wifi_password || !lat || !long) {
+            return res.status(400).json({ message: 'Username, chargerID, charger_accessibility , wifi_username, wifi_password,lat, long}and Status (boolean) are required' });
         }
 
         const db = await database.connectToDatabase();
@@ -508,9 +477,8 @@ async function UpdateDevice(req, res, next) {
                     wifi_password: wifi_password,
                     lat: lat,
                     long: long,
-                    landmark: landmark,
                     modified_by: modified_by,
-                    modified_date: new Date(),
+                    modified_date: new Date()
                 }
             }
         );
@@ -650,36 +618,13 @@ async function AddUserToAssociation(req, res) {
         const db = await database.connectToDatabase();
         const usersCollection = db.collection("users");
 
-        const existingUser = await usersCollection.findOne({
-            $and: [
-                {
-                    $and: [
-                        { email_id: email_id },
-                        { phone_no: parseInt(phone_no) }
-                    ]
-                },
-                {role_id: 5},
-                {status: true}
-            ]
-        });
-
-        if (!existingUser) {
+        // Check if the user exists
+        const existingUser = await usersCollection.findOne({ email_id: email_id, phone_no: parseInt(phone_no) });
+        if (!existingUser || existingUser.role_id !== 5) {
             return res.status(404).json({ message: 'User not found' });
-        } 
-        
-        if (existingUser.email_id !== email_id) {
-            return res.status(404).json({ message: 'Email is incorrect' });
         }
-        
-        if (existingUser.phone_no !== parseInt(phone_no)) {
-            return res.status(404).json({ message: 'Phone number is incorrect' });
-        }
-        
-        if (existingUser.role_id !== 5) {
-            return res.status(404).json({ message: 'User does not have the required role' });
-        }
-        
-        if (existingUser.assigned_association !== null) {
+
+        if(existingUser.assigned_association !== null){
             return res.status(404).json({ message: 'User is already assigned' });
         }
 
@@ -1037,14 +982,6 @@ async function UpdateTagID(req, res) {
         const tag = await tagsCollection.findOne({ id: id });
         if (!tag) {
             return res.status(404).json({ message: 'Tag ID not found' });
-        }
-
-        // Check for duplicate tag_id if the tag_id is being updated
-        if (tag_id) {
-            const duplicateTag = await tagsCollection.findOne({ tag_id: tag_id, id: { $ne: id } });
-            if (duplicateTag) {
-                return res.status(400).json({ message: 'Tag ID already exists' });
-            }
         }
 
         // Update the tag_id details

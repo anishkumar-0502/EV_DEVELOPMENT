@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Header from '../../components/Header';
 import axios from 'axios';
 import Sidebar from '../../components/Sidebar';
@@ -13,31 +13,22 @@ const Managefinance = ({ userInfo, handleLogout }) => {
     const fetchUsersCalled = useRef(false); 
 
     // fetch finance details
-    const fetchFinanceDetails = useCallback(async () => {
+    const fetchFinanceDetails = async () => {
         try {
-            const response = await axios.post('/clientadmin/FetchFinanceDetails', {
-                client_id: userInfo.data.client_id
-            });
-          
-            if (response.status === 200) {
-                setFinanceDetails(response.data.data || []);
-            } else {
-                const data = response.data.data;
-                console.error('Error fetching finance: ', data);
-                setFinanceDetails([]);
-            }
+            const response = await axios.get('/clientadmin/FetchFinanceDetails');
+            setFinanceDetails(response.data.data || []);
         } catch (error) {
-            console.error('Error fetching finance:', error);
+            console.error('Error fetching users:', error);
             setFinanceDetails([]);
         }
-    }, [userInfo.data.client_id]);
+    };
 
     useEffect(() => {
         if (!fetchUsersCalled.current) {
             fetchFinanceDetails();
             fetchUsersCalled.current = true;
         }
-    }, [fetchFinanceDetails]);
+    }, []);
 
     // search
     const handleSearch = (e) => {
@@ -104,7 +95,7 @@ const Managefinance = ({ userInfo, handleLogout }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="table-responsive" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                                        <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                                             <table className="table table-striped">
                                                 <thead style={{ textAlign: 'center', position: 'sticky', tableLayout: 'fixed', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                                                     <tr> 
@@ -124,8 +115,8 @@ const Managefinance = ({ userInfo, handleLogout }) => {
                                                         filteredFinanceDetails.map((finance, index) => (
                                                             <tr key={index}>
                                                                 <td>{index + 1}</td>
-                                                                <td>{finance.totalprice ? `₹ ${finance.totalprice}` : '-'}</td>
-                                                                <td>{finance.eb_charges ? `₹ ${finance.eb_charges}` : '-'}</td>
+                                                                <td>{finance.totalprice ? finance.totalprice : '-'}</td>
+                                                                <td>{finance.eb_charges  ? finance.eb_charges : '-'}</td>
                                                                 <td>{finance.app_charges ? finance.app_charges +' %' : '-'}</td>
                                                                 <td>{finance.open_a_eb_charges ?  finance.open_a_eb_charges +' %' : '-'}</td>
                                                                 <td>{finance.parking_charges ? finance.parking_charges +' %' : '-'}</td>

@@ -114,7 +114,7 @@ const ViewUserList = ({ userInfo, handleLogout }) => {
                                                             <hr></hr>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>User Name: <span style={{fontWeight:'normal'}}>{newUser.username ? newUser.username : '-'}</span></div>
@@ -131,7 +131,7 @@ const ViewUserList = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Password: <span style={{fontWeight:'normal'}}>{newUser.password ? newUser.password : '-'}</span></div>   
@@ -139,16 +139,21 @@ const ViewUserList = ({ userInfo, handleLogout }) => {
                                                         </div>
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
+                                                                <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Wallet Balance: <span style={{fontWeight:'normal'}}>{newUser.wallet_bal ? newUser.wallet_bal : '0'}</span></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Role Name: <span style={{fontWeight:'normal'}}>{newUser.role_name ? newUser.role_name : '-'}</span></div>
                                                             </div>
                                                         </div>
+                                                    </div>
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Assigned Reseller Name: <span style={{fontWeight:'normal'}}>{newUser.reseller_name ? newUser.reseller_name : '-'}</span></div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Assigned Client Name: <span style={{fontWeight:'normal'}}>{newUser.client_name ? newUser.client_name : '-'}</span></div>
@@ -159,13 +164,13 @@ const ViewUserList = ({ userInfo, handleLogout }) => {
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Assigned Association Name: <span style={{fontWeight:'normal'}}>{newUser.association_name ? newUser.association_name :'-'}</span></div>
                                                             </div>
                                                         </div>
+                                                    </div>
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Created By: <span style={{fontWeight:'normal'}}>{newUser.created_by ? newUser.created_by : '-'}</span></div> 
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Created Date: <span style={{fontWeight:'normal'}}>{newUser.created_date ? formatTimestamp(newUser.created_date) : '-'}</span></div>
@@ -176,25 +181,18 @@ const ViewUserList = ({ userInfo, handleLogout }) => {
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Modified By: <span style={{fontWeight:'normal'}}>{newUser.modified_by ? newUser.modified_by : '-'}</span></div>
                                                             </div>
                                                         </div>
+                                                    </div>
+                                                    <div className="row col-12 col-xl-12">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Modified Date: <span style={{fontWeight:'normal'}}>{newUser.modified_date ? formatTimestamp(newUser.modified_date) : '-'}</span></div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <div className="row col-12 col-xl-12 viewDataCss">
                                                         <div className="col-md-4">
                                                             <div className="form-group row">
                                                                 <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Status: <span style={{fontWeight:'normal'}}>{newUser.status===true ? <span className="text-success">Active</span> : <span className="text-danger">DeActive</span>}</span></div>
                                                             </div>
                                                         </div>
-                                                        {newUser.role_id === 5 && 
-                                                            <div className="col-md-4">
-                                                                <div className="form-group row">
-                                                                    <div className="col-sm-12" style={{ fontWeight: 'bold' }}>Wallet Balance: <span style={{fontWeight:'normal'}}>{newUser.wallet_bal ? newUser.wallet_bal : '0'}</span></div>
-                                                                </div>
-                                                            </div>
-                                                         }
                                                     </div>
                                                 </div>
                                             </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef} from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Sidebar from '../../components/Sidebar';
@@ -12,15 +12,20 @@ const Assignfinance = ({ userInfo, handleLogout }) => {
     const [chargerId, setChargerId] = useState('');
     const [financeOptions, setFinanceOptions] = useState([]);
     const [selectedFinanceId, setSelectedFinanceId] = useState('');
-    const [isEdited, setIsEdited] = useState(false); // New state to track if the unit price is edited
-    const fetchFinanceIdCalled = useRef(false); 
+    // const [totalPrice, setTotalPrice] = useState('');
+
+    useEffect(() => {
+        const { charger_id, finance_id } = location.state || {};
+        if (charger_id) {
+            setChargerId(charger_id);
+        }
+        fetchFinanceId(finance_id);
+    }, [location]);
 
     // Fetch finance details
-    const fetchFinanceId = useCallback(async (finance_id) => {
+    const fetchFinanceId = async (finance_id) => {
         try {
-            const response = await axios.post('/clientadmin/FetchFinanceDetailsForSelection', {
-                client_id: userInfo.data.client_id,
-            });
+            const response = await axios.get('/clientadmin/FetchFinanceDetailsForSelection');
             if (response.data && Array.isArray(response.data.data)) {
                 const financeIds = response.data.data.map(item => ({
                     finance_id: item.finance_id,
@@ -33,6 +38,7 @@ const Assignfinance = ({ userInfo, handleLogout }) => {
                     const selectedFinance = financeIds.find(item => item.finance_id === finance_id);
                     if (selectedFinance) {
                         setSelectedFinanceId(selectedFinance.finance_id);
+                        // setTotalPrice(selectedFinance.totalprice);
                     }
                 }
             } else {
@@ -41,24 +47,17 @@ const Assignfinance = ({ userInfo, handleLogout }) => {
         } catch (error) {
             console.error('Error fetching finance details:', error);
         }
-    }, [userInfo.data.client_id]);
-
-    useEffect(() => {
-        const { charger_id, finance_id } = location.state || {};
-        if (charger_id) {
-            setChargerId(charger_id);
-        }
-        if (!fetchFinanceIdCalled.current) {
-            fetchFinanceId(finance_id);
-            fetchFinanceIdCalled.current = true;
-        }
-    }, [location, fetchFinanceId]);
+    };
 
     // Handle selection change
     const handleFinanceChange = (e) => {
         const selectedId = e.target.value;
         setSelectedFinanceId(selectedId);
-        setIsEdited(true); // Mark as edited when a selection is changed
+
+        const selectedFinance = financeOptions.find(item => item.finance_id === selectedId);
+        if (selectedFinance) {
+            // setTotalPrice(selectedFinance.totalprice);
+        }
     };
 
     // Handle form submission
@@ -146,8 +145,8 @@ const Assignfinance = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Charger ID</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Charger ID</label>
+                                                                    <div className="col-sm-9">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control"
@@ -159,8 +158,8 @@ const Assignfinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Unit Price</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Unit Price</label>
+                                                                    <div className="col-sm-9">
                                                                         <select
                                                                             className="form-control"
                                                                             value={selectedFinanceId}
@@ -168,22 +167,16 @@ const Assignfinance = ({ userInfo, handleLogout }) => {
                                                                             required
                                                                         >
                                                                             <option value="" disabled>Select Unit Price</option>
-                                                                            {financeOptions.length === 0 ? (
-                                                                                <option disabled>No data found</option>
-                                                                            ) : (
-                                                                                financeOptions.map((financeItem, index) => (
-                                                                                    <option key={index} value={financeItem.finance_id}>{`₹${financeItem.totalprice}`}</option>
-                                                                                ))
-                                                                            )}
+                                                                            {financeOptions.map((financeItem, index) => (
+                                                                                <option key={index} value={financeItem.finance_id}>{`₹${financeItem.totalprice}`}</option>
+                                                                            ))}
                                                                         </select>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div style={{ textAlign: 'center', padding:'15px'}}>
-                                                            <button type="submit" className="btn btn-primary mr-2" disabled={!isEdited}>
-                                                                Assign
-                                                            </button>
+                                                        <div style={{ textAlign: 'center' }}>
+                                                            <button type="submit" className="btn btn-primary mr-2">Assign</button>
                                                         </div>
                                                     </form>
                                                 </div>

@@ -15,76 +15,23 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
 
     const [errorMessage, setErrorMessage] = useState('');
    
-    const handleInputChangers = (e, field) => {
-        let value = e.target.value;
-    
-        // Allow only numbers and a single decimal point
-        value = value.replace(/[^0-9.]/g, '');
-    
-        // Check if the value starts with multiple zeros
-        if (value.startsWith('00')) {
-            value = value.slice(1); // Remove one leading zero
-        }
-        // Ensure there's only one decimal point and limit to two decimal places
-        const parts = value.split('.');
-        if (parts.length > 2) {
-            value = parts[0] + '.' + parts[1];
-        } else if (parts.length === 2 && parts[1].length > 2) {
-            value = parts[0] + '.' + parts[1].slice(0, 2);
-        }
-    
-        // Convert to float and validate range
-        const numericValue = parseFloat(value);
-        let errorMessage = '';
-        if (numericValue < 1 || numericValue > 100) {
-            errorMessage = 'Please enter a value between ₹1.00 and ₹100.00.';
-        }
-    
-        // Limit the length to 6 characters and apply validation
-        if (value.length > 6) {
-            value = value.slice(0, 6);
-        }
-    
-        // Update the state based on validation
-        if (!errorMessage) {
-            setNewFinance({ ...newFinance, [field]: value });
-        }
-        setErrorMessage(errorMessage);
-    };
-
     const handleInputChange = (e, field) => {
         let value = e.target.value;
 
         // Allow only numbers and a single decimal point
         value = value.replace(/[^0-9.]/g, '');
-    
-        // Ensure there's only one decimal point and limit to two decimal places
         const parts = value.split('.');
         if (parts.length > 2) {
             value = parts[0] + '.' + parts[1];
-        } else if (parts.length === 2 && parts[1].length > 2) {
-            value = parts[0] + '.' + parts[1].slice(0, 2);
         }
-    
-        // Convert to float and validate range
-        const numericValue = parseFloat(value);
-        let errorMessage = '';
-        if (numericValue < 0 || numericValue > 10) {
-            errorMessage = 'Please enter a value between 0.00% and 10.00%.';
-        }
-    
-        // Limit the length to 6 characters and apply validation
+
+        // Limit the length to 6 characters
         if (value.length > 6) {
             value = value.slice(0, 6);
         }
-    
-        // Update the state based on validation
-        if (!errorMessage) {
-            setNewFinance({ ...newFinance, [field]: value });
-        }
-        setErrorMessage(errorMessage);
+
+        setNewFinance({ ...newFinance, [field]: value });
     };
-    
     // create finance
     const createFinance = async (e) => {
         e.preventDefault();
@@ -163,8 +110,8 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">EB Charges</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">EB Charges</label>
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">₹</span>
@@ -174,7 +121,7 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                                                 className="form-control" placeholder="EB Chargers"
                                                                                 maxLength={6}
                                                                                 value={newFinance.eb_charges}
-                                                                                onChange={(e) => handleInputChangers(e, 'eb_charges')}
+                                                                                onChange={(e) => handleInputChange(e, 'eb_charges')}
                                                                                 required
                                                                             />
                                                                         </div>
@@ -183,8 +130,8 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">App Charges</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">App Charges</label>
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -192,7 +139,7 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                                             <input
                                                                                 type="text"
                                                                                 className="form-control" placeholder="App Charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={newFinance.app_charges}
                                                                                 onChange={(e) => handleInputChange(e, 'app_charges')}
                                                                                 required
@@ -203,8 +150,8 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Other Charges</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Other Charges</label>
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -212,7 +159,7 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                                             <input
                                                                                 type="text"
                                                                                 className="form-control" placeholder="Other Charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={newFinance.other_charges}
                                                                                 onChange={(e) => handleInputChange(e, 'other_charges')}
                                                                                 required
@@ -223,8 +170,8 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Parking Charges</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Parking Charges</label>
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -232,7 +179,7 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                                             <input
                                                                                 type="text"
                                                                                 className="form-control" placeholder="Parking Charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={newFinance.parking_charges}
                                                                                 onChange={(e) => handleInputChange(e, 'parking_charges')} required
                                                                             />
@@ -242,8 +189,8 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Rent Charges</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Rent Charges</label>
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -251,7 +198,7 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                                             <input
                                                                                 type="text"
                                                                                 className="form-control" placeholder="Rent Charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={newFinance.rent_charges}
                                                                                 onChange={(e) => handleInputChange(e, 'rent_charges')}
                                                                                 required
@@ -262,8 +209,8 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Open A EB Charges</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Open A EB Charges</label>
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -271,7 +218,7 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                                             <input
                                                                                 type="text"
                                                                                 className="form-control" placeholder="Open A EB Charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={newFinance.open_a_eb_charges}
                                                                                 onChange={(e) => handleInputChange(e, 'open_a_eb_charges')}
                                                                                 required
@@ -282,8 +229,8 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Open Other Charges</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Open Other Charges</label>
+                                                                    <div className="col-sm-5">
                                                                         <div className="input-group">
                                                                             <div className="input-group-prepend">
                                                                                 <span className="input-group-text">%</span>
@@ -291,7 +238,7 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                                             <input
                                                                                 type="text"
                                                                                 className="form-control" placeholder="Open Other Charges"
-                                                                                maxLength={5}
+                                                                                maxLength={6}
                                                                                 value={newFinance.open_other_charges}
                                                                                 onChange={(e) => handleInputChange(e, 'open_other_charges')}
                                                                                 required
@@ -302,7 +249,7 @@ const CreateFinance = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                         {errorMessage && <div className="text-danger">{errorMessage}</div>}
-                                                        <div style={{ textAlign: 'center', padding:'15px'}}>
+                                                        <div style={{ textAlign: 'center' }}>
                                                             <button type="submit" className="btn btn-primary mr-2">Create Finance</button>
                                                         </div>
                                                     </form>

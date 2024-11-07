@@ -154,8 +154,8 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Association  Name</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Association  Name</label>
+                                                                    <div className="col-sm-9">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control"
@@ -173,8 +173,8 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             {/* <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label">Association ID</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Association ID</label>
+                                                                    <div className="col-sm-9">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control"
@@ -186,8 +186,8 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                             </div> */}
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Association Phone</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Association Phone</label>
+                                                                    <div className="col-sm-9">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control"
@@ -204,8 +204,8 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Association Email</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Association Email</label>
+                                                                    <div className="col-sm-9">
                                                                         <input
                                                                             type="email"
                                                                             className="form-control"
@@ -217,53 +217,23 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Association Wallet</label>
-                                                                    <div className="col-sm-12">
-                                                                        <input type="text"
+                                                                    <label className="col-sm-3 col-form-label">Association  Wallet</label>
+                                                                    <div className="col-sm-9">
+                                                                        <input
+                                                                            type="text"
                                                                             className="form-control"
                                                                             value={association_wallet}
                                                                             onChange={(e) => {
-                                                                                let value = e.target.value;
-
-                                                                                // Allow only numbers and a single decimal point
-                                                                                value = value.replace(/[^0-9.]/g, '');
-
-                                                                                const parts = value.split('.');
-
-                                                                                // Ensure there's only one decimal point and limit to two decimal places
-                                                                                if (parts.length > 2) {
-                                                                                    value = parts[0] + '.' + parts[1];
-                                                                                } else if (parts.length === 2 && parts[1].length > 2) {
-                                                                                    value = parts[0] + '.' + parts[1].slice(0, 2);
-                                                                                }
-
-                                                                                // Limit the length to 8 characters
-                                                                                if (value.length > 8) {
-                                                                                    value = value.slice(0, 8);
-                                                                                }
-
-                                                                                // Convert to float and validate range
-                                                                                const numericValue = parseFloat(value);
-
-                                                                                // If the value is within the range 1.00 to 99,999.00, set the value
-                                                                                if (!isNaN(numericValue) && numericValue >= 1 && numericValue < 100000) {
-                                                                                    setAssociationWallet(value);
-                                                                                    setErrorMessage(''); // Clear error if within range
-                                                                                } else {
-                                                                                    // If outside range, clear the input field and show an error message
-                                                                                    setAssociationWallet('');
-                                                                                    setErrorMessage('Please enter a wallet amount between 1.00 ₹ and 99999.00 ₹.');
-                                                                                }
-                                                                            }}
-                                                                            required
-                                                                        />
+                                                                            const value = e.target.value;
+                                                                            const sanitizedValue = value.replace(/[^0-9]/g, '');
+                                                                            setAssociationWallet(sanitizedValue);}} required  />
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Association  Address</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Association  Address</label>
+                                                                    <div className="col-sm-9">
                                                                         <textarea
                                                                             type="text"
                                                                             className="form-control"
@@ -277,8 +247,8 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Status</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Status</label>
+                                                                    <div className="col-sm-9">
                                                                         <select
                                                                             className="form-control"
                                                                             value={status}
@@ -292,7 +262,7 @@ const Editass = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                         {errorMessage && <div className="text-danger">{errorMessage}</div>}
-                                                        <div style={{ textAlign: 'center', padding:'15px'}}>
+                                                        <div style={{ textAlign: 'center' }}>
                                                             <button type="submit" className="btn btn-primary mr-2" disabled={!isModified}>Update</button>
                                                         </div>
                                                     </form>

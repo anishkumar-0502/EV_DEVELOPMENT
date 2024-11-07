@@ -245,19 +245,19 @@ const Profile = ({ userInfo, handleLogout }) => {
                                             <h4 className="card-title">Association Profile</h4>
                                         </div> 
                                         <form className="forms-sample" onSubmit={addAssProfileUpdate}>
-                                            <div className="form-group profileINputCss">
+                                            <div className="form-group">
                                                 <label htmlFor="exampleInputUsername1">Username</label>
                                                 <input type="text" className="form-control" placeholder="Username" value={association_name} maxLength={25} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^a-zA-Z0-9 ]/g, ''); setUpdateUname(sanitizedValue);}} readOnly required/>
                                             </div>
-                                            <div className="form-group profileINputCss">
+                                            <div className="form-group">
                                                 <label htmlFor="exampleInputEmail1">Email address</label>
                                                 <input type="email" className="form-control" placeholder="Email" value={association_email_id} onChange={(e) => setUpdateEmail(e.target.value)} readOnly required/>
                                             </div>
-                                            <div className="form-group profileINputCss">
+                                            <div className="form-group">
                                                 <label htmlFor="exampleInputPassword1">Phone Number</label>
                                                 <input type="text" className="form-control" placeholder="Phone Number" value={association_phone_no} maxLength={10} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^0-9]/g, ''); setUpdatePhone(sanitizedValue);}} required/>
                                             </div>
-                                            <div className="form-group profileINputCss">
+                                            <div className="form-group">
                                                 <label htmlFor="exampleInputConfirmPassword1">Address</label>
                                                 <textarea type="password" className="form-control" placeholder="Address" maxLength={150} value={association_address} onChange={(e) => setUpdateAddress(e.target.value)} required/>
                                             </div>
@@ -276,19 +276,19 @@ const Profile = ({ userInfo, handleLogout }) => {
                                             <h4 className="card-title">User Profile</h4>
                                         </div> 
                                         <form className="forms-sample" onSubmit={addUserProfileUpdate}>
-                                            <div className="form-group profileINputCss">
+                                            <div className="form-group">
                                                 <label htmlFor="exampleInputUsername1">Username</label>
                                                 <input type="text" className="form-control" placeholder="Username" value={username} maxLength={25} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^a-zA-Z0-9 ]/g, ''); setUserUname(sanitizedValue);}} readOnly required/>
                                             </div>
-                                            <div className="form-group profileINputCss">
+                                            <div className="form-group">
                                                 <label htmlFor="exampleInputEmail1">Email address</label>
                                                 <input type="email" className="form-control" placeholder="Email" value={email_id} onChange={(e) => setUserEmail(e.target.value)} readOnly required/>
                                             </div>
-                                            <div className="form-group profileINputCss">
+                                            <div className="form-group">
                                                 <label htmlFor="exampleInputConfirmPassword1">Phone Number</label>
                                                 <input type="text" className="form-control" placeholder="Phone Number" value={phone_no} maxLength={10} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^0-9]/g, ''); setUserPhone(sanitizedValue);}} required/> 
                                             </div>
-                                            <div className="form-group profileINputCss">
+                                            <div className="form-group">
                                                 <label htmlFor="exampleInputPassword1">Password</label>
                                                 <input type="text" className="form-control" placeholder="Password" value={password} maxLength={4} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^0-9]/g, ''); setUserPassword(sanitizedValue);}} required/>
                                             </div>

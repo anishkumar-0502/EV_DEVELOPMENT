@@ -46,29 +46,8 @@ const AssignTagID = ({ userInfo, handleLogout }) => {
                 association_id: userInfo.data.association_id,
                 user_id: userInfo.data.user_id
             });
-    
-            if (res.data && res.data.status === 'Success') {
-                if (typeof res.data.data === 'string' && res.data.data === 'No tags found') {
-                    // If the data contains the message "No tags found"
-                    setError(res.data.data);
-                    setData([]); // Clear the data since no tags were found
-                } else if (Array.isArray(res.data.data)) {
-                    // If the data contains an array of tag IDs, filter based on expiry date
-                    const currentDate = new Date();
-                    const tagIDdata = res.data.data.filter((item) => {
-                        const expiryDate = new Date(item.tag_id_expiry_date);
-                        return expiryDate >= currentDate; // Filter future expiry dates
-                    });
-    
-                    setData(tagIDdata);
-                    setError(null); // Clear any previous errors
-                } else {
-                    setError('Unexpected response format.');
-                }
-            } else {
-                setError('Error fetching data. Please try again.');
-            }
-    
+
+            setData(res.data.data);
             setLoading(false);
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -76,7 +55,6 @@ const AssignTagID = ({ userInfo, handleLogout }) => {
             setLoading(false);
         }
     }, [userInfo.data.association_id, userInfo.data.user_id]);
-    
 
     useEffect(() => {
         if (!fetchUserRoleCalled.current) {
@@ -84,6 +62,28 @@ const AssignTagID = ({ userInfo, handleLogout }) => {
             fetchUserRoleCalled.current = true;
         }
     }, [fetchTagID]);
+
+    // const fetchTagID = async () => {
+    //     try {
+    //         const res = await axios.post('/associationadmin/FetchTagIdToAssign', {
+    //             association_id: userInfo.data.association_id,
+    //             user_id: userInfo.data.user_id
+    //         });
+    //         setData(res.data.data);
+    //         setLoading(false);
+    //     } catch (err) {
+    //         console.error('Error fetching data:', err);
+    //         setError('Error fetching data. Please try again.');
+    //         setLoading(false);
+    //     }
+    // };
+
+    // useEffect(() => {
+    //     if (!fetchUserRoleCalled.current) {
+    //         fetchTagID();
+    //         fetchUserRoleCalled.current = true;
+    //     }
+    // }, []);
 
     // Search data 
     const handleSearchInputChange = (e) => {
@@ -238,7 +238,7 @@ const AssignTagID = ({ userInfo, handleLogout }) => {
                                                         </tr>
                                                     ) : error ? (
                                                         <tr>
-                                                            <td colSpan="9" style={{ marginTop: '50px', textAlign: 'center' }}>{error}</td>
+                                                            <td colSpan="9" style={{ marginTop: '50px', textAlign: 'center' }}>Error: {error}</td>
                                                         </tr>
                                                     ) : (
                                                         Array.isArray(posts) && posts.length > 0 ? (

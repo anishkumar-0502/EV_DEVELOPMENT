@@ -107,7 +107,7 @@ const AddManageReseller = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label labelInput">Reseller Name</label>
+                                                                    <label className="col-sm-3 col-form-label">Reseller Name</label>
                                                                     <div className="col-sm-9">
                                                                         <input type="text" className="form-control" placeholder="Reseller Name" value={reseller_name} maxLength={25} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^a-zA-Z0-9 ]/g, ''); setResellerName(sanitizedValue);}} required/>
                                                                     </div>
@@ -115,7 +115,7 @@ const AddManageReseller = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label labelInput">Phone Number</label>
+                                                                    <label className="col-sm-3 col-form-label">Phone Number</label>
                                                                     <div className="col-sm-9">
                                                                         <input type="text" className="form-control" placeholder="Phone Number" value={phoneNumber} maxLength={10} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^0-9]/g, ''); setPhoneNumber(sanitizedValue);}} required/>
                                                                     </div>
@@ -125,7 +125,7 @@ const AddManageReseller = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label labelInput">Email ID</label>
+                                                                    <label className="col-sm-3 col-form-label">Email ID</label>
                                                                     <div className="col-sm-9">
                                                                     <input type="email" className="form-control" placeholder="Email ID" value={reseller_email_id} 
                                                                         onChange={(e) => {
@@ -145,7 +145,7 @@ const AddManageReseller = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-3 col-form-label labelInput">Address</label>
+                                                                    <label className="col-sm-3 col-form-label">Address</label>
                                                                     <div className="col-sm-9">
                                                                         <textarea type="text" className="form-control" placeholder="Address" value={reseller_address} maxLength={150} onChange={(e) => setAddress(e.target.value)} required/>
                                                                     </div>

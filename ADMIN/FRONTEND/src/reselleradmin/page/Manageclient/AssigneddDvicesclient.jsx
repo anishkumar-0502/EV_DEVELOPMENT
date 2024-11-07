@@ -13,7 +13,6 @@ const Assigneddevicesclient = ({ userInfo, handleLogout }) => {
     const [filteredData, setFilteredData] = useState([]);
     const fetchChargerDetailsCalled = useRef(false);
     const [initialResellerCommission, setInitialResellerCommission] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
 
     // Fetch charger details
     const fetchChargerDetails = useCallback(async () => {
@@ -59,7 +58,7 @@ const Assigneddevicesclient = ({ userInfo, handleLogout }) => {
  
     // View session history page
     const navigateToSessionHistory = (data) => {
-        const sessiondata = data.sessiondata; // Assuming sessiondata is an array and we take the first element
+        const sessiondata = data.sessiondata[0]; // Assuming sessiondata is an array and we take the first element
         navigate('/reselleradmin/Sessionhistoryclient', { state: { sessiondata } });
     };
 
@@ -85,7 +84,6 @@ const Assigneddevicesclient = ({ userInfo, handleLogout }) => {
 
     const closeEditModal = () => {
         setShowEditForm(false); // Close the form
-        setErrorMessage('')
         setTheadsticky('sticky');
         setTheadfixed('fixed');
         setTheadBackgroundColor('white');
@@ -129,7 +127,6 @@ const Assigneddevicesclient = ({ userInfo, handleLogout }) => {
                 setEditRellComm(''); 
                 setShowEditForm(false);
                 closeEditModal();
-                setErrorMessage('')
                 setTheadsticky('sticky');
                 setTheadfixed('fixed');
                 setTheadBackgroundColor('white');
@@ -190,42 +187,24 @@ const Assigneddevicesclient = ({ userInfo, handleLogout }) => {
                                                 <div className="input-group-prepend">
                                                     <span className="input-group-text" style={{color:'black', width:'185px'}}>Reseller Commission</span>
                                                 </div>
-                                                <input type="text" className="form-control" placeholder="Client Commission" value={reseller_commission} maxLength={5}
+                                                <input type="text" className="form-control" placeholder="Client Commission" value={reseller_commission} maxLength={6}
                                                     onChange={(e) => {
-                                                        let value = e.target.value;
-                                                        // Allow only numbers and a single decimal point
+                                                        let value = e.target.value; // Define `value` here
+
+                                                        // Remove any non-digit or non-decimal characters
                                                         value = value.replace(/[^0-9.]/g, '');
-                                                    
-                                                        // Ensure there's only one decimal point and limit to two decimal places
+
+                                                        // Ensure only one decimal point is allowed
                                                         const parts = value.split('.');
                                                         if (parts.length > 2) {
-                                                            value = parts[0] + '.' + parts[1];
-                                                        } else if (parts.length === 2 && parts[1].length > 2) {
-                                                            value = parts[0] + '.' + parts[1].slice(0, 2);
+                                                        value = parts[0] + '.' + parts[1]; // Combine the first two parts if more than one decimal point is present
                                                         }
-                                                    
-                                                        // Convert to float and validate range
-                                                        const numericValue = parseFloat(value);
-                                                        let errorMessage = '';
-                                                        if (numericValue < 0 || numericValue > 25) {
-                                                            errorMessage = 'Please enter a value between 0.00% and 25.00%.';
-                                                        }
-                                                        // Limit the length to 6 characters
-                                                        if (value.length > 5) {
-                                                            value = value.slice(0, 5);
-                                                        }
-                                                    
-                                                        // Update the state based on validation
-                                                        if (!errorMessage) {
-                                                            setEditRellComm(value);
 
-                                                        }
-                                                        setErrorMessage(errorMessage);
+                                                        setEditRellComm(value); // Update state with sanitized value
                                                     }}
                                                 required/>
                                             </div>
                                         </div>
-                                        {errorMessage && <div className="text-danger">{errorMessage}</div>}
                                         <div style={{textAlign:'center'}}>
                                             <button type="submit" className="btn btn-primary mr-2" style={{marginTop:'10px'}} disabled={!isUpdateButtonEnabled}>Update</button>
                                         </div>
@@ -260,7 +239,7 @@ const Assigneddevicesclient = ({ userInfo, handleLogout }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="table-responsive" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                                        <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                                             <table className="table table-striped">
                                                 <thead style={{ textAlign: 'center', position: theadsticky, tableLayout: theadfixed, top: 0, zIndex: 1, backgroundColor: theadBackgroundColor}}>
                                                     <tr> 

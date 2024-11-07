@@ -13,7 +13,6 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
     
     const [latitude, setLatitude] = useState(dataItem?.lat || '');
     const [longitude, setLongitude] = useState(dataItem.long || '');
-    const [landmark, setlandmark] = useState(dataItem?.landmark || '');
     const [wifiUsername, setWifiUsername] = useState(dataItem.wifi_username || '');
     const [wifiPassword, setWifiPassword] = useState(dataItem.wifi_password || '');
     const [selectStatus, setSelectedStatus] = useState(dataItem?.charger_accessibility || '');
@@ -22,7 +21,6 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
     const [initialValues, setInitialValues] = useState({
         lat: dataItem?.lat || '',
         long: dataItem.long || '',
-        landmark: dataItem.landmark || '',
         wifi_username: dataItem.wifi_username || '',
         wifi_password: dataItem.wifi_password || '',
         charger_accessibility: dataItem?.charger_accessibility || ''
@@ -32,7 +30,6 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
     const isModified = (
         latitude !== initialValues.lat ||
         longitude !== initialValues.long ||
-        landmark !== initialValues.landmark ||
         wifiUsername !== initialValues.wifi_username ||
         wifiPassword !== initialValues.wifi_password ||
         selectStatus !== initialValues.charger_accessibility
@@ -66,7 +63,6 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                     charger_accessibility: Status,
                     lat: latitude,
                     long: longitude,
-                    landmark,
                     wifi_username: wifiUsername,
                     wifi_password: wifiPassword,
                     modified_by: userInfo.data.email_id
@@ -83,7 +79,6 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                 setWifiUsername('');
                 setWifiPassword('');
                 editBackManageDevice();
-                setlandmark('');
             } else {
                 const responseData = await response.json();
                 Swal.fire({
@@ -106,7 +101,6 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
         setInitialValues({
             lat: dataItem?.lat || '',
             long: dataItem.long || '',
-            landmark: dataItem.landmark || '',
             wifi_username: dataItem.wifi_username || '',
             wifi_password: dataItem.wifi_password || '',
             charger_accessibility: dataItem?.charger_accessibility || ''
@@ -148,8 +142,8 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Charger Accessibility</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Charger Accessibility</label>
+                                                                    <div className="col-sm-9">
                                                                         <select className="form-control" value={selectStatus} onChange={handleStatusChange} required>
                                                                             <option value="1">Public</option>
                                                                             <option value="2">Private</option>
@@ -159,8 +153,8 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Latitude</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Latitude</label>
+                                                                    <div className="col-sm-9">
                                                                         <input type="text" className="form-control" value={latitude} maxLength={10} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^0-9.-]/g, ''); setLatitude(sanitizedValue); }} required />
                                                                     </div>
                                                                 </div>
@@ -169,17 +163,17 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Longitude</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Longitude</label>
+                                                                    <div className="col-sm-9">
                                                                         <input type="text" className="form-control" value={longitude} maxLength={11} onChange={(e) => { const value = e.target.value; const sanitizedValue = value.replace(/[^0-9.-]/g, ''); setLongitude(sanitizedValue); }} required />
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Land Mark</label>
-                                                                    <div className="col-sm-12">
-                                                                        <input type="text" className="form-control" value={landmark} maxLength={12} onChange={(e) => setlandmark(e.target.value)} required />
+                                                                    <label className="col-sm-3 col-form-label">Wifi Username</label>
+                                                                    <div className="col-sm-9">
+                                                                        <input type="text" className="form-control" value={wifiUsername} maxLength={25} onChange={(e) => setWifiUsername(e.target.value)} required />
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -187,22 +181,14 @@ const EditManageDevice = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Wifi Username</label>
-                                                                    <div className="col-sm-12">
-                                                                        <input type="text" className="form-control" value={wifiUsername} maxLength={25} onChange={(e) => setWifiUsername(e.target.value)} required />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="col-md-6">
-                                                                <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Wifi Password</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Wifi Password</label>
+                                                                    <div className="col-sm-9">
                                                                         <input type="text" className="form-control" value={wifiPassword} maxLength={15} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/\s/g, ''); setWifiPassword(sanitizedValue); }} required />
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div style={{ textAlign: 'center', padding:'15px'}}>
+                                                        <div style={{ textAlign: 'center' }}>
                                                             <button type="submit" className="btn btn-primary mr-2" disabled={!isModified}>Update</button>
                                                         </div>
                                                     </form>

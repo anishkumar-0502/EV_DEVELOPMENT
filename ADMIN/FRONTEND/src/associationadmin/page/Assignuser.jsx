@@ -177,32 +177,45 @@ const Assignuser = ({ userInfo, handleLogout }) => {
                         </div>
                       </div>
                     </div>
-                    <div className="col-12 grid-margin stretch-card d-flex justify-content-center align-items-center">
+                    <div className="col-12 grid-margin">
                       <div className="card">
                         <div className="card-body">
-                          <form onSubmit={handleAssuserSubmits} className="form-inline d-flex justify-content-center align-items-center w-100">
-                            <label htmlFor="emailId" className="mr-2">Email ID</label>
-                            <input type="email" className="form-control mb-2 mr-sm-2" id="emailId" placeholder="Enter Email ID" value={email_id} 
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                const noSpaces = value.replace(/\s/g, '');
-                                const validChars = noSpaces.replace(/[^a-zA-Z0-9@.]/g, '');
-                                const lowerCaseEmail = validChars.toLowerCase();
-                                const atCount = (lowerCaseEmail.match(/@/g) || []).length;
-                                const sanitizedEmail = atCount <= 1 ? lowerCaseEmail : lowerCaseEmail.replace(/@.*@/, '@');
-                                setAssEmail(sanitizedEmail);
-                              }} autoComplete='off' required />
-
-                            <label htmlFor="phoneNo" className="mr-2">Phone Number</label>
-                            <input type="text" className="form-control mb-2 mr-sm-2" id="phoneNo" placeholder="Enter Phone Number" value={phone_no} maxLength={10} 
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                const sanitizedValue = value.replace(/[^0-9]/g, '');
-                                setAssPhone(sanitizedValue);
-                              }} autoComplete='off' required />
-
-                            <button type="submit" className="btn btn-primary mb-2">Assign</button>
-                            {errorMessage && <p className="text-danger ml-2">{errorMessage}</p>}
+                          <form onSubmit={handleAssuserSubmits} className="form-sample">
+                            <div className="row">
+                              <div className="col-md-12">
+                                <div className="form-group row">
+                                  <div className="col-sm-5">
+                                    <div className="form-group">
+                                      <label htmlFor="exampleInputEmail1">Email ID</label>
+                                      <input type="email" className="form-control" placeholder="Enter Email ID" value={email_id} 
+                                      
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          // Remove spaces and invalid characters
+                                          const noSpaces = value.replace(/\s/g, '');
+                                          const validChars = noSpaces.replace(/[^a-zA-Z0-9@.]/g, '');
+                                          // Convert to lowercase
+                                          const lowerCaseEmail = validChars.toLowerCase();
+                                          // Handle multiple @ symbols
+                                          const atCount = (lowerCaseEmail.match(/@/g) || []).length;
+                                          const sanitizedEmail = atCount <= 1 ? lowerCaseEmail : lowerCaseEmail.replace(/@.*@/, '@');
+                                          // Set the sanitized and lowercase email
+                                          setAssEmail(sanitizedEmail); }} required />
+                                    </div>
+                                  </div>
+                                  <div className="col-sm-5">
+                                    <div className="form-group">
+                                      <label htmlFor="exampleInputConfirmPassword1">Phone Number</label>
+                                      <input type="text" className="form-control" placeholder="Enter Phone Number" value={phone_no} maxLength={10} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^0-9]/g, ''); setAssPhone(sanitizedValue);}} required/> 
+                                    </div>
+                                  </div>
+                                  <div className="col-sm-2" style={{paddingTop:'30px'}}>
+                                    <button type="submit" className="btn btn-primary btn-block">Assign</button>
+                                  </div>
+                                  {errorMessage && <p className="text-danger">{errorMessage}</p>}
+                                </div>
+                              </div>
+                            </div>
                           </form>
                         </div>
                       </div>
@@ -267,6 +280,7 @@ const Assignuser = ({ userInfo, handleLogout }) => {
                                       type="button"
                                       className="btn btn-warning"
                                       onClick={() => handleViewAssignTagID(dataItem)}
+                                      style={{ marginBottom: '10px' }}
                                   >
                                       {dataItem.tag_id === null ? 'Assign' : 'Re-assign'}
                                   </button>
@@ -278,7 +292,7 @@ const Assignuser = ({ userInfo, handleLogout }) => {
                               ))
                             ) : (
                               <tr>
-                                <td colSpan="9" style={{ marginTop: '50px', textAlign: 'center' }}>No Assign user's found</td>
+                                <td colSpan="8" style={{ marginTop: '50px', textAlign: 'center' }}>No Assign user's found</td>
                               </tr>
                             )
                           )}

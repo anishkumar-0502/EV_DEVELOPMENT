@@ -17,6 +17,7 @@ router.post('/getRecentSessionDetails', controllers.getRecentSessionDetails);
 
 router.post('/getAllChargersWithStatusAndPrice', controllers.getAllChargersWithStatusAndPrice);
 
+
 //Fetch all action options for OCPPConfig
 router.get('/GetAction', async(req, res) => {
 

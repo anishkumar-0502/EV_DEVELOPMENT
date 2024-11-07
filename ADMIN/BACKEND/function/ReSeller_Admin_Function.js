@@ -247,7 +247,7 @@ async function updateClient(req){
                 client_name: client_name,
                 client_phone_no: client_phone_no,
                 client_address: client_address,
-                client_wallet: parseFloat(client_wallet),
+                client_wallet,
                 status: status,
                 modified_by: modified_by,
                 modified_date: new Date()
@@ -463,11 +463,7 @@ async function CreateUser(req, res, next) {
             ] 
         });
         if (existingUser) {
-            if (existingUser.email_id === email_id) {
-                return res.status(400).json({ message: 'Email ID already exists' });
-            } else if (existingUser.username === username) {
-                return res.status(400).json({ message: 'Username already exists' });
-            }
+            return res.status(400).json({ message: 'Email ID already exists' });
         }
 
         // Use aggregation to fetch the highest user_id
@@ -537,7 +533,7 @@ async function UpdateUser(req, res, next) {
                 $set: {
                     username: username,
                     phone_no: phone_no,
-                    wallet_bal: parseFloat(wallet_bal) || parseFloat(existingUser.wallet_bal), 
+                    wallet_bal: wallet_bal || existingUser.wallet_bal, 
                     modified_date: new Date(),
                     modified_by: modified_by,
                     password: parseInt(password),

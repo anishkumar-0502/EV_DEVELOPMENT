@@ -164,7 +164,7 @@ const Profile = ({ userInfo, handleLogout }) => {
                                                 <div className="card-body">
                                                     <form className="forms-sample" onSubmit={addProfileUpdate}>
                                                         <div className="form-group row">
-                                                            <label htmlFor="exampleInputUsername2" className="col-sm-12 col-form-label labelInput">User Name</label>
+                                                            <label htmlFor="exampleInputUsername2" className="col-sm-2 col-form-label">User Name</label>
                                                             <div className="col-sm-10">
                                                                 <input
                                                                     type="text"
@@ -183,7 +183,7 @@ const Profile = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                         <div className="form-group row">
-                                                            <label htmlFor="exampleInputEmail2" className="col-sm-2 col-form-label labelInput">Email</label>
+                                                            <label htmlFor="exampleInputEmail2" className="col-sm-2 col-form-label">Email</label>
                                                             <div className="col-sm-10">
                                                                 <input
                                                                     type="email"
@@ -197,7 +197,7 @@ const Profile = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                         <div className="form-group row">
-                                                            <label htmlFor="exampleInputMobile" className="col-sm-2 col-form-label labelInput">Phone</label>
+                                                            <label htmlFor="exampleInputMobile" className="col-sm-2 col-form-label">Phone</label>
                                                             <div className="col-sm-10">
                                                                 <input
                                                                     type="text"
@@ -215,7 +215,7 @@ const Profile = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                         <div className="form-group row">
-                                                            <label htmlFor="exampleInputPassword2" className="col-sm-2 col-form-label labelInput">Password</label>
+                                                            <label htmlFor="exampleInputPassword2" className="col-sm-2 col-form-label">Password</label>
                                                             <div className="col-sm-10">
                                                                 <input
                                                                     type="text"

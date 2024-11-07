@@ -176,8 +176,8 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Role Name</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Role Name</label>
+                                                                    <div className="col-sm-9">
                                                                         <select
                                                                             className="form-control"
                                                                             value={newUser.role_name}
@@ -185,21 +185,17 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                                             required
                                                                         >
                                                                             <option value="">Select Role</option>
-                                                                            {userRoles.length === 0 ? (
-                                                                                <option disabled>No data found</option>
-                                                                            ) : (
-                                                                                userRoles.map(role => (
-                                                                                    <option key={role.role_id} value={role.role_name}>{role.role_name}</option>
-                                                                                ))
-                                                                            )}
+                                                                            {userRoles.map(role => (
+                                                                                <option key={role.role_id} value={role.role_name}>{role.role_name}</option>
+                                                                            ))}
                                                                         </select>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Association Name</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Association Name</label>
+                                                                    <div className="col-sm-9">
                                                                         <select
                                                                             className="form-control"
                                                                             value={newUser.client_name}
@@ -207,23 +203,19 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                                             required
                                                                         >
                                                                             <option value="">Select Association</option>
-                                                                            {assname.length === 0 ? (
-                                                                                <option disabled>No data found</option>
-                                                                            ) : (
-                                                                                assname.map(association => (
-                                                                                    <option key={association.association_id} value={association.association_name}>
-                                                                                        {association.association_name}
-                                                                                    </option>
-                                                                                ))
-                                                                            )}
+                                                                            {assname.map(association => (
+                                                                                <option key={association.association_id} value={association.association_name}>
+                                                                                    {association.association_name}
+                                                                                </option>
+                                                                            ))}
                                                                         </select>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">User Name</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">User Name</label>
+                                                                    <div className="col-sm-9">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control" placeholder="User Name"
@@ -240,8 +232,8 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Phone No</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Phone No</label>
+                                                                    <div className="col-sm-9">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control" placeholder="Phone No"
@@ -258,8 +250,8 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Email ID</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Email ID</label>
+                                                                    <div className="col-sm-9">
                                                                         <input
                                                                             type="email"
                                                                             className="form-control" placeholder="Email ID"
@@ -284,8 +276,8 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Password</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Password</label>
+                                                                    <div className="col-sm-9">
                                                                         <input
                                                                             type="text"
                                                                             className="form-control" placeholder="Password"
@@ -303,7 +295,7 @@ const CreateUser = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                         {errorMessage && <div className="text-danger">{errorMessage}</div>}
-                                                        <div style={{ textAlign: 'center', padding:'15px'}}>
+                                                        <div style={{ textAlign: 'center' }}>
                                                             <button type="submit" className="btn btn-primary mr-2">Create</button>
                                                         </div>
                                                     </form>

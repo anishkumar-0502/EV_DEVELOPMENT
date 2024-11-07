@@ -107,16 +107,16 @@ const CreateClients = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Client Name</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Client Name</label>
+                                                                    <div className="col-sm-9">
                                                                         <input type="text" className="form-control" placeholder="Client Name" value={client_name} maxLength={25} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^a-zA-Z0-9 ]/g, ''); setClientName(sanitizedValue);}} required/>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Phone Number</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Phone Number</label>
+                                                                    <div className="col-sm-9">
                                                                         <input type="text" className="form-control" placeholder="Phone Number" value={client_phone_no} maxLength={10} onChange={(e) => {const value = e.target.value; const sanitizedValue = value.replace(/[^0-9]/g, ''); setPhoneNumber(sanitizedValue);}} required/>
                                                                     </div>
                                                                 </div>
@@ -125,8 +125,8 @@ const CreateClients = ({ userInfo, handleLogout }) => {
                                                         <div className="row">
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Email ID</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Email ID</label>
+                                                                    <div className="col-sm-9">
                                                                         <input type="email" className="form-control" placeholder="Email ID" value={client_email_id} onChange={(e) => {const value = e.target.value;
                                                                                 // Remove spaces and invalid characters
                                                                                 const noSpaces = value.replace(/\s/g, '');
@@ -143,8 +143,8 @@ const CreateClients = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <div className="form-group row">
-                                                                    <label className="col-sm-12 col-form-label labelInput">Address</label>
-                                                                    <div className="col-sm-12">
+                                                                    <label className="col-sm-3 col-form-label">Address</label>
+                                                                    <div className="col-sm-9">
                                                                         <textarea type="text" className="form-control" placeholder="Address" value={client_address} maxLength={150} onChange={(e) => setAddress(e.target.value)} required/>
                                                                     </div>
                                                                 </div>

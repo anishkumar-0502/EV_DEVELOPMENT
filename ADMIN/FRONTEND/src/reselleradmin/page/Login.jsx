@@ -36,8 +36,8 @@ const Login = ({ handleLogin }) => {
         // Include email in the data sent to handleLogin
         handleLogin({ ...data, email }); // Adding email to the data object
       } else {
-        const responseData = await response.json();
-        setErrorMessage('Login failed. ' + responseData.message);
+        // const responseData = await response.json();
+        setErrorMessage('Login failed. Please check your credentials.');
       }
     } catch (error) {
       setSuccessMessage('');
