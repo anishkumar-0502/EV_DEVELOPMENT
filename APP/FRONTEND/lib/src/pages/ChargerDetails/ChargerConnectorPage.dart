@@ -43,7 +43,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
   bool isSearching = false;
   bool areMapButtonsEnabled = false;
   bool isChargerAvailable = false; // Flag to track if any charger is available
-  static const String apiKey = 'AIzaSyDezbZNhVuBMXMGUWqZTOtjegyNexKWosA';
+  static const String apiKey = 'AIzaSyCwyCo-jhRnxEo55neAZI8cCbVbdwLtmJ8';
   Map<String, String> _addressCache = {};
   List<String> chargerIdsList = [];
   // Declare charger at the class level
@@ -137,7 +137,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
     try {
       final response = await http.post(
         Uri.parse(
-            'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
+            'http://192.168.1.32:4444/getAllChargersWithStatusAndPrice'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': widget.userId}),
       );
@@ -448,7 +448,7 @@ Widget build(BuildContext context) {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
+        Uri.parse('http://192.168.1.32:4444/updateConnectorUser'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -517,7 +517,7 @@ Widget build(BuildContext context) {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/SearchCharger'),
+        Uri.parse('http://192.168.1.32:4444/SearchCharger'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,

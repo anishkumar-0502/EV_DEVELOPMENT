@@ -50,7 +50,7 @@
 //   LatLng? _previousPosition;
 //   double? _previousBearing;
 //   bool _isCheckingPermission = false; // Flag to prevent repeated permission checks
-//   static const String apiKey = 'AIzaSyDezbZNhVuBMXMGUWqZTOtjegyNexKWosA';
+//   static const String apiKey = 'AIzaSyCwyCo-jhRnxEo55neAZI8cCbVbdwLtmJ8';
 
 //  @override
 //   void initState() {
@@ -726,7 +726,7 @@
 // Future<void> _getPolyline(LatLng start, LatLng end) async {
 //   print('Fetching polyline from $start to $end');
 //   final response = await http.get(Uri.parse(
-//         'https://maps.googleapis.com/maps/api/directions/json?origin=${start.latitude},${start.longitude}&destination=${end.latitude},${end.longitude}&key=AIzaSyDezbZNhVuBMXMGUWqZTOtjegyNexKWosA'));
+//         'https://maps.googleapis.com/maps/api/directions/json?origin=${start.latitude},${start.longitude}&destination=${end.latitude},${end.longitude}&key=AIzaSyCwyCo-jhRnxEo55neAZI8cCbVbdwLtmJ8'));
 
 //   if (response.statusCode == 200) {
 //     final data = json.decode(response.body);
@@ -915,7 +915,7 @@
 
 //   try {
 //     final response = await http.post(
-//       Uri.parse('http://122.166.210.142:4444/searchCharger'),
+//       Uri.parse('http://192.168.1.32:4444/searchCharger'),
 //       headers: {'Content-Type': 'application/json'},
 //       body: json.encode({
 //         'searchChargerID': searchChargerID,
@@ -970,7 +970,7 @@
 //       String searchChargerID, int connectorId, int connectorType) async {
 //     try {
 //       final response = await http.post(
-//         Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
+//         Uri.parse('http://192.168.1.32:4444/updateConnectorUser'),
 //         headers: {'Content-Type': 'application/json'},
 //         body: json.encode({
 //           'searchChargerID': searchChargerID,
@@ -1087,7 +1087,7 @@
 
 //     try {
 //       final response = await http.post(
-//         Uri.parse('http://122.166.210.142:4444/getRecentSessionDetails'),
+//         Uri.parse('http://192.168.1.32:4444/getRecentSessionDetails'),
 //         headers: {'Content-Type': 'application/json'},
 //         body: json.encode({
 //           'user_id': widget.userId,
@@ -1131,7 +1131,7 @@
 //     try {
 //       final response = await http.post(
 //         Uri.parse(
-//             'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
+//             'http://192.168.1.32:4444/getAllChargersWithStatusAndPrice'),
 //         headers: {'Content-Type': 'application/json'},
 //         body: json.encode({
 //           'user_id': widget.userId,

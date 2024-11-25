@@ -55,14 +55,13 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   MarkerId? _previousMarkerId; // To track the previously selected marker
   StreamSubscription<Position>? _positionStreamSubscription;
   bool _isFetchingLocation = false; // Ensure initialization
-  LatLng? _previousPosition;
   bool isChargerAvailable = false; // Flag to track if any charger is available
   bool _isCheckingPermission =
       false; // Flag to prevent repeated permission checks
   bool LocationEnabled = false;
   final PageController _pageController = PageController(
       viewportFraction: 0.85); // Page controller for scrolling cards
-  static const String apiKey = 'AIzaSyDezbZNhVuBMXMGUWqZTOtjegyNexKWosA';
+  static const String apiKey = 'AIzaSyCwyCo-jhRnxEo55neAZI8cCbVbdwLtmJ8';
   Map<String, String> _addressCache = {};
   GoogleMapController? _mapController;
   List<String> chargerIdsList = [];
@@ -76,6 +75,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     _currentSelectedLocation = widget.selectedLocation;
     _checkLocationPermission(); // Check permissions on initialization
     // Prioritize moving to the selected location
+    _getCurrentLocation();
     _updateMarkers();
     activeFilter = 'All Chargers';
     fetchAllChargers();
@@ -729,60 +729,79 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   }
 
 
-  Future<void> _smoothlyMoveCameraForChargerMarker(
-      LatLng startPosition, LatLng endPosition) async {
-    if (mapController != null) {
-      const int totalSteps =
-          25; // Number of animation steps for smooth movement
-      const int stepDuration = 120; // Duration between steps in milliseconds
+Future<void> _smoothlyMoveCameraForChargerMarker(
+    LatLng startPosition, LatLng endPosition) async {
+  if (mapController == null) {
+    print("Map controller is not initialized.");
+    return;
+  }
 
-      for (int i = 1; i <= totalSteps; i++) {
-        double latitude = startPosition.latitude +
-            (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
-        double longitude = startPosition.longitude +
-            (endPosition.longitude - startPosition.longitude) *
-                (i / totalSteps);
-        LatLng intermediatePosition = LatLng(latitude, longitude);
+  // Check if start and end positions are the same
+  if (startPosition == endPosition) {
+    print("Start and end positions are the same. No animation required.");
+    return;
+  }
 
-        // Smoothly animate to intermediate positions
-        await mapController!.animateCamera(
-          CameraUpdate.newLatLng(intermediatePosition),
-        );
+  // Calculate the distance between start and end positions
+  double distance = _calculateDistance(
+    startPosition.latitude,
+    startPosition.longitude,
+    endPosition.latitude,
+    endPosition.longitude,
+  );
 
-        await Future.delayed(const Duration(milliseconds: stepDuration));
-      }
+  // Dynamic step adjustment based on distance
+  int totalSteps = (distance < 1.0) ? 10 : 25; // Fewer steps for closer distances
+  const int stepDuration = 50; // Duration between steps in milliseconds
 
-      // Rotate the camera and set an initial zoom and bearing
+  for (int i = 1; i <= totalSteps; i++) {
+    double latitude = startPosition.latitude +
+        (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
+    double longitude = startPosition.longitude +
+        (endPosition.longitude - startPosition.longitude) * (i / totalSteps);
+    LatLng intermediatePosition = LatLng(latitude, longitude);
+
+    try {
+      // Smoothly animate to intermediate positions
       await mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: endPosition,
-            zoom: 16.0, // Set an initial zoom level
-            bearing: 90.0, // Rotate the camera 90 degrees
-            tilt: 0, // Set tilt to 0 initially
-          ),
-        ),
+        CameraUpdate.newLatLng(intermediatePosition),
       );
-
-      // Delay to simulate rotation effect
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      // // Final zoom and tilt for 3D effect
-      // await mapController!.animateCamera(
-      //   CameraUpdate.newCameraPosition(
-      //     CameraPosition(
-      //       target: endPosition,
-      //       zoom: 18.0, // Final zoom level for close-up view
-      //       tilt: 45.0, // Tilt the camera for a 3D effect
-      //       bearing: 90.0, // Keep the same bearing
-      //     ),
-      //   ),
-      // );
-    } else {
-      // Log or handle cases when the map controller is not initialized
-      print("Map controller is not initialized.");
+      await Future.delayed(const Duration(milliseconds: stepDuration));
+    } catch (e) {
+      print("Error animating to intermediate position: $e");
+      break; // Exit loop if animation fails
     }
   }
+
+  try {
+    // Move to the final position with a specific zoom and bearing
+    await mapController!.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: endPosition,
+          zoom: 16.0, // Optimal zoom level for charger visibility
+          bearing: 0.0, // Keep bearing neutral
+          tilt: 0.0, // Keep tilt flat initially
+        ),
+      ),
+    );
+
+    // Optional: Add a subtle rotation/zoom for visual enhancement
+    await Future.delayed(const Duration(milliseconds: 200)); // Delay for effect
+    await mapController!.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: endPosition,
+          zoom: 18.0, // Closer zoom for better focus
+          bearing: 90.0, // Rotate slightly for emphasis
+          tilt: 30.0, // Add slight tilt for 3D effect
+        ),
+      ),
+    );
+  } catch (e) {
+    print("Error animating to final position: $e");
+  }
+}
 
   void _onMapTapped(LatLng position) async {
     setState(() {
@@ -903,14 +922,9 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   }
 
   void _updateMarkers() async {
-    print("_updateMarkers: 1");
-    print("_updateMarkers: 1 $_currentPosition");
-    print("_updateMarkers: 1 $_currentSelectedLocation");
-    print("_updateMarkers Available Chargers:1 $availableChargers");
 
     // Use a set to track unique positions to avoid duplicate markers
     Set<String> uniquePositions = {};
-    print("_updateMarkers: 2");
 
     // Iterate through available chargers
     for (var charger in availableChargers) {
@@ -919,16 +933,13 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
           charger['lat'] != null ? double.tryParse(charger['lat']) : null;
       final lng =
           charger['long'] != null ? double.tryParse(charger['long']) : null;
-      print("_updateMarkers: 3");
 
       if (lat != null && lng != null) {
         // Create a unique key based on latitude and longitude
         String positionKey = '$lat,$lng';
-        print("_updateMarkers: 4");
 
         // Check if this position already exists
         if (uniquePositions.contains(positionKey)) {
-          print("_updateMarkers: 5");
 
           continue; // Skip adding a marker if this position is already tracked
         }
@@ -961,32 +972,9 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
             ),
           );
         });
-        print("_updateMarkers: 6");
       }
     }
 
-    if (_currentPosition != null || _currentSelectedLocation != null) {
-      // Fetch the dynamic bearing
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.bestForNavigation,
-      );
-      final double bearing = position.heading; // Get the current bearing
-
-      // Update the current location marker with the custom marker icon and bearing
-      final currentLocationIcon =
-          await _createCurrentLocationMarkerIcon(bearing);
-
-      setState(() {
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('current_location'),
-            position: _currentPosition!,
-            icon: currentLocationIcon,
-            infoWindow: const InfoWindow(title: 'Your Location'),
-          ),
-        );
-      });
-    }
   }
 
   Future<Map<String, dynamic>?> handleSearchRequest(
@@ -1006,7 +994,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/searchCharger'),
+        Uri.parse('http://192.168.1.32:4444/searchCharger'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -1019,7 +1007,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
       await Future.delayed(const Duration(seconds: 2));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(response.body); 
         setState(() {
           this.searchChargerID = searchChargerID;
           isSearching = false;
@@ -1074,7 +1062,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
+        Uri.parse('http://192.168.1.32:4444/updateConnectorUser'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -1222,7 +1210,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/getRecentSessionDetails'),
+        Uri.parse('http://192.168.1.32:4444/getRecentSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
@@ -1268,7 +1256,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     try {
       final response = await http.post(
         Uri.parse(
-            'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
+            'http://192.168.1.32:4444/getAllChargersWithStatusAndPrice'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': widget.userId}),
       );
@@ -1529,7 +1517,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
                 ),
                 markers: _markers,
                 zoomControlsEnabled: false,
-                myLocationEnabled: false,
+                myLocationEnabled: true,
                 myLocationButtonEnabled: false,
                 mapToolbarEnabled: false,
                 compassEnabled: false,
@@ -2346,7 +2334,7 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
-                   Navigator.push(
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => HomePage(

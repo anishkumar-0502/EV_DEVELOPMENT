@@ -197,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/profile/CheckLoginCredentials'),
+        Uri.parse('http://192.168.1.32:4444/profile/CheckLoginCredentials'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email_id': email, 'password': password}),
       );

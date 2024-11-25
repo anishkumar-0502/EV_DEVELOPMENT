@@ -117,7 +117,9 @@ class _ChargingPageState extends State<Charging> with SingleTickerProviderStateM
   String currentA1 = '';
   String currentA2 = '';
   String currentA3 = '';
-
+  String powerActiveL1 = '';
+  String powerActiveL2 = '';
+  String powerActiveL3 = '';
 
   late double _currentTemperature;
 
@@ -260,7 +262,7 @@ Widget _buildLoadingIndicator() {
   Future<void> endChargingSession(String chargerID, int? connectorId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/charging/endChargingSession'),
+        Uri.parse('http://192.168.1.32:4444/charging/endChargingSession'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'charger_id': chargerID, 'connector_id': connectorId}),
       );
@@ -286,7 +288,7 @@ Widget _buildLoadingIndicator() {
     // Introduce a 3-second delay before sending the request
     await Future.delayed(const Duration(seconds: 4));
 
-      var url = Uri.parse('http://122.166.210.142:4444/charging/getUpdatedCharingDetails');
+      var url = Uri.parse('http://192.168.1.32:4444/charging/getUpdatedCharingDetails');
       var body = {
         'chargerID': chargerID,
         'user': username,
@@ -486,7 +488,7 @@ Widget _buildLoadingIndicator() {
   Future<void> fetchLastStatus(String chargerID, int? connectorId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/charging/FetchLaststatus'),
+        Uri.parse('http://192.168.1.32:4444/charging/FetchLaststatus'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'id': chargerID, 'connector_id': connectorId, 'connector_type': widget.connector_type}),
       );
@@ -547,50 +549,68 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
   final List<dynamic> message = parsedMessage['message'];
 
   if (message.length < 4 || message[3] == null) return;
+if (message[2] == 'MeterValues') {
+  final meterValues = message[3]['meterValue'] ?? [];
+  
+  // Reset all values initially
+  voltageV1 = '';
+  voltageV2 = '';
+  voltageV3 = '';
+  currentA1 = '';
+  currentA2 = '';
+  currentA3 = '';
+  powerActiveL1 = '';
+  powerActiveL2 = '';
+  powerActiveL3 = '';
+  temperature = '';
+  frequency = '';
 
-  if (message[2] == 'MeterValues') {
-    final meterValues = message[3]['meterValue'] ?? [];
-    if (meterValues.isNotEmpty) {
-      final sampledValue = meterValues[0]['sampledValue'] ?? [];
-      // Reset all values initially
-      voltageV1 = '';
-      voltageV2 = '';
-      voltageV3 = '';
-      currentA1 = '';
-      currentA2 = '';
-      currentA3 = '';
+  if (meterValues.isNotEmpty) {
+    for (var meterValue in meterValues) {
+      final sampledValues = meterValue['sampledValue'] ?? [];
 
-      for (var value in sampledValue) {
-        switch (value['unit']) {
-          case 'V1':
-            voltageV1 = value['value'];
+      for (var value in sampledValues) {
+        final measurand = value['measurand'] ?? '';
+        final phase = value['phase'] ?? '';
+        final unit = value['unit'] ?? '';
+        final val = value['value'] ?? '';
+
+        switch (measurand) {
+          case 'Voltage':
+            if (phase == 'L1') voltageV1 = '$val $unit';
+            if (phase == 'L2') voltageV2 = '$val $unit';
+            if (phase == 'L3') voltageV3 = '$val $unit';
             break;
-          case 'V2':
-            voltageV2 = value['value'];
+          case 'Current.Import':
+            if (phase == 'L1') currentA1 = '$val $unit';
+            if (phase == 'L2') currentA2 = '$val $unit';
+            if (phase == 'L3') currentA3 = '$val $unit';
             break;
-          case 'V3':
-            voltageV3 = value['value'];
+          case 'Power.Active.Import':
+            if (phase == 'L1') powerActiveL1 = '$val $unit';
+            if (phase == 'L2') powerActiveL2 = '$val $unit';
+            if (phase == 'L3') powerActiveL3 = '$val $unit';
             break;
-          case 'A1':
-            currentA1 = value['value'];
+          case 'Temperature':
+            temperature = '$val $unit';
             break;
-          case 'A2':
-            currentA2 = value['value'];
+          case 'Frequency':
+            frequency = '$val Hz';
             break;
-          case 'A3':
-            currentA3 = value['value'];
+          default:
+            // Handle additional measurands if needed
             break;
         }
       }
-
-  // Determine whether to show meter values container
-      setState(() {
-        showMeterValuesContainer = voltageV1.isNotEmpty || currentA1.isNotEmpty;
-        showVoltageCurrentContainer = voltageV1.isNotEmpty || currentA1.isNotEmpty;
-      });
     }
+    
+    // Determine whether to show meter values container
+    setState(() {
+      showMeterValuesContainer = voltageV1.isNotEmpty || currentA1.isNotEmpty;
+      showVoltageCurrentContainer = showMeterValuesContainer;
+    });
   }
-
+}
   String chargerStatus = '';
   String currentTime = '';
   String vendorErrorCode = '';
@@ -823,8 +843,8 @@ void RcdMsg(Map<String, dynamic> parsedMessage) async {
 
   void initializeWebSocket() {
     channel = WebSocketChannel.connect(
-      // Uri.parse('ws://122.166.210.142:8566'),
-      Uri.parse('ws://122.166.210.142:7002'),
+      // Uri.parse('ws://192.168.1.32:8566'),
+      Uri.parse('ws://192.168.1.32:7002'),
         // Uri.parse('ws://192.168.1.7:7050'),
 
     );
@@ -945,7 +965,7 @@ void toggleBatteryScreen() {
     });
 
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/charging/start'),
+        Uri.parse('http://192.168.1.32:4444/charging/start'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -997,7 +1017,7 @@ void handleStopTransaction() async {
     });
 
     final response = await http.post(
-      Uri.parse('http://122.166.210.142:4444/charging/stop'),
+      Uri.parse('http://192.168.1.32:4444/charging/stop'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
