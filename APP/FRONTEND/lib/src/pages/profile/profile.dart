@@ -26,7 +26,7 @@ class _ProfilePageState extends State<ProfilePage> {
   int? phoneNo;
   String? password;
   int _selectedTileIndex = -1; // Index of the selected tile
-  final String _version = '1.0.7'; // Default value, in case fetching fails
+  final String _version = '1.0.9'; // Default value, in case fetching fails
 
   @override
   void initState() {
@@ -83,24 +83,27 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     });
   }
+void _showHelpModal() {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    isDismissible: false,
+    enableDrag: false,
+    builder: (BuildContext context) {
+      double screenHeight = MediaQuery.of(context).size.height;
+      double modalHeight = screenHeight * 0.6; // Adjust this percentage as needed
 
-  void _showHelpModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      enableDrag: false,
-      builder: (BuildContext context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.7, // Set height to 70% of the screen
-          child: Padding(
-            padding: MediaQuery.of(context).viewInsets,
-            child: const HelpPage(), // Ensure this is the correct widget name
-          ),
-        );
-      },
-    );
-  }
+      return Container(
+        height: modalHeight, // Dynamic height based on screen size
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom), // Only add padding for the keyboard area
+          child: const HelpPage(), // Make sure to use the correct widget
+        ),
+      );
+    },
+  );
+}
+
 
   void _showAccountModal() {
     showModalBottomSheet(
@@ -119,277 +122,230 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
   }
+@override
+Widget build(BuildContext context) {
+  final userImageProvider = Provider.of<UserImageProvider>(context);
+  final screenHeight = MediaQuery.of(context).size.height;
+  final screenWidth = MediaQuery.of(context).size.width;
 
-  @override
-  Widget build(BuildContext context) {
-    final userImageProvider = Provider.of<UserImageProvider>(context);
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              ClipPath(
-                clipper: CustomClipPath(),
-                child: Container(
-                  height: 400,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.green.shade800.withOpacity(0), Colors.black],
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomCenter,
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(0),
-                      bottomRight: Radius.circular(0),
-                    ),
+  return Scaffold(
+    backgroundColor: Colors.black,
+    body: Stack(
+      children: [
+        Column(
+          children: [
+            ClipPath(
+              clipper: CustomClipPath(),
+              child: Container(
+                height: screenHeight * 0.5, // Set height to 40% of screen height
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.green.shade800.withOpacity(0), Colors.black],
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomCenter,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundImage: userImageProvider.userImage != null
-                            ? FileImage(userImageProvider.userImage!)
-                            : const AssetImage('assets/Image/avatar.png') as ImageProvider,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        widget.username,
-                        style: const TextStyle(fontSize: 23, color: Colors.white),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        email ?? '',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 16),
-                        textAlign: TextAlign.center,
-                      ),
-
-                      const SizedBox(height: 20,width: 20,),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 200, // Increase the width of the container
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                width: 0,
-
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.lightGreenAccent.withOpacity(0.3), // Light green color with some transparency
-                                  Colors.lightGreen.withOpacity(0.6)
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _showEditUserModal,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent, // Keep the button background transparent
-                                foregroundColor: Colors.white, // Text and icon color white
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                elevation: 1,
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // Adjust padding for a larger button
-                                shadowColor: Colors.transparent,
-                                minimumSize: const Size(180, 50), // Ensure the button has the desired size
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.edit, size: 16, color: Colors.white), // White icon color
-                                  SizedBox(width: 8),
-                                  Text('Edit profile', style: TextStyle(color: Colors.white, fontSize: 14)), // White text color
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-
-                    ],
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(0),
+                    bottomRight: Radius.circular(0),
                   ),
                 ),
-              ),
-              Expanded(
-                child: ListView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-
-                      child: Column(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedTileIndex = 0;
-                              });
-                              _showAccountModal();
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              color: _selectedTileIndex == 0
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.black,
-                              child: const ListTile(
-                                title: Text('Account', style: TextStyle(color: Colors.white)),
-                                leading: Icon(Icons.account_circle, color: Colors.white),
-                                trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                              ),
+                    CircleAvatar(
+                      radius: screenWidth * 0.15, // Adjust the radius based on screen width
+                      backgroundImage: userImageProvider.userImage != null
+                          ? FileImage(userImageProvider.userImage!)
+                          : const AssetImage('assets/Image/avatar.png') as ImageProvider,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      widget.username,
+                      style: const TextStyle(fontSize: 23, color: Colors.white),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      widget.email ?? '',
+                      style: TextStyle(color: Colors.grey[400], fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: screenWidth * 0.5, // Make button width responsive
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.lightGreenAccent.withOpacity(0.3),
+                                Colors.lightGreen.withOpacity(0.6),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
                           ),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedTileIndex = 1;
-                              });
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>  TermsPage(), // Ensure this is the correct widget name
-                                ),
-                              );
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              color: _selectedTileIndex == 1
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.black,
-                              child: const ListTile(
-                                title: Text('Terms and Conditions', style: TextStyle(color: Colors.white)),
-                                leading: Icon(Icons.description, color: Colors.white),
-                                trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
+                          child: ElevatedButton(
+                            onPressed: _showEditUserModal,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedTileIndex = 2;
-                              });
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>  PrivacyPolicyPage(), // Ensure this is the correct widget name
-                                ),
-                              );
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              color: _selectedTileIndex == 2
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.black,
-                              child: const ListTile(
-                                title: Text('Privacy Policy', style: TextStyle(color: Colors.white)),
-                                leading: Icon(Icons.policy, color: Colors.white),
-                                trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
+                              elevation: 1,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.1, // Adjust padding based on screen width
+                                vertical: screenHeight * 0.02, // Adjust padding based on screen height
                               ),
+                              shadowColor: Colors.transparent,
+                              minimumSize: Size(screenWidth * 0.4, screenHeight * 0.06), // Make button size responsive
                             ),
-                          ),
-                          const SizedBox(width: 10,height: 30,),
-                          SizedBox(
-                            width: 300,
-                            child:CustomGradientDivider (),
-                          ),
-                          const SizedBox(height: 5,),
-                          GestureDetector(
-                            onTap: () {
-                              _logout(); // Correctly invoking the _logout function
-                            },
-                            child: Container(
-                              // You can uncomment and use the decoration if needed
-                              // decoration: BoxDecoration(
-                              //   border: Border.all(
-                              //     width: 2,
-                              //   ),
-                              //   borderRadius: BorderRadius.circular(20),
-                              //   gradient: LinearGradient(
-                              //     colors: [
-                              //       Colors.redAccent.withOpacity(0.3), // Light red color with some transparency
-                              //       Colors.red.withOpacity(0.6),
-                              //     ],
-                              //     begin: Alignment.topLeft,
-                              //     end: Alignment.bottomRight,
-                              //   ),
-                              // ),
-                              child: ListTile(
-                                title: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center, // Center the content horizontally
-                                  children: [
-                                    Icon(
-                                      Icons.logout,
-                                      color: Colors.red,
-                                    ),
-                                    SizedBox(width: 20), // Add some space between the icon and the text
-                                    Text(
-                                      'Logout',
-                                      style: TextStyle(
-                                        color: Colors.red,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                onTap: _logout,
-                                hoverColor: Colors.red.withOpacity(0.1), // Light change when hovered or tapped
-                                splashColor: Colors.redAccent.withOpacity(0.2), // Splash effect on tap
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 100,),
-                          Container(
-                            margin:const EdgeInsets.only(bottom: 50,top: 50) ,
-
-                            child: Column(
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                  Text(
-                                  'Version: alpha $_version ',
-                                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                                ),
-                                RichText(
-                                  text: const TextSpan(
-                                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                                    children: [
-                                      TextSpan(text: 'Copyright © 2024 '),
-                                      TextSpan(
-                                        text: 'EV Power',
-                                        style: TextStyle(color: Colors.green),
-                                      ),
-                                      TextSpan(text: '. All rights reserved.'),
-                                    ],
-                                  ),
-                                ),
-
+                                Icon(Icons.edit, size: 16, color: Colors.white),
+                                SizedBox(width: 8),
+                                Text('Edit profile', style: TextStyle(color: Colors.white, fontSize: 14)),
                               ],
                             ),
-                          )
-
-
-                        ],
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
+            ),
+            Expanded(
+              child: ListView(
+                children: [
+                  _buildListTile(
+                    title: 'Account',
+                    icon: Icons.account_circle,
+                    onTap: _showAccountModal,
+                    index: 0,
+                  ),
+                  _buildListTile(
+                    title: 'Terms and Conditions',
+                    icon: Icons.description,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TermsPage(),
+                        ),
+                      );
+                    },
+                    index: 1,
+                  ),
+                  _buildListTile(
+                    title: 'Privacy Policy',
+                    icon: Icons.policy,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PrivacyPolicyPage(),
+                        ),
+                      );
+                    },
+                    index: 2,
+                  ),
+                  const SizedBox(height: 30),
+                  CustomGradientDivider(),
+                  const SizedBox(height: 5),
+                  _buildLogoutTile(),
+                  const SizedBox(height: 100),
+                  _buildFooter(),
+                ],
+              ),
+            ),
+          ],
+        ),
+        Positioned(
+          top: 61,
+          right: 12,
+          child: GestureDetector(
+            onTap: _showHelpModal,
+            child: const Icon(Icons.help_outline, color: Colors.white),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+  GestureDetector _buildListTile({
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+    required int index,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedTileIndex = index;
+        });
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        color: _selectedTileIndex == index
+            ? Colors.green.withOpacity(0.1)
+            : Colors.black,
+        child: ListTile(
+          title: Text(title, style: const TextStyle(color: Colors.white)),
+          leading: Icon(icon, color: Colors.white),
+          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  GestureDetector _buildLogoutTile() {
+    return GestureDetector(
+      onTap: _logout,
+      child: Container(
+        child: ListTile(
+          title: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.logout, color: Colors.red),
+              SizedBox(width: 20),
+              Text('Logout', style: TextStyle(color: Colors.red)),
             ],
           ),
-          Positioned (
-            top: 61,
-            right: 12,
-            child: GestureDetector(
-              onTap: _showHelpModal ,
-              child: const Icon(Icons.help_outline, color: Colors.white, ),
-            ),
-          ),
-
-
-        ],
+          onTap: _logout,
+          hoverColor: Colors.red.withOpacity(0.1),
+          splashColor: Colors.redAccent.withOpacity(0.2),
+        ),
       ),
+    );
+  }
+
+  Column _buildFooter() {
+    return Column(
+      children: [
+        Text(
+          'Version: alpha $_version',
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
+        RichText(
+          text: const TextSpan(
+            style: TextStyle(color: Colors.white70, fontSize: 12),
+            children: [
+              TextSpan(text: 'Copyright © 2024 '),
+              TextSpan(
+                text: 'EV Power',
+                style: TextStyle(color: Colors.green),
+              ),
+              TextSpan(text: '. All rights reserved.'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

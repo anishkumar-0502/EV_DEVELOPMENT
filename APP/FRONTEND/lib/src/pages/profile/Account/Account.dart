@@ -418,7 +418,7 @@ class _RfidpageState extends State<Rfidpage> {
       }
     } catch (error) {
       setState(() {
-        errorMessage = 'Error fetching user details: $error';
+        errorMessage = 'Error fetching user details';
         isLoading = false; // Set loading to false on error
       });
       print('Error fetching user details catch: $error');
@@ -439,9 +439,12 @@ class _RfidpageState extends State<Rfidpage> {
   return DateFormat('dd/MM/yyyy, hh:mm:ss a').format(istDateTime);
 }
 
-
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage RFID', style: TextStyle(color: Colors.white)),
@@ -456,37 +459,40 @@ class _RfidpageState extends State<Rfidpage> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(screenWidth * 0.04), // Responsive padding
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CustomGradientDivider(),
-              const SizedBox(height: 20),
+              SizedBox(height: screenHeight * 0.02), // Responsive space
               Center(
                 child: Text(
-                    "Let’s take a look at your RFID card details!",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  "Let’s take a look at your RFID card details!",
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.05, // Responsive font size
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: screenHeight * 0.02), // Responsive space
               Center(
                 child: Image.asset(
                   'assets/Image/rfid2.png', // Use the correct path to your asset
-                  width: 300, // Optional: Adjust image size
+                  width: screenWidth * 0.6, // Responsive image width
                 ),
               ),
-              const SizedBox(height: 10), // Space between image and button
+              SizedBox(height: screenHeight * 0.02), // Space between image and button
 
               // Show shimmer effect while fetching data
               if (isLoading)
-                Center(child: _buildShimmerCard())
+                Center(child: _buildShimmerCard(context))
               else if (errorMessage.isNotEmpty)
                 Center(
                   child: Container(
-                    width: 300,
-                    padding: EdgeInsets.all(16.0),
-                    margin: EdgeInsets.only(bottom: 20.0),
+                    width: screenWidth * 0.8, // Responsive width
+                    padding: EdgeInsets.all(screenWidth * 0.04), // Responsive padding
+                    margin: EdgeInsets.only(bottom: screenHeight * 0.02), // Responsive margin
                     decoration: BoxDecoration(
                       color: const Color(0xFF3E3E3E).withOpacity(0.8),
                       borderRadius: const BorderRadius.all(
@@ -498,7 +504,7 @@ class _RfidpageState extends State<Rfidpage> {
                         errorMessage,
                         style: TextStyle(
                           color: Colors.red,
-                          fontSize: 20,
+                          fontSize: screenWidth * 0.05, // Responsive font size
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -506,178 +512,120 @@ class _RfidpageState extends State<Rfidpage> {
                   ),
                 )
               else ...[
-                  // Display the fetched data with unique designs
-                  Center(
-                    child: Container(
-                      padding: EdgeInsets.all(16.0),
-                      margin: EdgeInsets.only(bottom: 20.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3E3E3E).withOpacity(0.8),
-                        borderRadius: const BorderRadius.all(
-                          Radius.circular(10),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Text(
-                              '📋 RFID Information',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          CustomGradientDivider(),
-                          SizedBox(height: 10),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 15.0, top: 15, bottom: 10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      'RFID Name: ',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ), // Bold RFID name heading
-                                    ),
-                                    SizedBox(width: 5),
-                                    Text(
-                                      '$tagId',
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 5), // Spacing between fields
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Expiry Date: ',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ), // Bold Expiry Date heading
-                                    ),
-                                    SizedBox(width: 5),
-                                    Text(
-                                      '${formatDate(tagIdExpiryDate)}',
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 5), // Spacing between fields
-                                RichText(
-                                  text: TextSpan(
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.white,
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                        text: 'Status: ',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ), // Bold Status heading
-                                      ),
-
-                                      TextSpan(
-                                        text: status == true ? 'Active' : 'Inactive',
-                                        style: TextStyle(
-                                          color: status == true ? Colors.green : Colors.red, // Status color
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                // Display the fetched data with unique designs
+                Center(
+                  child: Container(
+                    padding: EdgeInsets.all(screenWidth * 0.04), // Responsive padding
+                    margin: EdgeInsets.only(bottom: screenHeight * 0.02), // Responsive margin
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3E3E3E).withOpacity(0.8),
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(10),
                       ),
                     ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            '📋 RFID Information',
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.045, // Responsive font size
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.02), // Responsive space
+                        CustomGradientDivider(),
+                        SizedBox(height: screenHeight * 0.02), // Responsive space
+                        Padding(
+                          padding: EdgeInsets.only(left: screenWidth * 0.04, top: screenHeight * 0.02, bottom: screenHeight * 0.01),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'RFID Name: ',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.045, // Responsive font size
+                                      fontWeight: FontWeight.bold,
+                                    ), // Bold RFID name heading
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02), // Responsive space
+                                  Text(
+                                    '$tagId',
+                                    style: TextStyle(fontSize: screenWidth * 0.045), // Responsive font size
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: screenHeight * 0.015), // Responsive space
+                              Row(
+                                children: [
+                                  Text(
+                                    'Expiry Date: ',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.045, // Responsive font size
+                                      fontWeight: FontWeight.bold,
+                                    ), // Bold Expiry Date heading
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02), // Responsive space
+                                  Text(
+                                    '${formatDate(tagIdExpiryDate)}',
+                                    style: TextStyle(fontSize: screenWidth * 0.045), // Responsive font size
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: screenHeight * 0.015), // Responsive space
+                              RichText(
+                                text: TextSpan(
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.045, // Responsive font size
+                                    color: Colors.white,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: 'Status: ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ), // Bold Status heading
+                                    ),
+                                    TextSpan(
+                                      text: status == true ? 'Active' : 'Inactive',
+                                      style: TextStyle(
+                                        color: status == true ? Colors.green : Colors.red, // Status color
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
+              ],
 
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start, // Align the text and icon
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(right: 8.0), // Add space between icon and text
-                    child: Icon(Icons.lightbulb_outline, color: Colors.yellow,size: 17,),
+                    padding: EdgeInsets.only(right: screenWidth * 0.02), // Responsive space between icon and text
+                    child: Icon(Icons.lightbulb_outline, color: Colors.yellow, size: screenWidth * 0.05),
                   ),
                   Expanded( // Ensure the text wraps correctly
                     child: Text(
                       'Minimum wallet balance should be maintained to access RFID card',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: screenWidth * 0.04, // Responsive font size
                         color: Colors.white70, // Match text color with the icon
                         height: 1.5, // Increase line height for better readability
                       ),
                     ),
                   ),
                 ],
-              )
-
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildShimmerCard() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[700]!,
-      child: Container(
-        width: 280,
-        margin: const EdgeInsets.only(right: 15.0),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0E0E0E),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 100,
-                height: 20,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 5),
-              Container(
-                width: 80,
-                height: 20,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 5),
-              Row(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 20,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 5),
-                  Container(
-                    width: 20,
-                    height: 20,
-                    color: Colors.white,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
-              Container(
-                width: double.infinity,
-                height: 20,
-                color: Colors.white,
               ),
             ],
           ),
@@ -685,8 +633,29 @@ class _RfidpageState extends State<Rfidpage> {
       ),
     );
   }
+
+
+// Shimmer loading card widget
+Widget _buildShimmerCard(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
+
+  return Shimmer.fromColors(
+    baseColor: Colors.grey[800]!,
+    highlightColor: Colors.grey[700]!,
+    child: Container(
+      width: screenWidth * 0.9, // Reduced width to make it smaller
+      height: screenHeight * 0.9, // Reduced height to make it smaller
+      margin: EdgeInsets.only(
+        left: screenWidth * 0.05, // Move the shimmer card slightly to the right
+        right: screenWidth * 0.02,
+        top: screenHeight * 0.01,
+      ),
+      color: const Color(0xFF0E0E0E), // Background color of the shimmer
+    ),
+  );
 }
-
+}
 
 
 class CustomGradientDivider extends StatelessWidget {

@@ -45,7 +45,7 @@ android {
     }
 
     // Define MAPS_API_KEY at the top level
-    def MAPS_API_KEY = "AIzaSyCwyCo-jhRnxEo55neAZI8cCbVbdwLtmJ8"
+    def MAPS_API_KEY = "AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo"
 
     buildTypes {
         debug {

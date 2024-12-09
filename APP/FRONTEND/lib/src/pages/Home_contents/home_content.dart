@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'package:async/async.dart';
 import 'package:ev_app/src/pages/home.dart';
@@ -61,11 +62,10 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   bool LocationEnabled = false;
   final PageController _pageController = PageController(
       viewportFraction: 0.85); // Page controller for scrolling cards
-  static const String apiKey = 'AIzaSyCwyCo-jhRnxEo55neAZI8cCbVbdwLtmJ8';
-  Map<String, String> _addressCache = {};
+  static const String apiKey = 'AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo';
   GoogleMapController? _mapController;
   List<String> chargerIdsList = [];
-  bool _isAnimationInProgress = false;
+  bool _isAnimationInProgress = false       ;
   CancelableOperation? _currentAnimationOperation;
   Timer? _debounceTimer;
 
@@ -91,65 +91,79 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     super.dispose(); // Call the super class dispose method
   }
 
-// Define the method to check and request location permissions
-  Future<void> _checkLocationPermission() async {
-    if (_isCheckingPermission) return; // Prevent multiple permission checks
+Future<void> _checkLocationPermission() async {
+  if (_isCheckingPermission) return; // Prevent multiple permission checks
 
-    _isCheckingPermission = true;
+  _isCheckingPermission = true;
 
-    // Load the saved flag from SharedPreferences
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool locationPromptClosed = prefs.getBool('LocationPromptClosed') ?? false;
+  // Load the saved flag from SharedPreferences
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool locationPromptClosed = prefs.getBool('LocationPromptClosed') ?? false;
 
-    // If the user has closed the dialog before, don't show it again
-    if (locationPromptClosed) {
-      _isCheckingPermission = false;
-      return;
-    }
+  // If the user has closed the dialog before, don't show it again
+  if (locationPromptClosed) {
+    _isCheckingPermission = false;
+    return;
+  }
 
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // Show the location services dialog
+      // Show the location services dialog if location services are off on Android
       await _showLocationServicesDialog();
       _isCheckingPermission = false;
       return;
     }
+  
 
-    // Request location permission
+  // Request location permission (Android specific, iOS handles it automatically)
+  if (Platform.isAndroid) {
     PermissionStatus permission = await Permission.location.request();
     if (permission.isGranted) {
       await _getCurrentLocation();
       // Reset the flag, because location is now enabled
       await prefs.setBool('LocationPromptClosed', false);
+    } else {
+      // Do nothing if permission is denied; no alert is shown
+      _isCheckingPermission = false;
+      return;
     }
-
-    // Do nothing if permission is denied; no alert is shown
+  } else if (Platform.isIOS) {
+    // For iOS, we assume location permission is automatically handled by the system
+    await _getCurrentLocation();
     _isCheckingPermission = false;
   }
+}
 
-  Future<void> _getCurrentLocation() async {
-    // If a location fetch is already in progress, don't start a new one
-    if (_isFetchingLocation) return;
 
-    setState(() {
-      _isFetchingLocation = true;
-    });
+Future<void> _getCurrentLocation() async {
+  // If a location fetch is already in progress, don't start a new one
+  if (_isFetchingLocation) return;
 
-    // if (_currentSelectedLocation != null ){
-    //   setState(() {
-    //     _currentSelectedLocation = null;
-    //   });
-    // }
+  setState(() {
+    _isFetchingLocation = true;
+  });
 
-    try {
-      // Ensure location services are enabled and permission is granted before fetching location
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        await _showLocationServicesDialog();
+  try {
+    // Ensure location services are enabled and permission is granted before fetching location
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await _showLocationServicesDialog();
+      return;
+    }
+
+    PermissionStatus permission;
+
+    if (Platform.isIOS) {
+      // iOS-specific permission check
+      permission = await Permission.location.status;
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        await _showPermissionDeniedDialog();
         return;
       }
-
-      PermissionStatus permission = await Permission.location.status;
+    } else if (Platform.isAndroid) {
+      // Android-specific permission check
+      permission = await Permission.location.status;
       if (permission.isDenied) {
         await _showPermissionDeniedDialog();
         return;
@@ -157,271 +171,46 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
         await _showPermanentlyDeniedDialog();
         return;
       }
-
-      // Fetch the current location if permission is granted
-      LatLng? currentLocation =
-          await LocationService.instance.getCurrentLocation();
-      print("_onMapCreated currentLocation $currentLocation");
-
-      if (currentLocation != null) {
-        // Update the current position
-        setState(() {
-          _currentPosition = currentLocation;
-        });
-
-        // Smoothly animate the camera to the new position if the mapController is available
-        if (mapController != null) {
-          await mapController!.animateCamera(
-            CameraUpdate.newCameraPosition(
-              CameraPosition(
-                target: _currentPosition!,
-                zoom: 18.0, // Adjust zoom level as needed
-                tilt: 45.0, // Add a tilt for a 3D effect
-                // bearing:
-                //     _previousBearing ?? 0, // Use previous bearing if available
-              ),
-            ),
-          );
-        }
-
-        // Update the current location marker on the map
-        _updateMarkers();
-        fetchAllChargers();
-        // await _updateCurrentLocationMarker(_previousBearing ?? 0);
-      } else {
-        print('Current location could not be determined.');
-      }
-    } catch (e) {
-      print('Error occurred while fetching the current location: $e');
-    } finally {
-      setState(() {
-        _isFetchingLocation = false;
-      });
     }
+
+    // Fetch the current location if permission is granted
+    LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
+    print("_onMapCreated currentLocation $currentLocation");
+
+    if (currentLocation != null) {
+      // Update the current position
+      setState(() {
+        _currentPosition = currentLocation;
+      });
+
+      // Smoothly animate the camera to the new position if the mapController is available
+      if (mapController != null) {
+        await mapController!.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: _currentPosition!,
+              zoom: 18.0, // Adjust zoom level as needed
+              tilt: 45.0, // Add a tilt for a 3D effect
+            ),
+          ),
+        );
+      }
+
+      // Update the current location marker on the map
+      _updateMarkers();
+      fetchAllChargers();
+    } else {
+      print('Current location could not be determined.');
+    }
+  } catch (e) {
+    print('Error occurred while fetching the current location: $e');
+  } finally {
+    setState(() {
+      _isFetchingLocation = false;
+    });
   }
+}
 
-// // Define the method to check and request location permissions AND
-//   Future<void> _checkLocationPermission() async {
-//     if (_isCheckingPermission) return; // Prevent multiple permission checks
-
-//     _isCheckingPermission = true;
-
-//     // Load the saved flag from SharedPreferences
-//     SharedPreferences prefs = await SharedPreferences.getInstance();
-//     bool locationPromptClosed = prefs.getBool('LocationPromptClosed') ?? false;
-
-//     // If the user has closed the dialog before, don't show it again
-//     if (locationPromptClosed) {
-//       _isCheckingPermission = false;
-//       return;
-//     }
-
-//     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-//     if (!serviceEnabled) {
-//       // Show the location services dialog
-//       await _showLocationServicesDialog();
-//       _isCheckingPermission = false;
-//       return;
-//     }
-
-//     // Request location permission
-//     PermissionStatus permission = await Permission.location.request();
-//     if (permission.isGranted) {
-//       await _getCurrentLocation();
-//       // Reset the flag, because location is now enabled
-//       await prefs.setBool('LocationPromptClosed', false);
-//     }
-
-//     // Do nothing if permission is denied; no alert is shown
-//     _isCheckingPermission = false;
-//   }
-
-//   Future<void> _getCurrentLocation() async {
-//     // If a location fetch is already in progress, don't start a new one
-//     if (_isFetchingLocation) return;
-
-//     setState(() {
-//       _isFetchingLocation = true;
-//     });
-
-//   // if (_currentSelectedLocation != null ){
-//   //   setState(() {
-//   //     _currentSelectedLocation = null;
-//   //   });
-//   // }
-
-//     try {
-//       // Ensure location services are enabled and permission is granted before fetching location
-//       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-//       if (!serviceEnabled) {
-//         await _showLocationServicesDialog();
-//         return;
-//       }
-
-//       PermissionStatus permission = await Permission.location.status;
-//       if (permission.isDenied) {
-//         await _showPermissionDeniedDialog();
-//         return;
-//       } else if (permission.isPermanentlyDenied) {
-//         await _showPermanentlyDeniedDialog();
-//         return;
-//       }
-
-//       // Fetch the current location if permission is granted
-//       LatLng? currentLocation =
-//           await LocationService.instance.getCurrentLocation();
-//       print("_onMapCreated currentLocation $currentLocation");
-
-//       if (currentLocation != null) {
-//         // Update the current position
-//         setState(() {
-//           _currentPosition = currentLocation;
-//         });
-
-//         // Smoothly animate the camera to the new position if the mapController is available
-//         if (mapController != null) {
-//           await mapController!.animateCamera(
-//             CameraUpdate.newCameraPosition(
-//               CameraPosition(
-//                 target: _currentPosition!,
-//                 zoom: 18.0, // Adjust zoom level as needed
-//                 tilt: 45.0, // Add a tilt for a 3D effect
-//                 // bearing:
-//                 //     _previousBearing ?? 0, // Use previous bearing if available
-//               ),
-//             ),
-//           );
-//         }
-
-//         // Update the current location marker on the map
-//         _updateMarkers();
-//         fetchAllChargers();
-//         // await _updateCurrentLocationMarker(_previousBearing ?? 0);
-//       } else {
-//         print('Current location could not be determined.');
-//       }
-//     } catch (e) {
-//       print('Error occurred while fetching the current location: $e');
-//     } finally {
-//       setState(() {
-//         _isFetchingLocation = false;
-//       });
-//     }
-//   }
-
-// Future<void> _checkLocationPermission() async {
-//   if (_isCheckingPermission) return; // Prevent multiple permission checks
-
-//   _isCheckingPermission = true;
-
-//   // Load the saved flag from SharedPreferences
-//   SharedPreferences prefs = await SharedPreferences.getInstance();
-//   bool locationPromptClosed = prefs.getBool('LocationPromptClosed') ?? false;
-
-//   // If the user has closed the dialog before, don't show it again
-//   if (locationPromptClosed) {
-//     _isCheckingPermission = false;
-//     return;
-//   }
-
-//   // Check if location services are enabled
-//   bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-//   if (!serviceEnabled) {
-//     // Show the location services dialog
-//     await _showLocationServicesDialog();
-//     _isCheckingPermission = false;
-//     return;
-//   }
-//     print("Granted $_currentPosition");
-
-//   // Check the current location permission status
-//     PermissionStatus permission = await Permission.location.request();
-
-//   if (permission.isGranted) {
-//     print("Granted $_currentPosition");
-//     // Fetch the current location if permission is granted
-//     await _getCurrentLocation();
-//     await prefs.setBool('LocationPromptClosed', false); // Reset the flag
-//   } else if (permission.isDenied || permission.isRestricted) {
-//         print("not Granted $_currentPosition");
-
-//     // If the permission is denied or restricted, save the flag
-//     await prefs.setBool('LocationPromptClosed', true);
-//     await _showPermissionDeniedDialog(); // Show the dialog only when denied
-//   } else if (permission.isPermanentlyDenied) {
-//             print("not Granted isPermanentlyDenied $_currentPosition");
-
-//     // If permission is permanently denied, show a dialog to guide the user
-//     await _showPermanentlyDeniedDialog();
-//   }
-//     print("Granted $_currentPosition");
-
-//   _isCheckingPermission = false;
-// }
-
-// Future<void> _getCurrentLocation() async {
-//   // If a location fetch is already in progress, don't start a new one
-//   if (_isFetchingLocation) return;
-
-//   setState(() {
-//     _isFetchingLocation = true;
-//   });
-
-//   try {
-//     // Ensure location services are enabled before fetching location
-//     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-//     if (!serviceEnabled) {
-//       await _showLocationServicesDialog();
-//       return;
-//     }
-
-//     // Check the permission status again before fetching the location
-//     PermissionStatus permission = await Permission.locationWhenInUse.status;
-//     if (permission.isDenied || permission.isRestricted) {
-//       await _showPermissionDeniedDialog();
-//       return;
-//     } else if (permission.isPermanentlyDenied) {
-//       await _showPermanentlyDeniedDialog();
-//       return;
-//     }
-
-//     // Proceed with fetching the location
-//     LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
-//     print("_onMapCreated currentLocation: $currentLocation");
-
-//     if (currentLocation != null) {
-//       // Update the current position
-//       setState(() {
-//         _currentPosition = currentLocation;
-//       });
-
-//       // Smoothly animate the camera to the new position if the mapController is available
-//       if (mapController != null) {
-//         await mapController!.animateCamera(
-//           CameraUpdate.newCameraPosition(
-//             CameraPosition(
-//               target: _currentPosition!,
-//               zoom: 18.0, // Adjust zoom level as needed
-//               tilt: 45.0, // Add a tilt for a 3D effect
-//             ),
-//           ),
-//         );
-//       }
-
-//       // Update the current location marker on the map
-//       _updateMarkers();
-//       fetchAllChargers();
-//     } else {
-//       print('Current location could not be determined.');
-//     }
-//   } catch (e) {
-//     print('Error occurred while fetching the current location: $e');
-//   } finally {
-//     setState(() {
-//       _isFetchingLocation = false;
-//     });
-//   }
-// }
 
   void _resetSelectedLocationAndFetchCurrent() {
     setState(() {
@@ -658,7 +447,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     mapController = controller;
 
     // Load and set the map style
-    String mapStyle = await rootBundle.loadString('assets/Map/map.json');
+    String mapStyle = await rootBundle.loadString('assets/Map/map_theme2.json');
     mapController?.setMapStyle(mapStyle);
 
     await Future.delayed(const Duration(seconds: 1));
@@ -690,9 +479,9 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
 
     // Change the marker icon to the selected icon
     BitmapDescriptor newIcon =
-        await _getIconFromAsset('assets/icons/EV_location_green.png');
+        await _getIconFromAsset('assets/icons/EV_location_lightblue.png');
     BitmapDescriptor defaultIcon =
-        await _getIconFromAssetred('assets/icons/EV_location_red.png');
+        await _getIconFromAssetred('assets/icons/EV_location_green.png');
 
     setState(() {
       // Revert the previous marker icon to default if it exists
@@ -715,93 +504,110 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
       }).toSet();
     });
 
-    // Find the index of the charger card based on the marker ID
-    int cardIndex = chargerIdsList.indexWhere((id) => id == markerId.value);
+    // Fetch address from the latitude and longitude
+    try {
+      // Fetch the address
+      String fullAddress =
+          await _getAddressFromLatLng(position.latitude, position.longitude);
 
-    // Scroll to the corresponding charger card if it exists
-    if (cardIndex != -1) {
-      _pageController.animateToPage(
-        cardIndex,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+      // Trim the address if it's longer than 20 characters
+      // String trimmedAddress = fullAddress.length > 20
+      //     ? '${fullAddress.substring(0, 20)}...'
+      //     : fullAddress;
+
+      // Navigate to the ChargerConnectorPage with the fetched address
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChargerConnectorPage(
+            userId: widget.userId,
+            address: fullAddress,
+            position: position,
+            username: widget.username,
+            email: widget.email,
+          ),
+        ),
       );
+    } catch (e) {
+      print("Error fetching address: $e");
     }
   }
 
+  Future<void> _smoothlyMoveCameraForChargerMarker(
+      LatLng startPosition, LatLng endPosition) async {
+    if (mapController == null) {
+      print("Map controller is not initialized.");
+      return;
+    }
 
-Future<void> _smoothlyMoveCameraForChargerMarker(
-    LatLng startPosition, LatLng endPosition) async {
-  if (mapController == null) {
-    print("Map controller is not initialized.");
-    return;
-  }
+    // Check if start and end positions are the same
+    if (startPosition == endPosition) {
+      print("Start and end positions are the same. No animation required.");
+      return;
+    }
 
-  // Check if start and end positions are the same
-  if (startPosition == endPosition) {
-    print("Start and end positions are the same. No animation required.");
-    return;
-  }
+    // Calculate the distance between start and end positions
+    double distance = _calculateDistance(
+      startPosition.latitude,
+      startPosition.longitude,
+      endPosition.latitude,
+      endPosition.longitude,
+    );
 
-  // Calculate the distance between start and end positions
-  double distance = _calculateDistance(
-    startPosition.latitude,
-    startPosition.longitude,
-    endPosition.latitude,
-    endPosition.longitude,
-  );
+    // Dynamic step adjustment based on distance
+    int totalSteps =
+        (distance < 1.0) ? 10 : 25; // Fewer steps for closer distances
+    const int stepDuration = 50; // Duration between steps in milliseconds
 
-  // Dynamic step adjustment based on distance
-  int totalSteps = (distance < 1.0) ? 10 : 25; // Fewer steps for closer distances
-  const int stepDuration = 50; // Duration between steps in milliseconds
+    for (int i = 1; i <= totalSteps; i++) {
+      double latitude = startPosition.latitude +
+          (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
+      double longitude = startPosition.longitude +
+          (endPosition.longitude - startPosition.longitude) * (i / totalSteps);
+      LatLng intermediatePosition = LatLng(latitude, longitude);
 
-  for (int i = 1; i <= totalSteps; i++) {
-    double latitude = startPosition.latitude +
-        (endPosition.latitude - startPosition.latitude) * (i / totalSteps);
-    double longitude = startPosition.longitude +
-        (endPosition.longitude - startPosition.longitude) * (i / totalSteps);
-    LatLng intermediatePosition = LatLng(latitude, longitude);
+      try {
+        // Smoothly animate to intermediate positions
+        await mapController!.animateCamera(
+          CameraUpdate.newLatLng(intermediatePosition),
+        );
+        await Future.delayed(const Duration(milliseconds: stepDuration));
+      } catch (e) {
+        print("Error animating to intermediate position: $e");
+        break; // Exit loop if animation fails
+      }
+    }
 
     try {
-      // Smoothly animate to intermediate positions
+      // Move to the final position with a specific zoom and bearing
       await mapController!.animateCamera(
-        CameraUpdate.newLatLng(intermediatePosition),
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: endPosition,
+            zoom: 16.0, // Optimal zoom level for charger visibility
+            bearing: 0.0, // Keep bearing neutral
+            tilt: 0.0, // Keep tilt flat initially
+          ),
+        ),
       );
-      await Future.delayed(const Duration(milliseconds: stepDuration));
+
+      // Optional: Add a subtle rotation/zoom for visual enhancement
+      await Future.delayed(
+          const Duration(milliseconds: 200)); // Delay for effect
+      await mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: endPosition,
+            zoom: 18.0, // Closer zoom for better focus
+            bearing: 90.0, // Rotate slightly for emphasis
+            tilt: 30.0, // Add slight tilt for 3D effect
+          ),
+        ),
+      );
     } catch (e) {
-      print("Error animating to intermediate position: $e");
-      break; // Exit loop if animation fails
+      print("Error animating to final position: $e");
     }
   }
-
-  try {
-    // Move to the final position with a specific zoom and bearing
-    await mapController!.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: endPosition,
-          zoom: 16.0, // Optimal zoom level for charger visibility
-          bearing: 0.0, // Keep bearing neutral
-          tilt: 0.0, // Keep tilt flat initially
-        ),
-      ),
-    );
-
-    // Optional: Add a subtle rotation/zoom for visual enhancement
-    await Future.delayed(const Duration(milliseconds: 200)); // Delay for effect
-    await mapController!.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: endPosition,
-          zoom: 18.0, // Closer zoom for better focus
-          bearing: 90.0, // Rotate slightly for emphasis
-          tilt: 30.0, // Add slight tilt for 3D effect
-        ),
-      ),
-    );
-  } catch (e) {
-    print("Error animating to final position: $e");
-  }
-}
 
   void _onMapTapped(LatLng position) async {
     setState(() {
@@ -811,7 +617,7 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
     if (_previousMarkerId != null) {
       // Load the custom red icon
       BitmapDescriptor defaultIcon =
-          await _getIconFromAssetred('assets/icons/EV_location_red.png');
+          await _getIconFromAssetred('assets/icons/EV_location_green.png');
 
       setState(() {
         // Update the marker with the red icon
@@ -831,7 +637,7 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
   }
 
   Future<BitmapDescriptor> _getIconFromAsset(String assetPath,
-      {int width = 300, int height = 300}) async {
+      {int width = 460, int height = 400}) async {
     final byteData = await rootBundle.load(assetPath);
     final Uint8List bytes = byteData.buffer.asUint8List();
 
@@ -852,7 +658,7 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
   }
 
   Future<BitmapDescriptor> _getIconFromAssetred(String assetPath,
-      {int width = 230, int height = 230}) async {
+      {int width = 180, int height = 180}) async {
     final byteData = await rootBundle.load(assetPath);
     final Uint8List bytes = byteData.buffer.asUint8List();
 
@@ -922,7 +728,6 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
   }
 
   void _updateMarkers() async {
-
     // Use a set to track unique positions to avoid duplicate markers
     Set<String> uniquePositions = {};
 
@@ -940,7 +745,6 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
 
         // Check if this position already exists
         if (uniquePositions.contains(positionKey)) {
-
           continue; // Skip adding a marker if this position is already tracked
         }
 
@@ -956,7 +760,7 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
             : fullAddress;
 
         BitmapDescriptor chargerIcon =
-            await _getIconFromAssetred('assets/icons/EV_location_red.png');
+            await _getIconFromAssetred('assets/icons/EV_location_green.png');
         setState(() {
           _markers.add(
             Marker(
@@ -974,7 +778,6 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
         });
       }
     }
-
   }
 
   Future<Map<String, dynamic>?> handleSearchRequest(
@@ -994,7 +797,7 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/searchCharger'),
+        Uri.parse('http://122.166.210.142:4444/searchCharger'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -1007,7 +810,7 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
       await Future.delayed(const Duration(seconds: 2));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body); 
+        final data = json.decode(response.body);
         setState(() {
           this.searchChargerID = searchChargerID;
           isSearching = false;
@@ -1062,7 +865,7 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/updateConnectorUser'),
+        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -1096,92 +899,233 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
     }
   }
 
-  void navigateToQRViewExample() async {
-    // Check camera permission
-    bool hasPermission = await Permission.camera.isGranted;
+// void navigateToQRViewExample() async {
+//   if (Platform.isIOS) {
+//     // If the platform is iOS, directly navigate to the QR scanner screen
+//     final scannedCode = await Navigator.push<String>(
+//       context,
+//       MaterialPageRoute(
+//         builder: (context) => QRViewExample(
+//           handleSearchRequestCallback: handleSearchRequest,
+//           username: widget.username,
+//           userId: widget.userId,
+//         ),
+//       ),
+//     );
 
-    if (hasPermission) {
-      // Navigate to the QR scanner screen if permission is granted
-      final scannedCode = await Navigator.push<String>(
-        context,
-        MaterialPageRoute(
-          builder: (context) => QRViewExample(
-            handleSearchRequestCallback: handleSearchRequest,
-            username: widget.username,
-            userId: widget.userId,
-          ),
-        ),
-      );
+//     if (scannedCode != null) {
+//       setState(() {
+//         searchChargerID = scannedCode;
+//         isSearching = false;
+//       });
+//     }
+//   } else if (Platform.isAndroid) {
+//     // If the platform is Android, check for camera permission
+//     PermissionStatus permissionStatus = await Permission.camera.request();
 
-      if (scannedCode != null) {
-        setState(() {
-          searchChargerID = scannedCode;
-          isSearching = false;
-        });
-      }
+//     if (permissionStatus.isGranted) {
+//       // Navigate to the QR scanner screen if permission is granted
+//       final scannedCode = await Navigator.push<String>(
+//         context,
+//         MaterialPageRoute(
+//           builder: (context) => QRViewExample(
+//             handleSearchRequestCallback: handleSearchRequest,
+//             username: widget.username,
+//             userId: widget.userId,
+//           ),
+//         ),
+//       );
+
+//       if (scannedCode != null) {
+//         setState(() {
+//           searchChargerID = scannedCode;
+//           isSearching = false;
+//         });
+//       }
+//     } else {
+//       // Show a custom dialog if permission is not granted
+//       showDialog(
+//         context: context,
+//         barrierDismissible: false,
+//         builder: (BuildContext context) {
+//           return AlertDialog(
+//             backgroundColor: const Color(0xFF1E1E1E),
+//             shape: RoundedRectangleBorder(
+//               borderRadius: BorderRadius.circular(15),
+//             ),
+//             title: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 const Row(
+//                   children: [
+//                     Icon(Icons.camera_alt, color: Colors.blue, size: 35),
+//                     SizedBox(width: 10),
+//                     Text(
+//                       "Permission Denied",
+//                       style: TextStyle(
+//                           color: Colors.white,
+//                           fontSize: 18,
+//                           fontWeight: FontWeight.bold),
+//                     ),
+//                   ],
+//                 ),
+//                 const SizedBox(height: 10),
+//                 CustomGradientDivider(),
+//               ],
+//             ),
+//             content: const Column(
+//               mainAxisSize: MainAxisSize.min,
+//               children: [
+//                 Text(
+//                   'To Scan QR codes, allow this app access to your camera. Tap Settings > Permissions, and turn Camera on.',
+//                   textAlign: TextAlign.center,
+//                   style: TextStyle(color: Colors.white70),
+//                 ),
+//               ],
+//             ),
+//             actions: <Widget>[
+//               TextButton(
+//                 onPressed: () {
+//                   Navigator.of(context).pop();
+//                 },
+//                 child: const Text("Cancel", style: TextStyle(color: Colors.white)),
+//               ),
+//               TextButton(
+//                 onPressed: () {
+//                   openAppSettings();
+//                   Navigator.of(context).pop();
+//                 },
+//                 child: const Text("Settings", style: TextStyle(color: Colors.blue)),
+//               ),
+//             ],
+//           );
+//         },
+//       );
+//     }
+//   }
+// }
+
+Future<void> navigateToQRViewExample() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool isFirstTime = prefs.getBool('isFirstTimeQR') ?? true;
+
+  if (Platform.isIOS) {
+    if (isFirstTime) {
+      // Navigate without checking permission for the first time
+      await _navigateToQRView();
+      prefs.setBool('isFirstTimeQR', false); // Set to false after the first navigation
     } else {
-      // Show a custom dialog if permission is not granted
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            backgroundColor: const Color(0xFF1E1E1E),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.camera_alt, color: Colors.blue, size: 35),
-                    SizedBox(width: 10),
-                    Text(
-                      "Permission Denied",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                CustomGradientDivider(),
-              ],
-            ),
-            content: const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'To Scan QR codes, allow this app access to your camera. Tap Settings > Permissions, and turn Camera on.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ],
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child:
-                    const Text("Cancel", style: TextStyle(color: Colors.white)),
-              ),
-              TextButton(
-                onPressed: () {
-                  openAppSettings();
-                  Navigator.of(context).pop();
-                },
-                child: const Text("Settings",
-                    style: TextStyle(color: Colors.blue)),
-              ),
-            ],
-          );
-        },
-      );
+
+      var status = await Permission.camera.status;
+      print("camera status: $status ");
+      if (status.isGranted) {
+        await _navigateToQRView();
+      } else {
+        // Navigate to a permission error page like the image provided
+        _navigateToPermissionErrorPage();
+      }
+    }
+  } else if (Platform.isAndroid) {
+    // For Android, always check permissions
+    PermissionStatus permissionStatus = await Permission.camera.request();
+
+    if (permissionStatus.isGranted) {
+      await _navigateToQRView();
+    } else {
+      // Show a dialog if permission is denied
+        _navigateToPermissionErrorPage();
     }
   }
+}
+
+Future<void> _navigateToQRView() async {
+  final scannedCode = await Navigator.push<String>(
+    context,
+    MaterialPageRoute(
+      builder: (context) => QRViewExample(
+        handleSearchRequestCallback: handleSearchRequest,
+        username: widget.username,
+        userId: widget.userId,
+      ),
+    ),
+  );
+
+  if (scannedCode != null) {
+    setState(() {
+      searchChargerID = scannedCode;
+      isSearching = false;
+    });
+  }
+}
+
+void _navigateToPermissionErrorPage() {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => PermissionErrorPage(), // Custom page like the image
+    ),
+  );
+}
+
+void _showPermissionDeniedDialogQR() {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.camera_alt, color: Colors.blue, size: 35),
+                SizedBox(width: 10),
+                Text(
+                  "Permission Denied",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            CustomGradientDivider(),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'To Scan QR codes, allow this app access to your camera. Tap Settings > Permissions, and turn Camera on.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70),
+            ),
+          ],
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text("Cancel", style: TextStyle(color: Colors.white)),
+          ),
+          TextButton(
+            onPressed: () {
+              openAppSettings();
+              Navigator.of(context).pop();
+            },
+            child: const Text("Settings", style: TextStyle(color: Colors.blue)),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   void showErrorDialog(BuildContext context, String message) {
     showModalBottomSheet(
@@ -1210,7 +1154,7 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/getRecentSessionDetails'),
+        Uri.parse('http://122.166.210.142:4444/getRecentSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
@@ -1256,7 +1200,7 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
     try {
       final response = await http.post(
         Uri.parse(
-            'http://192.168.1.32:4444/getAllChargersWithStatusAndPrice'),
+            'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': widget.userId}),
       );
@@ -1268,17 +1212,17 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
         final List<dynamic> chargerData = data['data'] ?? [];
 
         // Fetch addresses for each charger and store in a new field
-        for (var charger in chargerData) {
-          final lat = double.parse(charger['lat'] ?? '0');
-          final long = double.parse(charger['long'] ?? '0');
-          final chargerId = charger['charger_id'] ?? 'Unknown ID';
+        // for (var charger in chargerData) {
+        //   final lat = double.parse(charger['lat'] ?? '0');
+        //   final long = double.parse(charger['long'] ?? '0');
+        //   final chargerId = charger['charger_id'] ?? 'Unknown ID';
 
-          // Fetch address only if it's not already fetched
-          if (charger['address'] == null) {
-            String address = await _getPlaceName(LatLng(lat, long), chargerId);
-            charger['address'] = address; // Store the fetched address
-          }
-        }
+        //   // Fetch address only if it's not already fetched
+        //   if (charger['address'] == null) {
+        //     String address = await _getPlaceName(LatLng(lat, long), chargerId);
+        //     charger['address'] = address; // Store the fetched address
+        //   }
+        // }
 
         // Update available chargers and filter
         setState(() {
@@ -1568,19 +1512,29 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
                             }
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 15, vertical: 12),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth *
+                                  0.03, // Adjust padding proportionally
+                              vertical: screenHeight * 0.015,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFF0E0E0E),
-                              borderRadius: BorderRadius.circular(30.0),
+                              borderRadius:
+                                  BorderRadius.circular(screenWidth * 0.08),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
-                                Icon(Icons.search, color: Colors.white),
-                                SizedBox(width: 10),
+                                Icon(Icons.search,
+                                    color: Colors.white,
+                                    size: screenWidth * 0.05),
+                                SizedBox(width: screenWidth * 0.02),
                                 Text(
                                   'Search',
-                                  style: TextStyle(color: Colors.white70),
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: screenWidth *
+                                        0.04, // Adjust font size proportionally
+                                  ),
                                 ),
                               ],
                             ),
@@ -1591,9 +1545,14 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
                           width: screenWidth *
                               0.03), // Adjust spacing based on screen width
                       Container(
+                        width: screenWidth *
+                            0.12, // Adjust button width proportionally
+                        height: screenWidth *
+                            0.12, // Adjust button height proportionally
                         decoration: BoxDecoration(
                           color: const Color(0xFF0E0E0E),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius:
+                              BorderRadius.circular(screenWidth * 0.03),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.2),
@@ -1604,8 +1563,12 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.qr_code,
-                              color: Colors.white, size: 30),
+                          icon: Icon(
+                            Icons.qr_code,
+                            color: Colors.white,
+                            size: screenWidth *
+                                0.06, // Adjust icon size proportionally
+                          ),
                           onPressed: () {
                             navigateToQRViewExample();
                           },
@@ -1614,115 +1577,143 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
                     ],
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.04, // Adjust horizontal padding
-                    vertical: screenHeight * 0.01, // Adjust vertical padding
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // "All Chargers" Button
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: activeFilter == 'All Chargers'
-                                  ? Colors.blue
-                                  : const Color(0xFF0E0E0E),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                activeFilter = 'All Chargers';
-                              });
-                              fetchAllChargers();
-                            },
-                            icon: const Icon(Icons.ev_station,
-                                color: Colors.white),
-                            label: const Text(
-                              'All Chargers',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          SizedBox(
-                              width: screenWidth *
-                                  0.03), // Spacing between buttons
 
-                          // Additional buttons can be added here if needed
-                          // Example: Previously Used Button (uncomment if required)
-                          /*
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: activeFilter == 'Previously Used'
-                  ? Colors.blue
-                  : const Color(0xFF0E0E0E),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            onPressed: () {
-              setState(() {
-                activeFilter = 'Previously Used';
-              });
-              fetchRecentSessionDetails();
-            },
-            icon: const Icon(Icons.history, color: Colors.white),
-            label: const Text(
-              'Previously Used',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-          SizedBox(width: screenWidth * 0.03), // Spacing between buttons
-          */
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                // Padding(
+                //   padding: EdgeInsets.symmetric(
+                //     horizontal: screenWidth * 0.04, // Adjust horizontal padding
+                //     vertical: screenHeight * 0.01, // Adjust vertical padding
+                //   ),
+                //   child: const Align(
+                //     alignment: Alignment.centerLeft,
+                //     child: SingleChildScrollView(
+                //       scrollDirection: Axis.horizontal,
+                //       child: Row(
+                //         crossAxisAlignment: CrossAxisAlignment.start,
+                //         children: [
+                //           // "All Chargers" Button
+                //           // ElevatedButton.icon(
+                //           //   style: ElevatedButton.styleFrom(
+                //           //     backgroundColor: activeFilter == 'All Chargers'
+                //           //         ? Colors.blue
+                //           //         : const Color(0xFF0E0E0E),
+                //           //     shape: RoundedRectangleBorder(
+                //           //       borderRadius: BorderRadius.circular(30),
+                //           //     ),
+                //           //   ),
+                //           //   onPressed: () {
+                //           //     setState(() {
+                //           //       activeFilter = 'All Chargers';
+                //           //     });
+                //           //     fetchAllChargers();
+                //           //   },
+                //           //   icon: const Icon(Icons.ev_station,
+                //           //       color: Colors.white),
+                //           //   label: const Text(
+                //           //     'All Chargers',
+                //           //     style: TextStyle(color: Colors.white),
+                //           //   ),
+                //           // ),
+                //           // SizedBox(
+                //           //     width: screenWidth *
+                //           //         0.03), // Spacing between buttons
+
+                //           // Additional buttons can be added here if needed
+                //           // Example: Previously Used Button (uncomment if required)
+                //           /*
+                //           ElevatedButton.icon(
+                //             style: ElevatedButton.styleFrom(
+                //               backgroundColor: activeFilter == 'Previously Used'
+                //                   ? Colors.blue
+                //                   : const Color(0xFF0E0E0E),
+                //               shape: RoundedRectangleBorder(
+                //                 borderRadius: BorderRadius.circular(30),
+                //               ),
+                //             ),
+                //             onPressed: () {
+                //               setState(() {
+                //                 activeFilter = 'Previously Used';
+                //               });
+                //               fetchRecentSessionDetails();
+                //             },
+                //             icon: const Icon(Icons.history, color: Colors.white),
+                //             label: const Text(
+                //               'Previously Used',
+                //               style: TextStyle(color: Colors.white),
+                //             ),
+                //           ),
+                //           SizedBox(width: screenWidth * 0.03), // Spacing between buttons
+                //           */
+                //         ],
+                //       ),
+                //     ),
+                //   ),
+                // ),
                 SizedBox(
                     height: screenHeight *
-                        0.50), // Adjust height based on screen size
+                        0.60), // Adjust height based on screen size
                 _buildChargerListContainer()
               ],
             ),
             Positioned(
               top: screenHeight *
-                  0.2, // Adjust positioning based on screen height
+                  0.5, // Adjust positioning based on screen height
               right: screenWidth *
                   0.03, // Adjust positioning based on screen width
               child: Column(
                 children: [
-                  FloatingActionButton(
-                    heroTag: 'zoom_in',
-                    backgroundColor: Colors.black,
-                    onPressed: () {
-                      mapController?.animateCamera(CameraUpdate.zoomIn());
-                    },
-                    child: const Icon(Icons.zoom_in_map_rounded,
-                        color: Colors.white),
+                  SizedBox(
+                    width: screenWidth *
+                        0.12, // Adjust button width proportionally
+                    height: screenWidth *
+                        0.12, // Adjust button height proportionally
+                    child: FloatingActionButton(
+                      heroTag: 'zoom_in',
+                      backgroundColor: Colors.black,
+                      onPressed: () {
+                        mapController?.animateCamera(CameraUpdate.zoomIn());
+                      },
+                      child: const Icon(
+                        Icons.zoom_in_map_rounded,
+                        color: Colors.white,
+                        size: 24, // Adjust the icon size if needed
+                      ),
+                    ),
                   ),
                   SizedBox(
-                      height: screenHeight *
-                          0.01), // Adjust spacing between buttons
-                  FloatingActionButton(
-                    heroTag: 'zoom_out',
-                    backgroundColor: Colors.black,
-                    onPressed: () {
-                      mapController?.animateCamera(CameraUpdate.zoomOut());
-                    },
-                    child: const Icon(Icons.zoom_out_map_rounded,
-                        color: Colors.red),
+                    height:
+                        screenHeight * 0.01, // Adjust spacing between buttons
                   ),
-                  SizedBox(height: screenHeight * 0.01),
-                  FloatingActionButton(
-                    backgroundColor: const Color.fromARGB(227, 76, 175, 79),
-                    onPressed: _resetSelectedLocationAndFetchCurrent,
-                    child: const Icon(Icons.my_location, color: Colors.white),
+                  SizedBox(
+                    width: screenWidth * 0.12,
+                    height: screenWidth * 0.12,
+                    child: FloatingActionButton(
+                      heroTag: 'zoom_out',
+                      backgroundColor: Colors.black,
+                      onPressed: () {
+                        mapController?.animateCamera(CameraUpdate.zoomOut());
+                      },
+                      child: const Icon(
+                        Icons.zoom_out_map_rounded,
+                        color: Colors.red,
+                        size: 24, // Adjust the icon size if needed
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: screenHeight * 0.01,
+                  ),
+                  SizedBox(
+                    width: screenWidth * 0.12,
+                    height: screenWidth * 0.12,
+                    child: FloatingActionButton(
+                      backgroundColor: const Color.fromARGB(227, 76, 175, 79),
+                      onPressed: _resetSelectedLocationAndFetchCurrent,
+                      child: const Icon(
+                        Icons.my_location,
+                        color: Colors.white,
+                        size: 24, // Adjust the icon size if needed
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1767,9 +1758,9 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
 
   Future<void> _updateMarkerIcons(String chargerId) async {
     BitmapDescriptor newIcon =
-        await _getIconFromAsset('assets/icons/EV_location_green.png');
+        await _getIconFromAsset('assets/icons/EV_location_lightblue.png');
     BitmapDescriptor defaultIcon =
-        await _getIconFromAsset('assets/icons/EV_location_red.png');
+        await _getIconFromAssetred('assets/icons/EV_location_green.png');
 
     setState(() {
       // Change the icon of the previously selected marker back to default
@@ -1795,114 +1786,56 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
     });
   }
 
-  Future<String> _getPlaceName(LatLng position, String chargerId) async {
-    // Check if the address is already cached
-    if (_addressCache.containsKey(chargerId)) {
-      return _addressCache[chargerId]!;
-    }
+  // Future<String> _getPlaceName(LatLng position, String chargerId) async {
+  //   // Check if the address is already cached
+  //   if (_addressCache.containsKey(chargerId)) {
+  //     return _addressCache[chargerId]!;
+  //   }
 
-    final String url =
-        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=$apiKey';
+  //   final String url =
+  //       'https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=$apiKey';
 
-    final response = await http.get(Uri.parse(url));
+  //   final response = await http.get(Uri.parse(url));
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      if (data['results'].isNotEmpty) {
-        String fetchedAddress = data['results'][0]['formatted_address'];
-        // Store the fetched address in the cache
-        _addressCache[chargerId] = fetchedAddress;
-        return fetchedAddress;
-      } else {
-        return "Unknown Location";
-      }
-    } else {
-      throw Exception('Failed to fetch place name');
-    }
-  }
+  //   if (response.statusCode == 200) {
+  //     final Map<String, dynamic> data = json.decode(response.body);
+  //     if (data['results'].isNotEmpty) {
+  //       String fetchedAddress = data['results'][0]['formatted_address'];
+  //       // Store the fetched address in the cache
+  //       _addressCache[chargerId] = fetchedAddress;
+  //       return fetchedAddress;
+  //     } else {
+  //       return "Unknown Location";
+  //     }
+  //   } else {
+  //     throw Exception('Failed to fetch place name');
+  //   }
+  // }
 
-  Widget _buildShimmerCard() {
-    // Get screen size
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+Widget _buildShimmerCard(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
 
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[700]!,
-      child: Container(
-        width: screenWidth * 0.8, // Match charger card width
-        height: screenHeight * 0.2, // Match charger card height
-        margin: EdgeInsets.only(
-          right: screenWidth * 0.013,
-          top: screenHeight * 0.03,
-          bottom: screenHeight * 0.05,
-          left: screenHeight * 0.03, // Add extra left margin for the first card
-        ),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0E0E0E),
-          borderRadius: BorderRadius.circular(
-              screenWidth * 0.01), // Same border radius as charger card
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: screenWidth * 0.01,
-            top: screenHeight * 0.02,
-            bottom: screenHeight * 0.02,
-            right: screenWidth * 0.01, // Add right padding for all cards
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: screenWidth * 0.25,
-                height: screenHeight * 0.02,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 5),
-              Container(
-                width: screenWidth * 0.2,
-                height: screenHeight * 0.02,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 5),
-              Row(
-                children: [
-                  Container(
-                    width: screenWidth * 0.15,
-                    height: screenHeight * 0.02,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 5),
-                  Container(
-                    width: screenWidth * 0.05,
-                    height: screenHeight * 0.02,
-                    color: Colors.white,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
-              Container(
-                width: screenWidth * 0.6,
-                height: screenHeight * 0.02,
-                color: Colors.white,
-              ),
-            ],
-          ),
-        ),
+  return Shimmer.fromColors(
+    baseColor: Colors.grey[800]!,
+    highlightColor: Colors.grey[700]!,
+    child: Container(
+      width: screenWidth * 0.7, // Reduced width to make it smaller
+      height: screenHeight * 0.12, // Reduced height to make it smaller
+      margin: EdgeInsets.only(
+        left: screenWidth * 0.05, // Move the shimmer card slightly to the right
+        right: screenWidth * 0.02,
+        top: screenHeight * 0.01,
       ),
-    );
-  }
+      color: const Color(0xFF0E0E0E), // Background color of the shimmer
+    ),
+  );
+}
+
 
   Widget _buildChargerCard(
     BuildContext context,
+    String address,
     String landmark,
     String chargerId,
     LatLng position,
@@ -1917,8 +1850,7 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
     );
 
     // Get the address directly from the charger object (fetched once)
-    String placeName = charger?['address'] ?? 'Unknown Address';
-    String address = charger?['address'] ?? 'Unknown Address';
+    String placeName = address;
     placeName = truncateText(placeName, 79);
     landmark = truncateText(landmark, 20);
 
@@ -2069,7 +2001,7 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
                     children: List.generate(
                         3,
                         (index) =>
-                            _buildShimmerCard()), // Display 3 shimmer cards
+                            _buildShimmerCard(context)), // Display 3 shimmer cards
                   ),
                 ),
               )
@@ -2082,174 +2014,192 @@ Future<void> _smoothlyMoveCameraForChargerMarker(
         ),
       ),
     );
-  }Widget _buildChargerList() {
-  List<Widget> chargerCards = [];
-  Set<String> chargerIds = {}; // Track charger IDs to avoid duplicates
-  Set<String> uniqueLocations = {}; // Track unique lat/long combinations
-  chargerIdsList.clear(); // Clear previous IDs to avoid duplicates
-  isChargerAvailable = false; // Reset the flag initially
-
-  List<Map<String, dynamic>> chargersWithDistance = []; // To store charger data with distance
-
-  // Check if data is loading and show shimmer if true
-  if (isLoading) {
-    // Data is still loading, show shimmer cards
-    for (var i = 0; i < 3; i++) {
-      chargerCards.add(_buildShimmerCard());
-    }
-  } else {
-    LatLng referencePosition = _currentSelectedLocation != null
-        ? LatLng(
-            double.parse(_currentSelectedLocation!['latitude']),
-            double.parse(_currentSelectedLocation!['longitude']),
-          )
-        : (_currentPosition ?? _center); // Get reference position for distance calculation
-
-    // Process based on the active filter
-    List<dynamic> chargersToProcess = activeFilter == 'Previously Used'
-        ? recentSessions
-        : availableChargers;
-
-    for (var charger in chargersToProcess) {
-      String chargerId = activeFilter == 'Previously Used'
-          ? charger['details']['charger_id']?.trim() ?? 'Unknown ID'
-          : charger['charger_id']?.trim() ?? 'Unknown ID';
-
-      double chargerLatitude = activeFilter == 'Previously Used'
-          ? double.parse(charger['details']['lat'] ?? '0')
-          : double.parse(charger['lat'] ?? '0');
-      double chargerLongitude = activeFilter == 'Previously Used'
-          ? double.parse(charger['details']['long'] ?? '0')
-          : double.parse(charger['long'] ?? '0');
-
-      String locationKey = '$chargerLatitude,$chargerLongitude';
-
-      // Avoid duplicates based on charger ID and unique lat/long
-      if (!chargerIds.contains(chargerId) &&
-          !uniqueLocations.contains(locationKey)) {
-        double distanceInKm = _calculateDistance(
-          referencePosition.latitude,
-          referencePosition.longitude,
-          chargerLatitude,
-          chargerLongitude,
-        );
-
-        if (distanceInKm <= 100.0) { // Limit results within 100km
-          chargerIds.add(chargerId);
-          uniqueLocations.add(locationKey);
-          chargerIdsList.add(chargerId); // Add charger ID to the separate list
-
-          // Store charger data along with distance for sorting
-          chargersWithDistance.add({
-            'chargerId': chargerId,
-            'latitude': chargerLatitude,
-            'longitude': chargerLongitude,
-            'distance': distanceInKm,
-            'chargerData': charger, // Store entire charger data to pass to _buildChargerCard
-          });
-        }
-      }
-    }
-
-    // Sort the chargers by distance
-    chargersWithDistance.sort((a, b) => a['distance'].compareTo(b['distance']));
-
-    // Build the charger cards based on sorted data
-    for (var chargerInfo in chargersWithDistance) {
-      String distanceText = "${chargerInfo['distance'].toStringAsFixed(2)} km";
-      var charger = chargerInfo['chargerData'];
-
-      chargerCards.add(
-        _buildChargerCard(
-          context,
-          activeFilter == 'Previously Used'
-              ? charger['details']['landmark'] ?? 'Unknown location'
-              : charger['landmark'] ?? 'Unknown location',
-          chargerInfo['chargerId'],
-          LatLng(chargerInfo['latitude'], chargerInfo['longitude']),
-          distanceText, // Pass distance as a string
-        ),
-      );
-      isChargerAvailable = true; // Set flag to true if at least one charger is available
-    }
   }
 
-  return Expanded(
-    child: PageView.builder(
-      controller: _pageController,
-      scrollDirection: Axis.horizontal,
-      itemCount: chargerCards.length,
-      onPageChanged: (index) {
-        // Fetch corresponding charger info from sorted list
-        var chargerInfo = chargersWithDistance[index];
-        String chargerId = chargerInfo['chargerId'];
-        double latitude = chargerInfo['latitude'];
-        double longitude = chargerInfo['longitude'];
-        
-        // Call _onChargerCardChanged with relevant data
-        _onChargerCardChanged(chargerId, LatLng(latitude, longitude), chargerInfo['distance']);
-      },
-      itemBuilder: (context, index) {
-        return chargerCards[index];
-      },
-    ),
-  );
-}
+  Widget _buildChargerList() {
+    List<Widget> chargerCards = [];
+    Set<String> chargerIds = {}; // Track charger IDs to avoid duplicates
+    Set<String> uniqueLocations = {}; // Track unique lat/long combinations
+    chargerIdsList.clear(); // Clear previous IDs to avoid duplicates
+    isChargerAvailable = false; // Reset the flag initially
 
-void _onChargerCardChanged(String chargerId, LatLng chargerPosition, double distance) {
-  print("_onChargerCardChanged: $chargerId, Distance: $distance km");
+    List<Map<String, dynamic>> chargersWithDistance =
+        []; // To store charger data with distance
 
-  // Cancel any existing debounce timers
-  _debounceTimer?.cancel();
+    // Check if data is loading and show shimmer if true
+    if (isLoading) {
+      // Data is still loading, show shimmer cards
+      for (var i = 0; i < 3; i++) {
+        chargerCards.add(_buildShimmerCard(context));
+      }
+    } else {
+      LatLng referencePosition = _currentSelectedLocation != null
+          ? LatLng(
+              double.parse(_currentSelectedLocation!['latitude']),
+              double.parse(_currentSelectedLocation!['longitude']),
+            )
+          : (_currentPosition ??
+              _center); // Get reference position for distance calculation
 
-  // Add a short debounce duration (e.g., 150ms)
-  _debounceTimer = Timer(const Duration(milliseconds: 150), () async {
-    // Find the charger in the availableChargers list using the chargerId
-    var charger = availableChargers.firstWhere(
-      (charger) => charger['charger_id'] == chargerId,
-      orElse: () => null,
-    );
+      // Process based on the active filter
+      List<dynamic> chargersToProcess = activeFilter == 'Previously Used'
+          ? recentSessions
+          : availableChargers;
 
-    if (charger != null) {
-      // The latitude and longitude are now passed directly as `chargerPosition`
-      if (mapController != null) {
-        LatLng startPosition = _selectedPosition ?? _currentPosition ?? _center;
+      for (var charger in chargersToProcess) {
+        String chargerId = activeFilter == 'Previously Used'
+            ? charger['details']['charger_id']?.trim() ?? 'Unknown ID'
+            : charger['charger_id']?.trim() ?? 'Unknown ID';
 
-        // If an animation is in progress, cancel it before starting a new one
-        if (_isAnimationInProgress) {
-          _currentAnimationOperation?.cancel();
-        }
+        double chargerLatitude = activeFilter == 'Previously Used'
+            ? double.parse(charger['details']['lat'] ?? '0')
+            : double.parse(charger['lat'] ?? '0');
+        double chargerLongitude = activeFilter == 'Previously Used'
+            ? double.parse(charger['details']['long'] ?? '0')
+            : double.parse(charger['long'] ?? '0');
 
-        _isAnimationInProgress = true;
+        String locationKey = '$chargerLatitude,$chargerLongitude';
 
-        // Wrap the animation in a CancelableOperation
-        _currentAnimationOperation = CancelableOperation.fromFuture(
-          _smoothlyMoveCameraForChargerMarker(startPosition, chargerPosition),
-        );
+        String address = activeFilter == 'Previously Used'
+            ? charger['details']['address'] ?? 'Unknown Address'
+            : charger['address'] ?? 'Unknown Address';
 
-        try {
-          await _currentAnimationOperation!.value;
+        // Avoid duplicates based on charger ID and unique lat/long
+        if (!chargerIds.contains(chargerId) &&
+            !uniqueLocations.contains(locationKey)) {
+          double distanceInKm = _calculateDistance(
+            referencePosition.latitude,
+            referencePosition.longitude,
+            chargerLatitude,
+            chargerLongitude,
+          );
 
-          // Animation completed, update state
-          if (mounted) {
-            setState(() {
-              _selectedPosition = chargerPosition;
-              areMapButtonsEnabled = true; // Enable map buttons
+          if (distanceInKm <= 100.0) {
+            // Limit results within 100km
+            chargerIds.add(chargerId);
+            uniqueLocations.add(locationKey);
+            chargerIdsList
+                .add(chargerId); // Add charger ID to the separate list
 
-              // Update marker icons, using chargerId
-              _updateMarkerIcons(chargerId);
+            // Store charger data along with distance for sorting
+            chargersWithDistance.add({
+              'chargerId': chargerId,
+              'latitude': chargerLatitude,
+              'longitude': chargerLongitude,
+              'distance': distanceInKm,
+              'address': address, // Include address from backend
+              'chargerData':
+                  charger, // Store entire charger data to pass to _buildChargerCard
             });
           }
-        } catch (e) {
-          print("Animation was cancelled or failed: $e");
-        } finally {
-          _isAnimationInProgress = false;
         }
       }
-    }
-  });
-}
 
+      // Sort the chargers by distance
+      chargersWithDistance
+          .sort((a, b) => a['distance'].compareTo(b['distance']));
+
+      // Build the charger cards based on sorted data
+      for (var chargerInfo in chargersWithDistance) {
+        String distanceText =
+            "${chargerInfo['distance'].toStringAsFixed(2)} km";
+        var charger = chargerInfo['chargerData'];
+
+        chargerCards.add(
+          _buildChargerCard(
+            context,
+            chargerInfo['address'], // Pass address directly
+            activeFilter == 'Previously Used'
+                ? charger['details']['landmark'] ?? 'Unknown location'
+                : charger['landmark'] ?? 'Unknown location',
+            chargerInfo['chargerId'],
+            LatLng(chargerInfo['latitude'], chargerInfo['longitude']),
+            distanceText, // Pass distance as a string
+          ),
+        );
+        isChargerAvailable =
+            true; // Set flag to true if at least one charger is available
+      }
+    }
+
+    return Expanded(
+      child: PageView.builder(
+        controller: _pageController,
+        scrollDirection: Axis.horizontal,
+        itemCount: chargerCards.length,
+        onPageChanged: (index) {
+          // Fetch corresponding charger info from sorted list
+          var chargerInfo = chargersWithDistance[index];
+          String chargerId = chargerInfo['chargerId'];
+          double latitude = chargerInfo['latitude'];
+          double longitude = chargerInfo['longitude'];
+
+          // Call _onChargerCardChanged with relevant data
+          _onChargerCardChanged(
+              chargerId, LatLng(latitude, longitude), chargerInfo['distance']);
+        },
+        itemBuilder: (context, index) {
+          return chargerCards[index];
+        },
+      ),
+    );
+  }
+
+  void _onChargerCardChanged(
+      String chargerId, LatLng chargerPosition, double distance) {
+    print("_onChargerCardChanged: $chargerId, Distance: $distance km");
+
+    // Cancel any existing debounce timers
+    _debounceTimer?.cancel();
+
+    // Add a short debounce duration (e.g., 150ms)
+    _debounceTimer = Timer(const Duration(milliseconds: 150), () async {
+      // Find the charger in the availableChargers list using the chargerId
+      var charger = availableChargers.firstWhere(
+        (charger) => charger['charger_id'] == chargerId,
+        orElse: () => null,
+      );
+
+      if (charger != null) {
+        // The latitude and longitude are now passed directly as `chargerPosition`
+        if (mapController != null) {
+          LatLng startPosition =
+              _selectedPosition ?? _currentPosition ?? _center;
+
+          // If an animation is in progress, cancel it before starting a new one
+          if (_isAnimationInProgress) {
+            _currentAnimationOperation?.cancel();
+          }
+
+          _isAnimationInProgress = true;
+
+          // Wrap the animation in a CancelableOperation
+          _currentAnimationOperation = CancelableOperation.fromFuture(
+            _smoothlyMoveCameraForChargerMarker(startPosition, chargerPosition),
+          );
+
+          try {
+            await _currentAnimationOperation!.value;
+
+            // Animation completed, update state
+            if (mounted) {
+              setState(() {
+                _selectedPosition = chargerPosition;
+                areMapButtonsEnabled = true; // Enable map buttons
+
+                // Update marker icons, using chargerId
+                _updateMarkerIcons(chargerId);
+              });
+            }
+          } catch (e) {
+            print("Animation was cancelled or failed: $e");
+          } finally {
+            _isAnimationInProgress = false;
+          }
+        }
+      }
+    });
+  }
 
 // Truncate text if it's longer than the max length
   String truncateText(String text, int maxLength) {
@@ -2299,7 +2249,7 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
     }
     return 'Unknown';
   }
-  
+
   @override
   Widget build(BuildContext context) {
     // Get the screen size using MediaQuery
@@ -2345,7 +2295,6 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
                       ),
                     ),
                   );
-                  
                 },
               ),
             ],
@@ -2355,79 +2304,84 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
           const SizedBox(height: 20),
 
           // Connector Grid
-  GridView.builder(
-  shrinkWrap: true, // Prevents unnecessary space
-  physics: const NeverScrollableScrollPhysics(),
-  itemCount: widget.chargerData.keys
-      .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
-      .length,
-  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-    crossAxisCount: 2,
-    mainAxisSpacing: 10,
-    crossAxisSpacing: 10,
-    childAspectRatio: 3,
-  ),
-  itemBuilder: (BuildContext context, int index) {
-    // Fetch the available connector keys dynamically
-    List<String> connectorKeys = widget.chargerData.keys
-        .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
-        .toList();
+          GridView.builder(
+            shrinkWrap: true, // Prevents unnecessary space
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: widget.chargerData.keys
+                .where((key) =>
+                    key.startsWith('connector_') && key.endsWith('_type'))
+                .length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 3,
+            ),
+            itemBuilder: (BuildContext context, int index) {
+              // Fetch the available connector keys dynamically
+              List<String> connectorKeys = widget.chargerData.keys
+                  .where((key) =>
+                      key.startsWith('connector_') && key.endsWith('_type'))
+                  .toList();
 
-    String connectorKey = connectorKeys[index]; // Use the key directly
-    int connectorId = index + 1; // Still keep the numbering for display purposes
-    int? connectorType = widget.chargerData[connectorKey];
+              String connectorKey =
+                  connectorKeys[index]; // Use the key directly
+              int connectorId =
+                  index + 1; // Still keep the numbering for display purposes
+              int? connectorType = widget.chargerData[connectorKey];
 
-    if (connectorType == null) {
-      return const SizedBox.shrink(); // Skip if there's no valid connector
-    }
+              if (connectorType == null) {
+                return const SizedBox
+                    .shrink(); // Skip if there's no valid connector
+              }
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedConnector = connectorId;
-          selectedConnectorType = connectorType;
-        });
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: selectedConnector == connectorId
-              ? Colors.green
-              : Colors.grey[800],
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                connectorType == 1 ? Icons.power : Icons.ev_station,
-                color: connectorType == 1 ? Colors.green : Colors.red,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _getConnectorTypeName(connectorType),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: isSmallScreen ? 14 : 16,
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedConnector = connectorId;
+                    selectedConnectorType = connectorType;
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: selectedConnector == connectorId
+                        ? Colors.green
+                        : Colors.grey[800],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          connectorType == 1 ? Icons.power : Icons.ev_station,
+                          color: connectorType == 1 ? Colors.green : Colors.red,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _getConnectorTypeName(connectorType),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isSmallScreen ? 14 : 16,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          ' - [ $connectorId ]',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isSmallScreen ? 14 : 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                ' - [ $connectorId ]',
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                  fontSize: isSmallScreen ? 14 : 16,
-                ),
-              ),
-            ],
+              );
+            },
           ),
-        ),
-      ),
-    );
-  },
-),
 
           const SizedBox(height: 10), // Adjust this spacing as needed
 
@@ -2475,7 +2429,6 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
     );
   }
 }
-
 
 class SlantedLabel extends StatelessWidget {
   final String? distance;
@@ -2822,8 +2775,8 @@ class ErrorDetails extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
-                  // Use Navigator.push to add the new page without disrupting other content  
-                                  // Navigate to HomePage without disrupting other content
+                  // Use Navigator.push to add the new page without disrupting other content
+                  // Navigate to HomePage without disrupting other content
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -2835,6 +2788,8 @@ class ErrorDetails extends StatelessWidget {
                       ),
                     ),
                   );
+                  // Navigator.pop(context);
+
                   // Close the QR code scanner page and return to the Home Page
                 },
               ),

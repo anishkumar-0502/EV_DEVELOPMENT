@@ -128,7 +128,6 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
   }
 
   Future<void> fetchAllChargers() async {
-    // Set loading state to true
     setState(() {
       isLoading = true;
       availableChargers.clear(); // Clear previous chargers if needed
@@ -136,8 +135,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
 
     try {
       final response = await http.post(
-        Uri.parse(
-            'http://192.168.1.32:4444/getAllChargersWithStatusAndPrice'),
+        Uri.parse('http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': widget.userId}),
       );
@@ -145,11 +143,10 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
       final data = json.decode(response.body);
       print("Filtered Charger Data Position: $data");
 
-      // Check if the response is successful
       if (response.statusCode == 200) {
         final List<dynamic> chargerData = data['data'] ?? [];
 
-        // Filter chargers based on the specific latitude and longitude from widget.position
+        // Filter chargers based on latitude and longitude
         List<dynamic> filteredChargerData = chargerData.where((charger) {
           final lat = double.tryParse(charger['lat'] ?? '0');
           final long = double.tryParse(charger['long'] ?? '0');
@@ -162,47 +159,38 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
         List<Map<String, dynamic>> uniqueChargers = [];
         final Set<String> chargerIds = {}; // To track unique charger IDs
 
-        // Fetch addresses for each filtered charger and store in a new field
         for (var charger in filteredChargerData) {
           final chargerId = charger['charger_id'] ?? 'Unknown ID';
 
-          // Check if this charger has already been added to the unique list
           if (!chargerIds.contains(chargerId)) {
-            chargerIds.add(chargerId); // Add to the set of unique IDs
+            chargerIds.add(chargerId);
             final lat = double.tryParse(charger['lat'] ?? '0');
             final long = double.tryParse(charger['long'] ?? '0');
 
             // Fetch address using the charger’s coordinates
-            String address =
-                await _getPlaceName(LatLng(lat!, long!), chargerId);
+            String address = await _getPlaceName(LatLng(lat!, long!), chargerId);
 
-            // Extract the last used time from the status array, if available
             String lastUsedTime = 'Not yet received';
             if (charger['status'] != null &&
                 charger['status'] is List &&
                 charger['status'].isNotEmpty) {
-              // Assuming the status array contains timestamp inf
               final status = charger['status'].firstWhere(
-                (status) => status['timestamp'] != null,
+                    (status) => status['timestamp'] != null,
                 orElse: () => null,
               );
               if (status != null) {
-                lastUsedTime = formatTimestamp(
-                    status['timestamp']); // Format the timestamp
+                lastUsedTime = formatTimestamp(status['timestamp']);
               }
             }
 
-            // Determine accessibility
-            final isPrivate = charger['charger_accessibility'] ==
-                2; // Assuming 1 means public
+            final isPrivate = charger['charger_accessibility'] == 2;
 
-            // Extract and update charger status
-            String chargerStatus = 'Not yet updated';
+            String chargerStatus = '-';
             if (charger['status'] != null &&
                 charger['status'] is List &&
                 charger['status'].isNotEmpty) {
               final status = charger['status'].firstWhere(
-                (status) => status['charger_status'] != null,
+                    (status) => status['charger_status'] != null,
                 orElse: () => null,
               );
               if (status != null) {
@@ -210,26 +198,45 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
               }
             }
 
-            // Add the charger with the fetched address, formatted status timestamp, accessibility status, and charger status to the unique list
+            // Include bluetooth_module and wifi_module in the data
+            final bluetoothModule = charger['bluetooth_module'] ?? false;
+            final wifiModule = charger['wifi_module'] ?? false;
+            final gunConnector = charger['gun_connector'] ?? 0;
+            final socketCount = charger['socket_count'] ?? 0;
+
+            // Determine the display text for gun and socket
+            String gunSocketDisplay = '';
+
+            if (gunConnector > 0 && socketCount > 0) {
+              gunSocketDisplay = 'Gun and Socket';
+            } else if (gunConnector > 0 && socketCount == 0) {
+              gunSocketDisplay = 'Gun ';
+            } else if (gunConnector == 0 && socketCount > 0) {
+              gunSocketDisplay = 'Socket ';
+            }
+
             uniqueChargers.add({
               'charger_id': chargerId,
               'charger_type': charger['charger_type'] ?? 'Unknown Type',
-              'last_used_time':
-                  lastUsedTime, // Store the formatted status timestamp
+              'last_used_time': lastUsedTime,
               'unit_price': charger['unit_price'] ?? 0.0,
-              'address': address, // Store the fetched address
-              'is_private': isPrivate, // Store the accessibility
-              'status': chargerStatus, // Store the charger status
+              'address': address,
+              'is_private': isPrivate,
+              'status': chargerStatus,
+              'gun_connector': gunConnector,
+              'socket_count': socketCount,
+              'gun_socket_display': gunSocketDisplay,  // Store the display text
+              'charger_model': charger['charger_model'] ?? 'Unknown Model',
+              'bluetooth_module': charger['bluetooth_module'] ?? false,
+              'wifi_module': charger['wifi_module'] ?? false, // Include Wi-Fi status
             });
           }
         }
 
-        // Update available chargers with the unique chargers data
         setState(() {
-          availableChargers = uniqueChargers; // Set the unique chargers
-          isLoading = false; // Set loading to false after data is set
+          availableChargers = uniqueChargers;
+          isLoading = false;
 
-          // Optional: Set the first charger as the sample charger data
           if (uniqueChargers.isNotEmpty) {
             final firstCharger = uniqueChargers.first;
             print("firstCharger $firstCharger");
@@ -239,27 +246,31 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
               'last_used_time': firstCharger['last_used_time'] ?? ' - ',
               'unit_price': firstCharger['unit_price'] ?? 0.0,
               'status': firstCharger['status'] ?? 'Unknown',
+              'gun_connector': firstCharger['gun_connector'] ?? 0,
+              'socket_count': firstCharger['socket_count'] ?? 0,
+              'charger_model': firstCharger['charger_model'] ?? 'Unknown Model',
+              'bluetooth_module': firstCharger['bluetooth_module'] ?? false,
+              'wifi_module': firstCharger['wifi_module'] ?? false,
             };
           }
         });
       } else {
-        // Handle error response
         final errorData = json.decode(response.body);
         showErrorDialog(context, errorData['message']);
         setState(() {
-          isLoading = false; // Set loading to false on error
+          isLoading = false;
         });
       }
     } catch (error) {
       print('Internal server error: $error');
-      // Handle general errors
-      showErrorDialog(
-          context, 'An unexpected error occurred. Please try again.');
+      showErrorDialog(context, 'An unexpected error occurred. Please try again.');
       setState(() {
-        isLoading = false; // Set loading to false on error
+        isLoading = false;
       });
     }
   }
+
+
 
 // Function to format the timestamp
   String formatTimestamp(String? timestamp) {
@@ -448,7 +459,7 @@ Widget build(BuildContext context) {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/updateConnectorUser'),
+        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -517,7 +528,7 @@ Widget build(BuildContext context) {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/SearchCharger'),
+        Uri.parse('http://122.166.210.142:4444/SearchCharger'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'searchChargerID': searchChargerID,
@@ -603,194 +614,197 @@ Widget build(BuildContext context) {
       case 'Unavailable':
         return 'Unavailable';
       default:
-        return 'Not yet updated';
+        return '-';
     }
   }
 
-  Widget _buildChargerDetails(
-      double screenWidth, Map<String, dynamic> charger) {
-    return Card(
-      // margin: const EdgeInsets.symmetric(vertical: 8.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      color: Colors.grey[900],
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Row(
-            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //   children: [
-            //     Expanded(
-            //       child: Text(
-            //         charger['charger_id'] ?? 'Unknown Charger ID',
-            //         style: TextStyle(
-            //           fontSize: screenWidth * 0.045,
-            //           fontWeight: FontWeight.bold,
-            //           color: Colors.white,
-            //         ),
-            //       ),
-            //     ),
-            //     Icon(
-            //       charger['is_private'] == true ? Icons.lock : Icons.lock_open,
-            //       color: charger['is_private'] == true
-            //           ? Colors.orange
-            //           : Colors.green,
-            //       size: 22,
-            //     ),
-            //   ],
-            // ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    charger['charger_id'] ?? 'Unknown Charger ID',
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.045,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+  Widget _buildChargerDetails(double screenWidth, Map<String, dynamic> charger) {
+    return GestureDetector(
+      onTap: () async {
+        final data = await handleSearchRequest(charger['charger_id']);
+        print("connectorIdconnectorId data $data");
+        if (data != null && !data.containsKey('error')) {
+          if (mounted) {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              isDismissible: false,
+              enableDrag: false,
+              backgroundColor: Colors.black,
+              builder: (BuildContext context) {
+                return Padding(
+                  padding: MediaQuery.of(context).viewInsets,
+                  child: ConnectorSelectionDialog(
+                    chargerData: data['socketGunConfig'] ?? {},
+                    onConnectorSelected: (connectorId, connectorType) {
+                      updateConnectorUser(charger['charger_id'], connectorId, connectorType);
+                    },
+                    username: widget.username,
+                    email: widget.email,
+                    userId: widget.userId,
                   ),
-                ),
-                Text(
-                  charger['is_private'] == true ? 'Private' : 'Public',
-                  style: TextStyle(
-                    color: charger['is_private'] == true
-                        ? Colors.orange
-                        : Colors.green,
-                    fontSize: screenWidth * 0.04, // Adjust font size as needed
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 3),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                                    Text(
-                  getStatusText(charger['status']),
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.04,
-                    color: getStatusColor(charger['status']),
-                  ),
-                ),
-
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 3),
-            Row(
-              children: [
-                    Icon(
-                      Icons.access_time, // Clock icon
-                      size: screenWidth * 0.04, // Adjust the size as needed
-                      color: Colors.grey[400], // Set the icon color
-                    ),
-                    const SizedBox(
-                        width: 4), // Space between the icon and the text
-                    Text(
-                      "${charger['last_used_time'] ?? 'Not yet received'}",
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.035,
-                        color: Colors.grey[400],
+                );
+              },
+            );
+          }
+        }
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        color: Colors.grey[900],
+        elevation: 4,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left section: Centered image with border
+              Column(
+                children: [
+                  Container(
+                    width: screenWidth * 0.2,
+                    height: screenWidth * 0.22,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[850],
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color.fromARGB(255, 54, 54, 54),
+                        width: 2.0,
                       ),
                     ),
-                const Spacer(),
-                Text(
-                  charger['charger_type'] ?? 'Unknown Type',
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.04,
-                    color: Colors.redAccent,
-                    fontWeight: FontWeight.bold,
+                    
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Image.asset(
+                        'assets/Image/Gunsocket.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Icon(
-                  Icons.currency_rupee,
-                  color: Colors.yellowAccent,
-                  size: screenWidth * 0.04,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${charger['unit_price'] ?? 'N/A'}/kWh',
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.04,
-                    color: Colors.white54,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 7),
-            CustomGradientDivider(),
-            const SizedBox(height: 5),
-            Align(
-              alignment: Alignment.center,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1C1C1C),
-                  side: const BorderSide(
-                    color: Colors.green, // Set the border color to green
-                    width: 0.3, // Set the border width
-                  ),
-                  elevation: 3, // Set elevation for shadow effect
-                  shadowColor: const Color(
-                      0xFFB2FF59), // Set shadow color to green// Set the background color to green
-                ),
-                onPressed: () async {
-                  final data = await handleSearchRequest(charger['charger_id']);
-                  print("connectorIdconnectorId data $data" );
-                  if (data != null && !data.containsKey('error')) {
-                    if (mounted) {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        isDismissible: false,
-                        enableDrag: false,
-                        backgroundColor: Colors.black,
-                        builder: (BuildContext context) {
-                          return Padding(
-                            padding: MediaQuery.of(context).viewInsets,
-                            child: ConnectorSelectionDialog(
-                              chargerData: data['socketGunConfig'] ?? {},
-                              onConnectorSelected:
-                                  (connectorId, connectorType) {
-                                updateConnectorUser(charger['charger_id'],
-                                    connectorId, connectorType);
-                              },
-                              username: widget.username,
-                              email: widget.email,
-                              userId: widget.userId,
+                ],
+              ),
+              const SizedBox(width: 12),
+              // Right section for details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Row 1: Charger ID, Wi-Fi, and Bluetooth buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          charger['charger_id'] ?? 'Unknown Charger ID',
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.045,
+                            fontWeight: FontWeight.bold,
+                            color: const Color.fromARGB(255, 221, 219, 219),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.wifi,
+                              color: charger['wifi_module'] == true ? Colors.blueAccent : Colors.grey,
+                              size: screenWidth * 0.05,
                             ),
-                          );
-                        },
-                      );
-                    }
-                  }
-                },
-                child: const Text(
-                  'View Connectors',
-                  style: TextStyle(
-                    color: const Color(0xFFB2FF59),
-                  ),
+                            const SizedBox(width: 8), // Add spacing between icons
+                            Icon(
+                              Icons.bluetooth,
+                              color: charger['bluetooth_module'] == true ? Colors.lightBlueAccent : Colors.grey,
+                              size: screenWidth * 0.05,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    // Row 2: Socket/Gun, AC/DC, and Status
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${charger['gun_socket_display'] ?? 'Unknown'} | ${charger['charger_type'] ?? 'AC/DC'}',
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.04,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                        Text(
+                          getStatusText(charger['status']),
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.04,
+                            color: getStatusColor(charger['status']),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    // Row 3: Price per unit and Charger Model
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Price container with border
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: const Color.fromARGB(179, 48, 47, 47), width: 1.5),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.currency_rupee,
+                                color: Colors.yellowAccent,
+                                size: screenWidth * 0.04,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${charger['unit_price'] ?? 'N/A'} / unit',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.035, // Reduced size
+                                  fontWeight: FontWeight.bold, // Make bold
+                                  color: Colors.white54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // kWh container with border
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: const Color.fromARGB(179, 40, 39, 39), width: 1.5),
+                          ),
+                          child: Text(
+                            "${charger['charger_model'] ?? 'Unknown Model'} kWh",
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.035, // Reduced size
+                              fontWeight: FontWeight.bold, // Make bold
+                              // color: Colors.grey[400],
+                              color: const Color.fromARGB(255, 181, 40, 50),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 7),
+                  ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+
+
+
 
   Widget _buildShimmerCard(double screenWidth) {
     return Shimmer.fromColors(
@@ -1244,6 +1258,92 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+class ErrorDetails extends StatelessWidget {
+  final String? errorData;
+  final String username;
+  final int? userId;
+  final String email;
+  final Map<String, dynamic>? selectedLocation; // Accept the selected location
+
+  const ErrorDetails(
+      {Key? key,
+      required this.errorData,
+      required this.username,
+      this.userId,
+      required this.email,
+      this.selectedLocation})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center, // Center the content
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Error Details',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () {
+                  // Use Navigator.push to add the new page without disrupting other content  
+                                  // Navigate to HomePage without disrupting other content
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (context) => HomePage(
+                  //       selectedLocation: selectedLocation,
+                  //       username: username,
+                  //       userId: userId,
+                  //       email: email,
+                  //     ),
+                  //   ),
+                  // );
+                  Navigator.pop(context);
+
+                  // Close the QR code scanner page and return to the Home Page
+                },
+              ),
+            ],
+          ),
+          const SizedBox(
+              height: 10), // Add spacing between the header and the green line
+          CustomGradientDivider(),
+          const SizedBox(
+              height: 20), // Add spacing between the green line and the icon
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 70,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            errorData ?? 'An unknown error occurred.',
+            style: const TextStyle(color: Colors.white70, fontSize: 20),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 30),
         ],
       ),
     );

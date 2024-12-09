@@ -53,7 +53,11 @@
     <string>We need access to your location to show your current position on the map even when the app is in the background.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>We need access to your location to show your current position on the map.</string>
-    
+
+    <!-- Camera Permissions -->
+    <key>NSCameraUsageDescription</key>
+    <string>We need access to your camera to scan QR codes.</string>
+
     <!-- Network Permissions -->
     <key>NSAppTransportSecurity</key>
     <dict>
@@ -70,6 +74,6 @@
     
     <!-- Google Maps API Key -->
     <key>GMSApiKey</key>
-    <string>AIzaSyCwyCo-jhRnxEo55neAZI8cCbVbdwLtmJ8</string>
+    <string>AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo</string>
 </dict>
 </plist>

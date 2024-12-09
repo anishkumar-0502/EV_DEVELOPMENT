@@ -1,5 +1,6 @@
 import 'dart:isolate';
 import 'dart:async';
+// import 'package:ev_app/src/utilities/Connectivity_page/connectivity_page.dart';
 import 'package:flutter/material.dart';
 import 'Home_contents/home_content.dart'; // Import the HomeContent file
 import '../components/footer.dart';
@@ -7,7 +8,7 @@ import 'wallet/wallet.dart';
 import 'history/history.dart';
 import 'profile/profile.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart'; // Import the foreground task package
-import 'package:flutter/services.dart';
+// import 'package:flutter/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class HomePage extends StatefulWidget {
@@ -35,110 +36,45 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
      _connectivity = Connectivity();
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
-    _checkInitialConnection();
+    // _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+    // _checkInitialConnection();
     startForegroundService(); // Start the foreground service
   }
 
+// Future<void> _checkInitialConnection() async {
+//   var result = await _connectivity.checkConnectivity();
+//   _updateConnectionStatus(result);
+// }
 
-  Future<void> _checkInitialConnection() async {
-    var result = await _connectivity.checkConnectivity();
-    _updateConnectionStatus(result);
-  }
-  void _updateConnectionStatus(ConnectivityResult result) {
+//   void _updateConnectionStatus(ConnectivityResult result) {
+//   // Check for internet connection
+//   if (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi) {
+//     _dismissNoConnectionPage(); // Dismiss the error page if internet is restored
+//   } else if (result == ConnectivityResult.none) {
+//     _showNoConnectionPage(context); // Show the no internet error page
+//   }
+// }
+// void _showNoConnectionPage(BuildContext context) {
+//   Navigator.push(
+//     context,
+//     MaterialPageRoute(
+//       builder: (context) => InternetErrorPage(),
+//     ),
+//   );
+// }
 
-    // Check for specific connection types (Wi-Fi or Mobile Data)
-    if (result == ConnectivityResult.mobile) {
-      // Connected to mobile data
-      _dismissConnectionDialog(); // Close any dialog if mobile data is connected
-    } else if (result == ConnectivityResult.wifi) {
-      // Connected to Wi-Fi
-      _dismissConnectionDialog(); // Close any dialog if Wi-Fi is connected
-    } else if (result == ConnectivityResult.none) {
-      // No internet connection
-      if (!_isDialogOpen) {
-        _showNoConnectionDialog(result); // Show dialog with specific message
-      }
-    }
-  }
 
-  void _showNoConnectionDialog(ConnectivityResult result) {
-    String message;
 
-    if (result == ConnectivityResult.none) {
-      message = 'Mobile data is off. Please turn it on or connect to Wi-Fi.';
-    } else {
-      message = 'No Internet Connection. Please check your connection.';
-    }
-
-    setState(() {
-      _isDialogOpen = true;
-    });
-
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Prevent dismissing by tapping outside
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E), // Background color
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 35),
-                  SizedBox(width: 10),
-                  Text(
-                    "Mobile data required",
-                    style: TextStyle(color: Colors.white,fontSize: 18),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              CustomGradientDivider(), // Custom gradient divider
-            ],
-          ),
-          content: Text(
-            message,
-            style: const TextStyle(color: Colors.white70), // Adjusted text color for contrast
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () async {
-                _checkInitialConnection(); // Retry connection check
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: const Text("Retry", style: TextStyle(color: Colors.blue)),
-            ),
-            TextButton(
-              onPressed: () async {
-                SystemNavigator.pop(); // Close the app
-              },
-              child: const Text("Close App", style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    ).then((_) {
-      setState(() {
-        _isDialogOpen = false; // Update state when dialog is dismissed
-      });
-    });
-  }
-  void _dismissConnectionDialog() {
-    if (_isDialogOpen) {
-      Navigator.of(context, rootNavigator: true).pop(); // Dismiss the alert
-      _isDialogOpen = false;
-    }
-  }
+// void _dismissNoConnectionPage() {
+//   if (Navigator.canPop(context)) {
+//     Navigator.pop(context); // Pop the InternetErrorPage if it is active
+//   }
+// }
   
   @override
   void dispose() {
     FlutterForegroundTask.stopService(); // Stop the foreground service when the app is closed
-     _connectivitySubscription.cancel();
+    //  _connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -234,3 +170,4 @@ class YourTaskHandler extends TaskHandler {
     FlutterForegroundTask.launchApp(); // Bring your app to the foreground
   }
 }
+

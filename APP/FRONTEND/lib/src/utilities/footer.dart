@@ -14,7 +14,7 @@ class FooterState extends State<Footer> with SingleTickerProviderStateMixin {
   final GlobalKey<CurvedNavigationBarState> _bottomNavigationKey = GlobalKey();
   int _currentIndex = 0;
   late AnimationController _animationController;
-  final List<int> _navigationStack = [0]; // Navigation stack for back press handling
+  final List<int> _navigationStack = [0];
 
   @override
   void initState() {
@@ -92,7 +92,6 @@ class FooterState extends State<Footer> with SingleTickerProviderStateMixin {
     );
   }
 
-  /// Get the corresponding icon for each index
   IconData _getIconData(int index) {
     switch (index) {
       case 0:
@@ -108,7 +107,6 @@ class FooterState extends State<Footer> with SingleTickerProviderStateMixin {
     }
   }
 
-  /// Animate the color change of the icons
   Color _getColor(int index) {
     return _currentIndex == index
         ? ColorTween(
@@ -118,7 +116,6 @@ class FooterState extends State<Footer> with SingleTickerProviderStateMixin {
         : const Color.fromARGB(255, 79, 192, 83);
   }
 
-  /// Handle back button press to navigate backward in the stack
   bool handleBackPress() {
     if (_navigationStack.length > 1) {
       setState(() {

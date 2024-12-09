@@ -47,112 +47,49 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _emailController.addListener(_emailListener);
     _passwordController.addListener(_updateButtonState);
-    _connectivity = Connectivity();
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
-    _checkInitialConnection();
+    // _connectivity = Connectivity();
+    // _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+    // _checkInitialConnection();
     _retrieveUserData();
   }
 
-  Future<void> _checkInitialConnection() async {
-    var result = await _connectivity.checkConnectivity();
-    _updateConnectionStatus(result);
-  }
-  void _updateConnectionStatus(ConnectivityResult result) {
+// Future<void> _checkInitialConnection() async {
+//   var result = await _connectivity.checkConnectivity();
+//   _updateConnectionStatus(result);
+// }
 
-    // Check for specific connection types (Wi-Fi or Mobile Data)
-    if (result == ConnectivityResult.mobile) {
-      // Connected to mobile data
-      _dismissConnectionDialog(); // Close any dialog if mobile data is connected
-    } else if (result == ConnectivityResult.wifi) {
-      // Connected to Wi-Fi
-      _dismissConnectionDialog(); // Close any dialog if Wi-Fi is connected
-    } else if (result == ConnectivityResult.none) {
-      // No internet connection
-      if (!_isDialogOpen) {
-        _showNoConnectionDialog(result); // Show dialog with specific message
-      }
-    }
-  }
+//   void _updateConnectionStatus(ConnectivityResult result) {
+//   // Check for internet connection
+//   if (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi) {
+//     _dismissNoConnectionPage(); // Dismiss the error page if internet is restored
+//   } else if (result == ConnectivityResult.none) {
+//     _showNoConnectionPage(context); // Show the no internet error page
+//   }
+// }
+// void _showNoConnectionPage(BuildContext context) {
+//   Navigator.push(
+//     context,
+//     MaterialPageRoute(
+//       builder: (context) => InternetErrorPage(),
+//     ),
+//   );
+// }
 
-  void _showNoConnectionDialog(ConnectivityResult result) {
-    String message;
 
-    if (result == ConnectivityResult.none) {
-      message = 'Mobile data is off. Please turn it on or connect to Wi-Fi.';
-    } else {
-      message = 'No Internet Connection. Please check your connection.';
-    }
+// void _dismissNoConnectionPage() {
+//   if (Navigator.canPop(context)) {
+//     Navigator.pop(context); // Pop the InternetErrorPage if it is active
+//   }
+// }
+  
 
-    setState(() {
-      _isDialogOpen = true;
-    });
-
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Prevent dismissing by tapping outside
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E), // Background color
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 35),
-                  SizedBox(width: 10),
-                  Text(
-                    "Mobile data required",
-                    style: TextStyle(color: Colors.white,fontSize: 18),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              CustomGradientDivider(), // Custom gradient divider
-            ],
-          ),
-          content: Text(
-            message,
-            style: const TextStyle(color: Colors.white70), // Adjusted text color for contrast
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () async {
-                _checkInitialConnection(); // Retry connection check
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: const Text("Retry", style: TextStyle(color: Colors.blue)),
-            ),
-            TextButton(
-              onPressed: () async {
-                SystemNavigator.pop(); // Close the app
-              },
-              child: const Text("Close App", style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    ).then((_) {
-      setState(() {
-        _isDialogOpen = false; // Update state when dialog is dismissed
-      });
-    });
-  }
-  void _dismissConnectionDialog() {
-    if (_isDialogOpen) {
-      Navigator.of(context, rootNavigator: true).pop(); // Dismiss the alert
-      _isDialogOpen = false;
-    }
-  }
   @override
   void dispose() {
     _emailController.removeListener(_emailListener);
     _passwordController.removeListener(_updateButtonState);
     _emailController.dispose();
     _passwordController.dispose();
-    _connectivitySubscription.cancel();
+    // _connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -197,7 +134,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/profile/CheckLoginCredentials'),
+        Uri.parse('http://122.166.210.142:4444/profile/CheckLoginCredentials'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email_id': email, 'password': password}),
       );
@@ -422,38 +359,45 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _isFormValid() ? _login : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _isFormValid()
-                          ? const Color(0xFF1C8B39)
-                          : Colors.transparent, // Dark green when enabled
-                      minimumSize: const Size(double.infinity, 50), // Full width button
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
-                    ).copyWith(
-                      backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                            (Set<MaterialState> states) {
-                          if (states.contains(MaterialState.disabled)) {
-                            return Colors.green.withOpacity(0.2); // Light green gradient
-                          }
-                          return const Color(0xFF1C8B40); // Dark green color
-                        },
-                      ),
-                    ),
-                    child: Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _isFormValid()
-                            ? Colors.white
-                            : Colors.green[700], // Text color
-                      ),
-                    ),
-                  ),
+ElevatedButton(
+  onPressed: _isFormValid() ? () {
+    // Close the keyboard
+    FocusScope.of(context).unfocus();
+
+    // Proceed with login
+    _login();
+  } : null,
+  style: ElevatedButton.styleFrom(
+    backgroundColor: _isFormValid()
+        ? const Color(0xFF1C8B39)
+        : Colors.transparent, // Dark green when enabled
+    minimumSize: const Size(double.infinity, 50), // Full width button
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(8),
+    ),
+    elevation: 0,
+  ).copyWith(
+    backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+          (Set<MaterialState> states) {
+        if (states.contains(MaterialState.disabled)) {
+          return Colors.green.withOpacity(0.2); // Light green gradient
+        }
+        return const Color(0xFF1C8B40); // Dark green color
+      },
+    ),
+  ),
+  child: Text(
+    'Continue',
+    style: TextStyle(
+      fontSize: 18,
+      fontWeight: FontWeight.bold,
+      color: _isFormValid()
+          ? Colors.white
+          : Colors.green[700], // Text color
+    ),
+  ),
+),
+
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -657,3 +601,128 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
     );
   }
 }
+
+
+
+// class InternetErrorPage extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     // Fetch screen size
+//     final double screenWidth = MediaQuery.of(context).size.width;
+//     final double screenHeight = MediaQuery.of(context).size.height;
+
+//     return Scaffold(
+//       backgroundColor: Colors.black,
+//       body: SafeArea(
+//         child: Center(
+//           child: Column(
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             children: [
+//               // No Internet Icon
+//               Stack(
+//                 alignment: Alignment.center,
+//                 children: [
+//                   Icon(
+//                     Icons.wifi,
+//                     size: screenWidth * 0.30, // Adjust size dynamically
+//                     color: Colors.blueGrey,
+//                   ),
+//                   Icon(
+//                     Icons.close,
+//                     size: screenWidth * 0.17, // Adjust size dynamically
+//                     color: Colors.red,
+//                   ),
+//                 ],
+//               ),
+//               SizedBox(height: screenHeight * 0.05), // Adjust spacing
+//               // Title
+//               Text(
+//                 "Ooops!",
+//                 style: TextStyle(
+//                   fontSize: screenWidth * 0.07, // Adjust font size dynamically
+//                   fontWeight: FontWeight.bold,
+//                   color: Colors.white70,
+//                 ),
+//               ),
+//               SizedBox(height: screenHeight * 0.02),
+//               // Description
+//               Padding(
+//                 padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.08),
+//                 child: Text(
+//                   "It seems you are offline. Please check your internet connection and try again.",
+//                   textAlign: TextAlign.center,
+//                   style: TextStyle(
+//                     fontSize: screenWidth * 0.045, // Adjust font size dynamically
+//                     color: Colors.white70,
+//                   ),
+//                 ),
+//               ),
+//               SizedBox(height: screenHeight * 0.06),
+//               // Retry Button
+//               ElevatedButton(
+//                 onPressed: () async {
+//                   // Check the internet connection status
+//                   var connectivityResult = await Connectivity().checkConnectivity();
+
+//                   if (connectivityResult == ConnectivityResult.mobile ||
+//                       connectivityResult == ConnectivityResult.wifi) {
+//                     // Internet is available, close the page
+//                     Navigator.of(context).pop(); // Close the current page
+//                   } else {
+//                     // Internet is still not available, retry the connection check
+//                     _showRetryMessage(context);
+//                   }
+//                 },
+//                 style: ElevatedButton.styleFrom(
+//                   backgroundColor: Colors.green,
+//                   padding: EdgeInsets.symmetric(
+//                     horizontal: screenWidth * 0.1, // Adjust padding dynamically
+//                     vertical: screenHeight * 0.02,
+//                   ),
+//                   shape: RoundedRectangleBorder(
+//                     borderRadius: BorderRadius.circular(10),
+//                   ),
+//                 ),
+//                 child: Text(
+//                   "Try Again",
+//                   style: TextStyle(
+//                     fontSize: screenWidth * 0.045, // Adjust font size dynamically
+//                     color: Colors.white,
+//                   ),
+//                 ),
+//               ),
+//               SizedBox(height: screenHeight * 0.03),
+//               // Close App Button
+//               TextButton(
+//                 onPressed: () {
+//                   // Close the app (pop the current page)
+//                   Navigator.of(context).pop();
+//                 },
+//                 child: Text(
+//                   "Back to App",
+//                   style: TextStyle(
+//                     fontSize: screenWidth * 0.045, // Adjust font size dynamically
+//                     color: Colors.green,
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// void _showRetryMessage(BuildContext context) {
+//   // Dismiss any existing snack bars before showing a new one
+//   ScaffoldMessenger.of(context).clearSnackBars();
+  
+//   // Show the new retry message
+//   ScaffoldMessenger.of(context).showSnackBar(
+//     const SnackBar(
+//       content: Text('No internet connection. Please try again later.'),
+//       duration: Duration(seconds: 2),
+//     ),
+//   );
+// }
+
+// }

@@ -41,95 +41,39 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.addListener(_validateAndUpdate);
     _phoneController.addListener(_validateAndUpdate);
     _passwordController.addListener(_validateAndUpdate);
-    _connectivity = Connectivity();
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
-    _checkInitialConnection();
+    // _connectivity = Connectivity();
+    // _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+    // _checkInitialConnection();
   }
 
-  Future<void> _checkInitialConnection() async {
-    var result = await _connectivity.checkConnectivity();
-    _updateConnectionStatus(result);
-  }
+// Future<void> _checkInitialConnection() async {
+//   var result = await _connectivity.checkConnectivity();
+//   _updateConnectionStatus(result);
+// }
 
-  void _updateConnectionStatus(ConnectivityResult result) {
-    if (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi) {
-      _dismissConnectionDialog();
-    } else if (result == ConnectivityResult.none) {
-      if (!_isDialogOpen) {
-        _showNoConnectionDialog(result);
-      }
-    }
-  }
+//   void _updateConnectionStatus(ConnectivityResult result) {
+//   // Check for internet connection
+//   if (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi) {
+//     _dismissNoConnectionPage(); // Dismiss the error page if internet is restored
+//   } else if (result == ConnectivityResult.none) {
+//     _showNoConnectionPage(context); // Show the no internet error page
+//   }
+// }
+// void _showNoConnectionPage(BuildContext context) {
+//   Navigator.push(
+//     context,
+//     MaterialPageRoute(
+//       builder: (context) => InternetErrorPage(),
+//     ),
+//   );
+// }
 
-  void _showNoConnectionDialog(ConnectivityResult result) {
-    String message = result == ConnectivityResult.none
-        ? 'No Internet Connection. Please check your connection.'
-        : 'Mobile data is off. Please turn it on or connect to Wi-Fi.';
 
-    setState(() {
-      _isDialogOpen = true;
-    });
-
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Prevent dismissing by tapping outside
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E), // Background color
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 35),
-                  SizedBox(width: 10),
-                  Text(
-                    "Mobile data required",
-                    style: TextStyle(color: Colors.white,fontSize: 18),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              CustomGradientDivider(), // Custom gradient divider
-            ],
-          ),
-          content: Text(
-            message,
-            style: const TextStyle(color: Colors.white70), // Adjusted text color for contrast
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () async {
-                _checkInitialConnection(); // Retry connection check
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: const Text("Retry", style: TextStyle(color: Colors.blue)),
-            ),
-            TextButton(
-              onPressed: () async {
-                SystemNavigator.pop(); // Close the app
-              },
-              child: const Text("Close App", style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    ).then((_) {
-      setState(() {
-        _isDialogOpen = false; // Update state when dialog is dismissed
-      });
-    });
-  }
-
-  void _dismissConnectionDialog() {
-    if (_isDialogOpen) {
-      Navigator.of(context, rootNavigator: true).pop();
-      _isDialogOpen = false;
-    }
-  }
+// void _dismissNoConnectionPage() {
+//   if (Navigator.canPop(context)) {
+//     Navigator.pop(context); // Pop the InternetErrorPage if it is active
+//   }
+// }
 
   @override
   void dispose() {
@@ -137,7 +81,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
-    _connectivitySubscription.cancel();
+    // _connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -182,7 +126,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       var response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/profile/RegisterNewUser'),
+        Uri.parse('http://122.166.210.142:4444/profile/RegisterNewUser'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': username,
@@ -241,84 +185,88 @@ class _RegisterPageState extends State<RegisterPage> {
       });
     });
   }
-
   @override
-  Widget build(BuildContext context) {
-    return LoadingOverlay(
-      showAlertLoading: isSearching, 
-      child: Scaffold(
+Widget build(BuildContext context) {
+  return LoadingOverlay(
+    showAlertLoading: isSearching, 
+    child: Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
         backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: Colors.black,
-          elevation: 0,
-          toolbarHeight: 0,
-        ),
-        body: Column(
-          children: [
-            if (_alertMessage != null) AlertBanner(message: _alertMessage!),
-            if (successMsg != null) SuccessBanner(message: successMsg!),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Create your Account',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
+        elevation: 0,
+        toolbarHeight: 0,
+      ),
+      body: SingleChildScrollView(  // Allows scrolling
+        child: ConstrainedBox( // Ensures the content takes minimum space
+          constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+          child: Center(  // Center the content initially
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center, // Center content within Column
+                  children: [
+                    if (_alertMessage != null) 
+                      AlertBanner(message: _alertMessage!), // Conditional rendering
+                    if (successMsg != null) 
+                      SuccessBanner(message: successMsg!), // Conditional rendering
+                    const Text(
+                      'Create your Account',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        "Fill in the details below to get started.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Fill in the details below to get started.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildUsernameField(),
+                    const SizedBox(height: 20),
+                    _buildEmailField(),
+                    const SizedBox(height: 20),
+                    _buildPasswordField(),
+                    const SizedBox(height: 20),
+                    _buildPhoneField(),
+                    const SizedBox(height: 20),
+                    _buildSubmitButton(),
+                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LoginPage()),
+                          );
+                        },
+                        child: Text(
+                          'Already a user? Sign In ?',
+                          style: TextStyle(fontSize: 15, color: Colors.green[700]),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      _buildUsernameField(),
-                      const SizedBox(height: 20),
-                      _buildEmailField(),
-                      const SizedBox(height: 20),
-                      _buildPasswordField(),
-                      const SizedBox(height: 20),
-                      _buildPhoneField(),
-                      const SizedBox(height: 20),
-                      _buildSubmitButton(),
-                      const SizedBox(height: 20),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const LoginPage()),
-                            );
-                          },
-                          child: Text(
-                            'Already a user? Sign In ?',
-                            style: TextStyle(fontSize: 15, color: Colors.green[700]),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+
 
   Widget _buildUsernameField() {
     return TextFormField(
@@ -462,38 +410,49 @@ class _RegisterPageState extends State<RegisterPage> {
 
 
   Widget _buildSubmitButton() {
-    return ElevatedButton(
-      onPressed: _isButtonEnabled ? _handleRegister : null,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _isButtonEnabled ? const Color(0xFF1C8B39) : Colors.transparent, // Dark green when enabled
-        minimumSize: const Size(double.infinity, 50), // Set the width to be full width
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+  return ElevatedButton(
+  onPressed: _isButtonEnabled
+      ? () {
+          // Close the keyboard when the button is pressed
+          FocusScope.of(context).unfocus();
+
+          // Call the register function
+          _handleRegister();
+        }
+      : null,
+  style: ElevatedButton.styleFrom(
+    backgroundColor: _isButtonEnabled
+        ? const Color(0xFF1C8B39)
+        : Colors.transparent, // Dark green when enabled
+    minimumSize: const Size(double.infinity, 50), // Set the width to be full width
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(8),
+    ),
+    side: BorderSide(
+      color: _isButtonEnabled ? Colors.transparent : Colors.transparent, // No border color when disabled
+    ),
+    elevation: 0,
+  ).copyWith(
+    backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+      (Set<MaterialState> states) {
+        if (states.contains(MaterialState.disabled)) {
+          return Colors.green.withOpacity(0.2); // Light green gradient
+        }
+        return const Color(0xFF1C8B40); // Dark green color
+      },
+    ),
+  ),
+  child: _isLoading
+      ? const CircularProgressIndicator(color: Colors.white)
+      : const Text(
+          'Continue',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        side: BorderSide(
-          color: _isButtonEnabled ? Colors.transparent : Colors.transparent, // No border color when disabled
-        ),
-        elevation: 0,
-      ).copyWith(
-        backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-              (Set<MaterialState> states) {
-            if (states.contains(MaterialState.disabled)) {
-              return Colors.green.withOpacity(0.2); // Light green gradient
-            }
-            return const Color(0xFF1C8B40); // Dark green color
-          },
-        ),
-      ),
-      child: _isLoading
-          ? const CircularProgressIndicator(color: Colors.white)
-          : const Text(
-        'Continue',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
+);
+
   }
 }
 
@@ -675,3 +634,128 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
     );
   }
 }
+
+
+
+// class InternetErrorPage extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     // Fetch screen size
+//     final double screenWidth = MediaQuery.of(context).size.width;
+//     final double screenHeight = MediaQuery.of(context).size.height;
+
+//     return Scaffold(
+//       backgroundColor: Colors.black,
+//       body: SafeArea(
+//         child: Center(
+//           child: Column(
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             children: [
+//               // No Internet Icon
+//               Stack(
+//                 alignment: Alignment.center,
+//                 children: [
+//                   Icon(
+//                     Icons.wifi,
+//                     size: screenWidth * 0.30, // Adjust size dynamically
+//                     color: Colors.blueGrey,
+//                   ),
+//                   Icon(
+//                     Icons.close,
+//                     size: screenWidth * 0.17, // Adjust size dynamically
+//                     color: Colors.red,
+//                   ),
+//                 ],
+//               ),
+//               SizedBox(height: screenHeight * 0.05), // Adjust spacing
+//               // Title
+//               Text(
+//                 "Ooops!",
+//                 style: TextStyle(
+//                   fontSize: screenWidth * 0.07, // Adjust font size dynamically
+//                   fontWeight: FontWeight.bold,
+//                   color: Colors.white70,
+//                 ),
+//               ),
+//               SizedBox(height: screenHeight * 0.02),
+//               // Description
+//               Padding(
+//                 padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.08),
+//                 child: Text(
+//                   "It seems you are offline. Please check your internet connection and try again.",
+//                   textAlign: TextAlign.center,
+//                   style: TextStyle(
+//                     fontSize: screenWidth * 0.045, // Adjust font size dynamically
+//                     color: Colors.white70,
+//                   ),
+//                 ),
+//               ),
+//               SizedBox(height: screenHeight * 0.06),
+//               // Retry Button
+//               ElevatedButton(
+//                 onPressed: () async {
+//                   // Check the internet connection status
+//                   var connectivityResult = await Connectivity().checkConnectivity();
+
+//                   if (connectivityResult == ConnectivityResult.mobile ||
+//                       connectivityResult == ConnectivityResult.wifi) {
+//                     // Internet is available, close the page
+//                     Navigator.of(context).pop(); // Close the current page
+//                   } else {
+//                     // Internet is still not available, retry the connection check
+//                     _showRetryMessage(context);
+//                   }
+//                 },
+//                 style: ElevatedButton.styleFrom(
+//                   backgroundColor: Colors.green,
+//                   padding: EdgeInsets.symmetric(
+//                     horizontal: screenWidth * 0.1, // Adjust padding dynamically
+//                     vertical: screenHeight * 0.02,
+//                   ),
+//                   shape: RoundedRectangleBorder(
+//                     borderRadius: BorderRadius.circular(10),
+//                   ),
+//                 ),
+//                 child: Text(
+//                   "Try Again",
+//                   style: TextStyle(
+//                     fontSize: screenWidth * 0.045, // Adjust font size dynamically
+//                     color: Colors.white,
+//                   ),
+//                 ),
+//               ),
+//               SizedBox(height: screenHeight * 0.03),
+//               // Close App Button
+//               TextButton(
+//                 onPressed: () {
+//                   // Close the app (pop the current page)
+//                   Navigator.of(context).pop();
+//                 },
+//                 child: Text(
+//                   "Back to App",
+//                   style: TextStyle(
+//                     fontSize: screenWidth * 0.045, // Adjust font size dynamically
+//                     color: Colors.green,
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// void _showRetryMessage(BuildContext context) {
+//   // Dismiss any existing snack bars before showing a new one
+//   ScaffoldMessenger.of(context).clearSnackBars();
+  
+//   // Show the new retry message
+//   ScaffoldMessenger.of(context).showSnackBar(
+//     const SnackBar(
+//       content: Text('No internet connection. Please try again later.'),
+//       duration: Duration(seconds: 2),
+//     ),
+//   );
+// }
+
+// }

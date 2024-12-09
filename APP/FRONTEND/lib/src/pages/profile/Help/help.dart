@@ -10,25 +10,34 @@ class HelpPage extends StatefulWidget {
 class _HelpPageState extends State<HelpPage> {
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return SafeArea(
       child: Scaffold(
+        backgroundColor: Colors.black,
         body: Container(
           decoration: const BoxDecoration(
             color: Colors.black,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.05,
+              vertical: screenHeight * 0.02,
+            ),
             child: Column(
               children: [
+                // Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Help',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 25,
+                        fontSize: screenWidth * 0.07,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -38,109 +47,90 @@ class _HelpPageState extends State<HelpPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10,),
+                SizedBox(height: screenHeight * 0.02),
                 CustomGradientDivider(),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-
-                      Center(
-                        child: Container(
-                          margin: const EdgeInsets.all(16.0), // Adjust margin as needed
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(10),
-                          child: Text(
-                            'NEED HELP? CONTACT US!',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green.shade700,
-                            ),
-                            textAlign: TextAlign.center, // Ensure the text is centered within the container
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Contact Us Section
+                        Container(
+                          margin: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
+                          padding: EdgeInsets.all(screenWidth * 0.05),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade800,
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        ),
-                      ),
-
-
-
-                         Container(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 8.0),
-                                child: Text(
-                                  'If you require assistance or have any questions, feel free to reach out to us via email or WhatsApp.',
-                                  textAlign: TextAlign.left,
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    color: Colors.white,
-                                  ),
+                              // Title
+                              Text(
+                                'NEED HELP? CONTACT US!',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.05,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green.shade700,
                                 ),
                               ),
-                              const SizedBox(height: 10,),
+                              SizedBox(height: screenHeight * 0.02),
+                              // Help Text
+                              Text(
+                                'If you require assistance or have any questions, feel free to reach out to us via email or WhatsApp.',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.045,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        // Contact Information Section
+                        Container(
+                          margin: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
+                          padding: EdgeInsets.all(screenWidth * 0.05),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade800,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Email Section
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.email,
-                                    color: Colors.green,
-                                    size: 20,
+                                    color: Colors.green.shade700,
+                                    size: screenWidth * 0.06,
                                   ),
-                                  const SizedBox(width: 10),
-                                  RichText(
-                                    text: const TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: 'Email ID: ',
-                                          style: TextStyle(
-                                            color: Colors.green,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: 'evpower@gmail.com',
-                                          style: TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
+                                  SizedBox(width: screenWidth * 0.03),
+                                  Text(
+                                    'Email ID: evpower@gmail.com',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.045,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 10),
+                              SizedBox(height: screenHeight * 0.02),
+                              // WhatsApp Section
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.phone,
-                                    color: Colors.green,
-                                    size: 20,
+                                    color: Colors.green.shade700,
+                                    size: screenWidth * 0.06,
                                   ),
-                                  const SizedBox(width: 10),
-                                  RichText(
-                                    text: const TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: 'Whatsapp: ',
-                                          style: TextStyle(
-                                            color: Colors.green,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: '1234567',
-                                          style: TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
+                                  SizedBox(width: screenWidth * 0.03),
+                                  Text(
+                                    'WhatsApp: 1234567',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.045,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ],
@@ -148,20 +138,23 @@ class _HelpPageState extends State<HelpPage> {
                             ],
                           ),
                         ),
-
-                      const SizedBox(height: 50),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 0),
-                        child: Center(
-                          child: Image.asset(
-                            'assets/Image/car-2.png',
-                            width: 300, // Adjust width as needed
-                            height: 150, // Adjust height as needed
+                        SizedBox(height: screenHeight * 0.05),
+                        // Footer with more contact details or terms
+                        Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(screenWidth * 0.05),
+                            child: Text(
+                              'For more assistance, you can also visit our website or check our FAQs.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.04,
+                                color: Colors.white70,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -173,15 +166,14 @@ class _HelpPageState extends State<HelpPage> {
   }
 }
 
-
+// Custom Gradient Divider
 class CustomGradientDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 1.2,
+    return SizedBox(
+      height: 2,
       child: CustomPaint(
         painter: GradientPainter(),
-        child: const SizedBox.expand(),
       ),
     );
   }
@@ -212,7 +204,5 @@ class GradientPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

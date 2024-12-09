@@ -1,8 +1,5 @@
 import 'dart:convert';
-import 'dart:ui';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import '../home.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
@@ -65,6 +62,7 @@ class Charging extends StatefulWidget {
   final int? userId;
   final int? connector_type;
   final String email;
+    final Map<String, dynamic>? selectedLocation; // Accept the selected location
 
 
 
@@ -74,7 +72,7 @@ class Charging extends StatefulWidget {
     required this.username,
     required this.connector_id,
     required this.userId,
-    required this.connector_type, required this.email,
+    required this.connector_type, required this.email, this.selectedLocation,
   }) : super(key: key);
 
   @override
@@ -262,7 +260,7 @@ Widget _buildLoadingIndicator() {
   Future<void> endChargingSession(String chargerID, int? connectorId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/charging/endChargingSession'),
+        Uri.parse('http://122.166.210.142:4444/charging/endChargingSession'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'charger_id': chargerID, 'connector_id': connectorId}),
       );
@@ -288,7 +286,7 @@ Widget _buildLoadingIndicator() {
     // Introduce a 3-second delay before sending the request
     await Future.delayed(const Duration(seconds: 4));
 
-      var url = Uri.parse('http://192.168.1.32:4444/charging/getUpdatedCharingDetails');
+      var url = Uri.parse('http://122.166.210.142:4444/charging/getUpdatedCharingDetails');
       var body = {
         'chargerID': chargerID,
         'user': username,
@@ -488,7 +486,7 @@ Widget _buildLoadingIndicator() {
   Future<void> fetchLastStatus(String chargerID, int? connectorId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/charging/FetchLaststatus'),
+        Uri.parse('http://122.166.210.142:4444/charging/FetchLaststatus'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'id': chargerID, 'connector_id': connectorId, 'connector_type': widget.connector_type}),
       );
@@ -523,7 +521,9 @@ Widget _buildLoadingIndicator() {
           setState(() {
             charging = true;
           });
+          if(showMeterValuesContainer){
           toggleBatteryScreen();
+          }
         }
 
         appendStatusTime(status, formattedTimestamp);
@@ -565,7 +565,7 @@ if (message[2] == 'MeterValues') {
   temperature = '';
   frequency = '';
 
-  if (meterValues.isNotEmpty) {
+  if (meterValues.isNotEmpty && !isBatteryScreenVisible) {
     for (var meterValue in meterValues) {
       final sampledValues = meterValue['sampledValue'] ?? [];
 
@@ -688,7 +688,6 @@ if (message[2] == 'MeterValues') {
             charging = true;
             isLoading = false; // Stop loading when charging starts
           });
-          toggleBatteryScreen();
           setIsStarted(true);
         } else if (chargerStatus == 'Finishing') {
           setIsStarted(false);
@@ -759,26 +758,31 @@ if (message[2] == 'MeterValues') {
         break;
 
       case 'MeterValues':
-        final meterValues = message[3]['meterValue'] ?? [];
-        print(meterValues);
-        final sampledValue = meterValues.isNotEmpty ? meterValues[0]['sampledValue'] : [];
+        if(!showMeterValuesContainer){
+
+          final meterValues = message[3]['meterValue'] ?? [];
+          print(meterValues);
+          final sampledValue = meterValues.isNotEmpty ? meterValues[0]['sampledValue'] : [];
 
 
-        Map<String, dynamic> formattedJson = convertToFormattedJson(sampledValue);
-        currentTime = formatTimestamp(DateTime.now());
+          Map<String, dynamic> formattedJson = convertToFormattedJson(sampledValue);
+          currentTime = formatTimestamp(DateTime.now());
 
-        setState(() {
-          setChargerStatus('Charging');
-          setTimestamp(currentTime);
-          setVoltage((formattedJson['Voltage'] ?? '').toString());
-          setCurrent((formattedJson['Current.Import'] ?? '').toString());
-          setPower((formattedJson['Power.Active.Import'] ?? '').toString());
-          setEnergy((formattedJson['Energy.Active.Import.Register'] ?? '').toString());
-          setFrequency((formattedJson['Frequency'] ?? '').toString());
-          setTemperature((formattedJson['Temperature'] ?? '').toString());
-        });
+          setState(() {
+            // charging = true;
+            setChargerStatus('Charging');
+            setTimestamp(currentTime);
+            setVoltage((formattedJson['Voltage'] ?? '').toString());
+            setCurrent((formattedJson['Current.Import'] ?? '').toString());
+            setPower((formattedJson['Power.Active.Import'] ?? '').toString());
+            setEnergy((formattedJson['Energy.Active.Import.Register'] ?? '').toString());
+            setFrequency((formattedJson['Frequency'] ?? '').toString());
+            setTemperature((formattedJson['Temperature'] ?? '').toString());
+          });
 
-        print('{ "V": ${formattedJson['Voltage']},"A": ${formattedJson['Current.Import']},"W": ${formattedJson['Power.Active.Import']},"Wh": ${formattedJson['Energy.Active.Import.Register']},"Hz": ${formattedJson['Frequency']},"Kelvin": ${formattedJson['Temperature']}}');
+          print('{ "V": ${formattedJson['Voltage']},"A": ${formattedJson['Current.Import']},"W": ${formattedJson['Power.Active.Import']},"Wh": ${formattedJson['Energy.Active.Import.Register']},"Hz": ${formattedJson['Frequency']},"Kelvin": ${formattedJson['Temperature']}}');
+      
+        }   
         break;
 
       case 'Authorize':
@@ -843,8 +847,8 @@ if (message[2] == 'MeterValues') {
 
   void initializeWebSocket() {
     channel = WebSocketChannel.connect(
-      // Uri.parse('ws://192.168.1.32:8566'),
-      Uri.parse('ws://192.168.1.32:7002'),
+      // Uri.parse('ws://122.166.210.142:8566'),
+      Uri.parse('ws://122.166.210.142:7002'),
         // Uri.parse('ws://192.168.1.7:7050'),
 
     );
@@ -899,7 +903,7 @@ if (message[2] == 'MeterValues') {
   }
 
 void toggleBatteryScreen() {
-  print("Charging $charging");
+  print("Charging toggleBatteryScreen $charging");
 
   if (charging) {
     setState(() {
@@ -965,7 +969,7 @@ void toggleBatteryScreen() {
     });
 
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/charging/start'),
+        Uri.parse('http://122.166.210.142:4444/charging/start'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -997,7 +1001,7 @@ void toggleBatteryScreen() {
 void handleStopTransaction() async {
   String chargerID = widget.searchChargerID;
   final int? connectorId = widget.connector_id;
-
+  print("handleStopTransaction");
   try {
     setState(() {
       isLoading = true;
@@ -1017,7 +1021,7 @@ void handleStopTransaction() async {
     });
 
     final response = await http.post(
-      Uri.parse('http://192.168.1.32:4444/charging/stop'),
+      Uri.parse('http://122.166.210.142:4444/charging/stop'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -1046,6 +1050,7 @@ void handleStopTransaction() async {
 }
 
   void stopButtonPressed() {
+    print("stopButtonPressed handleStopTransaction");
     handleStopTransaction();
   }
 
@@ -1058,24 +1063,29 @@ void handleStopTransaction() async {
       return Colors.red;
     }
   }
-
 Widget _buildAnimatedTempColorCircle() {
+  // Get screen dimensions
+  final screenWidth = MediaQuery.of(context).size.width;
+
+  // Adjust based on screen size
+  final isSmallScreen = screenWidth < 400;
+
   return AnimatedBuilder(
     animation: _controller,
     builder: (context, child) {
       return Card(
         elevation: 5,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 15), // Adjust border radius for small screens
         ),
         child: Container(
-          width: 225,
-          height: 102, // Adjusted to make the card background more visible
-          padding: const EdgeInsets.all(16.0), // Add padding inside the card
+          width: isSmallScreen ? 200 : 225, // Adjust width for small screens
+          height: isSmallScreen ? 90 : 102, // Adjust height for small screens
+          padding: EdgeInsets.all(isSmallScreen ? 12 : 16.0), // Adjust padding for small screens
           decoration: BoxDecoration(
             color: Colors.grey.shade900,
             shape: BoxShape.rectangle,
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 15), // Adjust border radius for small screens
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -1097,8 +1107,8 @@ Widget _buildAnimatedTempColorCircle() {
               ),
               const SizedBox(width: 20), // Add some space between the circle and the text
               Container(
-                width: 90,
-                height: 90, // Adjusted to fit the card
+                width: isSmallScreen ? 80 : 90, // Adjust circle size for small screens
+                height: isSmallScreen ? 80 : 90, // Adjust circle size for small screens
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: SweepGradient(
@@ -1122,13 +1132,12 @@ Widget _buildAnimatedTempColorCircle() {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            // '${_currentTemperature.toInt()}',
                             '33.5 ',
-                            style: TextStyle(color: _getTemperatureColor(), fontSize: 15),
+                            style: TextStyle(color: _getTemperatureColor(), fontSize: isSmallScreen ? 12 : 15), // Adjust font size
                           ),
                           Text(
                             '°C',
-                            style: TextStyle(color: _getTemperatureColor(), fontSize: 14),
+                            style: TextStyle(color: _getTemperatureColor(), fontSize: isSmallScreen ? 11 : 14), // Adjust font size
                           ),
                         ],
                       ),
@@ -1144,7 +1153,12 @@ Widget _buildAnimatedTempColorCircle() {
   );
 }
 
-  void thresholdlevel() {
+void thresholdlevel() {
+  // Set the current based on chargerCapacity
+  String overCurrent = chargerCapacity == 3.5
+      ? 'Over Current - 17A'
+      : 'Over Current - 33A';
+  print("chargerCapacity $chargerCapacity");
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -1153,240 +1167,123 @@ Widget _buildAnimatedTempColorCircle() {
     backgroundColor: Colors.black,
     builder: (BuildContext context) {
       return Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(16.0),
         child: Container(
           color: Colors.black,
-          height: MediaQuery.of(context).size.height * 0.6,
-          child: Padding(
-            padding: MediaQuery.of(context).viewInsets,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Static Header with Close Icon
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'THRESHOLD LEVEL',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                        color: Colors.white,
+          height: MediaQuery.of(context).size.height * 0.7, // Adjusted height for better fit
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Static Header with Close Icon
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'THRESHOLD LEVEL',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.white,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.close, color: Colors.white),
+                  ),
+                ],
+              ),
+              CustomGradientDivider(),
+              const SizedBox(height: 8),
+
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Center(
+                    child: Container(
+                      width: double.infinity, // Make container take up full width
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(12.0),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      icon: const Icon(Icons.close, color: Colors.white),
-                    ),
-                  ],
-                ),
-                CustomGradientDivider(),
-                // Scrollable Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Center(
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 15),
-                        padding: const EdgeInsets.all(16.0),
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          border: Border.all(color: Colors.black),
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Voltage Level
-                            Padding(
-                              padding: const EdgeInsets.only(top: 10.0, bottom: 5),
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E1E1E),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 10),
-                                      child: Text(
-                                        'Voltage Level:',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 5.0),
-                                      child: Text(
-                                        'Input under voltage - 175V and below.',
-                                        style: TextStyle(
-                                          fontSize: 17,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    Text(
-                                      'Input over voltage - 270V and below.',
-                                      style: TextStyle(
-                                        fontSize: 17,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                      child: Column(
+                        children: [
+                          // Voltage Level
+                          _buildInfoCard('Voltage Level:', [
+                            'Input under voltage - 175V and below.',
+                            'Input over voltage - 270V and below.'
+                          ]),
 
-                            // Current
-                            Padding(
-                              padding: const EdgeInsets.only(top: 10.0, bottom: 5),
-                              child: Container(
-                                width: 330,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E1E1E),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 10.0),
-                                      child: Text(
-                                        'Current:',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 5.0),
-                                      child: Text(
-                                        'Over Current- 33A',
-                                        style: TextStyle(
-                                          fontSize: 17,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                          // Current (Conditional)
+                          _buildInfoCard('Current:', [
+                            overCurrent,
+                          ]),
 
-                            // Frequency
-                            Padding(
-                              padding: const EdgeInsets.only(top: 10.0, bottom: 5),
-                              child: Container(
-                                width: 330,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E1E1E),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 10.0),
-                                      child: Text(
-                                        'Frequency:',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 5.0),
-                                      child: Text(
-                                        'Under Frequency - 47HZ',
-                                        style: TextStyle(
-                                          fontSize: 17,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    Text(
-                                      'Over Frequency - 53HZ',
-                                      style: TextStyle(
-                                        fontSize: 17,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                          // Frequency
+                          _buildInfoCard('Frequency:', [
+                            'Under Frequency - 47HZ',
+                            'Over Frequency - 53HZ',
+                          ]),
 
-                            // Temperature
-                            Padding(
-                              padding: const EdgeInsets.only(top: 10.0, bottom: 5),
-                              child: Container(
-                                width: 330,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E1E1E),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 10.0),
-                                      child: Text(
-                                        'Temperature:',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 5.0),
-                                      child: Text(
-                                        'Low Temperature - 0 °C.',
-                                        style: TextStyle(
-                                          fontSize: 17,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    Text(
-                                      'High Temperature - 58 °C.',
-                                      style: TextStyle(
-                                        fontSize: 17,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          // Temperature
+                          _buildInfoCard('Temperature:', [
+                            'Low Temperature - 0°C.',
+                            'High Temperature - 58°C.',
+                          ]),
+                        ],
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );
     },
   );
 }
+
+// Helper method to build each info card
+Widget _buildInfoCard(String title, List<String> content) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 16.0),
+    child: Container(
+      width: double.infinity, // Ensure that all cards have the same width
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (var text in content)
+            Text(
+              text,
+              style: const TextStyle(
+                fontSize: 17,
+                color: Colors.white,
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+
 
 
   void showErrorDialog(BuildContext context) {
@@ -1422,12 +1319,14 @@ Widget _buildAnimatedTempColorCircle() {
   }
 
   void navigateToHomePage(BuildContext context, String username) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => HomePage(username: username,userId: widget.userId, email: widget.email),
-      ),
-    );
+    // Navigator.pushReplacement(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => HomePage(username: username,userId: widget.userId, email: widget.email),
+    //   ),
+    // );
+    Navigator.pop(context);
+
     endChargingSession(chargerID, widget.connector_id);
   }
 
@@ -1438,8 +1337,8 @@ Widget _buildAnimatedTempColorCircle() {
       curve: Curves.easeInOut,
     );
   }
-
-   void _scrollToPrevious() {
+  
+  void _scrollToPrevious() {
     _scrollController.animateTo(
       _scrollController.position.pixels - 400, // Adjust the value as needed
       duration: const Duration(milliseconds: 300),
@@ -1447,15 +1346,20 @@ Widget _buildAnimatedTempColorCircle() {
     );
   }
 
- 
 @override
 Widget build(BuildContext context) {
   String? ChargerID = widget.searchChargerID;
   int? connectorId = widget.connector_id;
-  int? connector_type = widget.connector_type;
+  int? connectorType = widget.connector_type;
+    // Get screen dimensions
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+  // Adjust based on screen width
+  final isSmallScreen = screenWidth < 400;
 
   String displayText;
-  switch (connector_type) {
+  switch (connectorType) {
     case 1:
       displayText = 'Socket';
       break;
@@ -1469,13 +1373,7 @@ Widget build(BuildContext context) {
 
   return WillPopScope(
     onWillPop: () async {
-      // This block of code will execute when the back button is pressed
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(username: username, userId: widget.userId, email: widget.email),
-        ),
-      );
+      Navigator.pop(context);
       return false; // Return false to prevent the default back behavior
     },
     child: Scaffold(
@@ -1485,199 +1383,233 @@ Widget build(BuildContext context) {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(
-                  top: 40.0, bottom: 23, left: 12.0, right: 12.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      navigateToHomePage(context, username);
-                    },
-                    child: const Padding(
-                      padding: EdgeInsets.all(0),
-                      child: Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
-                  ),
-                  const Spacer(), // Adds space between the settings icons and the back icon
-                  Padding(
-                    padding: const EdgeInsets.only(top: 0),
-                    child: IconButton(
-                      onPressed: chargerStopSettings,
-                      icon: const Icon(Icons.settings, color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 0),
-                    child: IconButton(
-                      onPressed: thresholdlevel,
-                      icon: const Icon(Icons.power_outlined, color: Colors.green),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 0),
-                    child: IconButton(
-                      onPressed: () => showErrorDialog(context),
-                      icon: const Icon(Icons.info_outline, color: Colors.red),
-                    ),
-                  ),
-                ],
-              ),
+Padding(
+    padding: EdgeInsets.only(
+      top: isSmallScreen ? 30.0 : 40.0,  // Adjust top padding based on screen size
+      bottom: isSmallScreen ? 15.0 : 23.0, // Adjust bottom padding
+      left: isSmallScreen ? 10.0 : 12.0,  // Adjust left padding
+      right: isSmallScreen ? 10.0 : 12.0, // Adjust right padding
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Back Icon
+        GestureDetector(
+          onTap: () {
+            navigateToHomePage(context, username);
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(0),
+            child: Icon(
+              Icons.arrow_back,
+              color: Colors.white,
+              size: isSmallScreen ? 25 : 30, // Adjust size based on screen size
             ),
-            Expanded(
+          ),
+        ),
+        const Spacer(), // Adds space between the settings icons and the back icon
+        // Settings Icon
+        Padding(
+          padding: EdgeInsets.only(top: isSmallScreen ? 5 : 0), // Adjust top padding
+          child: IconButton(
+            onPressed: chargerStopSettings,
+            icon: const Icon(Icons.settings, color: Colors.white),
+            iconSize: isSmallScreen ? 22 : 24, // Adjust size based on screen size
+          ),
+        ),
+        // Power Icon
+        Padding(
+          padding: EdgeInsets.only(top: isSmallScreen ? 5 : 0), // Adjust top padding
+          child: IconButton(
+            onPressed: thresholdlevel,
+            icon: const Icon(Icons.power_outlined, color: Colors.green),
+            iconSize: isSmallScreen ? 22 : 24, // Adjust size based on screen size
+          ),
+        ),
+        // Info Icon
+        Padding(
+          padding: EdgeInsets.only(top: isSmallScreen ? 5 : 0), // Adjust top padding
+          child: IconButton(
+            onPressed: () => showErrorDialog(context),
+            icon: const Icon(Icons.info_outline, color: Colors.red),
+            iconSize: isSmallScreen ? 22 : 24, // Adjust size based on screen size
+          ),
+        ),
+      ],
+    ),
+  ),
+      Expanded(
               child: SingleChildScrollView(
                 child: Center(
                   child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20.0, right: 20),
-                        child: Container(
-                          height: 65,
-                          width: 500,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E1E1E),
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                spreadRadius: 2,
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.charging_station,
-                                    color: Colors.green,
-                                    size: 25,
-                                  ),
-                                  const SizedBox(width: 15,),
-                                  Text(
-                                    ChargerID,
-                                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                              const Text('||', style: TextStyle(fontSize: 30)),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.ev_station,
-                                    color: Colors.red,
-                                    size: 25,
-                                  ),
-                                  const SizedBox(width: 15,),
-                                  Text(
-                                    displayText,
-                                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Image.asset(
+Padding(
+    padding: EdgeInsets.symmetric(
+      horizontal: isSmallScreen ? 12.0 : 20.0,  // Adjust padding based on screen size
+    ),
+    child: Container(
+      height: isSmallScreen ? 50 : 65, // Adjust height for smaller screens
+      width: screenWidth * 0.9, // Adjust width based on screen size (90% of screen width)
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.charging_station,
+                color: Colors.green,
+                size: 25,
+              ),
+              const SizedBox(width: 15),
+              Text(
+                ChargerID,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isSmallScreen ? 16 : 20, // Adjust text size for small screens
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const Text(
+            '||',
+            style: TextStyle(
+              fontSize: 30,
+              color: Colors.white, // Adjust the color for visibility
+            ),
+          ),
+          Row(
+            children: [
+              const Icon(
+                Icons.ev_station,
+                color: Colors.red,
+                size: 25,
+              ),
+              const SizedBox(width: 15),
+              Text(
+                displayText,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isSmallScreen ? 16 : 20, // Adjust text size for small screens
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  ),
+              Image.asset(
                         'assets/Image/Car.png',
-                        height: 300,
+    height: isSmallScreen ? screenHeight * 0.3 : 300,  // Adjust height based on screen size
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 13.0, bottom: 15),
-                        child: Padding(
-                          padding: const EdgeInsets.all(18.0),
-                          child: Row(
-                            children: [
-                              // Column for status and timestamp aligned to the left
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start, // Align text to the start
-                                children: [
-                                  Text(
-                                    chargerStatus,
-                                    style: TextStyle(
-                                      color: chargerStatus == 'Faulted' ? Colors.red : Colors.green,
-                                      fontSize: 24,
-                                    ),
-                                  ),
-                                  Text(
-                                    timestamp,
-                                    style: const TextStyle(fontSize: 14, color: Colors.white60),
-                                  ),
-                                ],
-                              ),
-                              // Spacer to push the connectorId to the right
-                              const Spacer(),
-                              Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      if (connectorId != null)
-                                        Text(
-                                          '$connectorId',
-                                          style: const TextStyle(fontSize: 24, color: Colors.white70, fontWeight: FontWeight.normal),
-                                        ),
-                                      const SizedBox(width: 20,),
-                                      const Icon(Icons.ev_station_outlined, color: Colors.red,),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      RichText(
-                                        text: TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: '$chargerCapacity ',
-                                              style: const TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.normal),
-                                            ),
-                                            const TextSpan(
-                                              text: 'kwh',
-                                              style: TextStyle(fontSize: 14, color: Colors.green, fontWeight: FontWeight.normal),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
+Padding(
+    padding: EdgeInsets.only(left: isSmallScreen ? 8.0 : 13.0, bottom: isSmallScreen ? 10 : 15),
+    child: Padding(
+      padding: EdgeInsets.all(isSmallScreen ? 12.0 : 18.0),
+      child: Row(
+        children: [
+          // Column for status and timestamp aligned to the left
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start, // Align text to the start
+            children: [
+              Text(
+                chargerStatus,
+                style: TextStyle(
+                  color: chargerStatus == 'Faulted' ? Colors.red : Colors.green,
+                  fontSize: isSmallScreen ? 20 : 24,
+                ),
+              ),
+              Text(
+                timestamp,
+                style: TextStyle(fontSize: isSmallScreen ? 12 : 14, color: Colors.white60),
+              ),
+            ],
+          ),
+          // Spacer to push the connectorId to the right
+          const Spacer(),
+          Column(
+            children: [
+              Row(
+                children: [
+                  if (connectorId != null)
+                    Text(
+                      '$connectorId',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 20 : 24,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  const SizedBox(width: 20),
+                  const Icon(Icons.ev_station_outlined, color: Colors.red),
+                ],
+              ),
+              Row(
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '$chargerCapacity ',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 12 : 14,
+                            color: Colors.white70,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (chargerStatus == 'Preparing')
-                              StartButton(
-                                chargerStatus: chargerStatus,
-                                isStartButtonEnabled: isStartButtonEnabled,
-                                onPressed: startButtonPressed,
-                              )
-                            else if (chargerStatus == 'Available' || chargerStatus == 'Finishing' || chargerStatus == 'Faulted' || chargerStatus == "SuspendedEV")
-                              const DisableButton()
-                            else if (chargerStatus == 'Charging')
-                              StopButton(
-                                isStopButtonEnabled: isStopButtonEnabled,
-                                isStopLoading: _isStopLoading, // Pass the loading state here
-                                onPressed: stopButtonPressed,
-                              ),
-                            const SizedBox(width: 8),
-                            _buildAnimatedTempColorCircle(),
-                          ],
+                        const TextSpan(
+                          text: 'kwh',
+                          style: TextStyle(fontSize: 14, color: Colors.green, fontWeight: FontWeight.normal),
                         ),
-                      ),
-                      if (isBatteryScreenVisible)
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  ),
+Padding(
+    padding: EdgeInsets.only(top: isSmallScreen ? 10 : 0),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (chargerStatus == 'Preparing')
+          StartButton(
+            chargerStatus: chargerStatus,
+            isStartButtonEnabled: isStartButtonEnabled,
+            onPressed: startButtonPressed,
+          )
+        else if (chargerStatus == 'Available' || chargerStatus == 'Finishing' || chargerStatus == 'Faulted' || chargerStatus == "SuspendedEV")
+          const DisableButton()
+        else if (chargerStatus == 'Charging')
+          StopButton(
+            isStopButtonEnabled: true,
+            isStopLoading: _isStopLoading, // Pass the loading state here
+            onPressed: stopButtonPressed,
+          ),
+        const SizedBox(width: 6),
+        _buildAnimatedTempColorCircle(),
+      ],
+    ),
+  ),               if (!showMeterValuesContainer && charging)
                         Padding(
                           padding: const EdgeInsets.only(top: 15, bottom: 15, left: 20),
                           child: SingleChildScrollView(
@@ -2472,7 +2404,6 @@ class BatteryPainter extends CustomPainter {
   }
 }
 
-
 class StartButton extends StatefulWidget {
   final String chargerStatus;
   final bool isStartButtonEnabled;
@@ -2521,44 +2452,51 @@ class _PowerButtonWidgetState extends State<StartButton>
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 5,
-      color: const Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(17.0),
-        child: AnimatedContainer(
-          duration: const Duration(seconds: 1),
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: SweepGradient(
-              colors: [Colors.green, _colorAnimation.value!, Colors.lightGreen],
-              stops: [0.0, 0.5, 1.0],
-            ),
+@override
+Widget build(BuildContext context) {
+  // Get screen dimensions
+  final screenWidth = MediaQuery.of(context).size.width;
+
+  // Adjust based on screen size
+  final isSmallScreen = screenWidth < 400;
+
+  return Card(
+    elevation: 5,
+    color: const Color(0xFF1E1E1E),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 15), // Adjust border radius for small screens
+    ),
+    child: Padding(
+      padding: EdgeInsets.all(isSmallScreen ? 15 : 20.0), // Adjust padding for small screens
+      child: AnimatedContainer(
+        duration: const Duration(seconds: 1),
+        width: isSmallScreen ? 60 : 70, // Adjust size for small screens
+        height: isSmallScreen ? 60 : 70, // Adjust size for small screens
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: SweepGradient(
+            colors: [Colors.green, _colorAnimation.value!, Colors.lightGreen],
+            stops: [0.0, 0.5, 1.0],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.grey.shade900,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.power_settings_new, color: Colors.white, size: 32),
-                onPressed: widget.chargerStatus == 'Preparing' && widget.isStartButtonEnabled ? widget.onPressed : null,
-              ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(5.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade900,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.power_settings_new, color: Colors.white, size: 32),
+              onPressed: widget.chargerStatus == 'Preparing' && widget.isStartButtonEnabled ? widget.onPressed : null,
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }
 class StopButton extends StatefulWidget {
   final bool isStopButtonEnabled;
@@ -2606,46 +2544,51 @@ class _StopButtonWidgetState extends State<StopButton>
     _controller.dispose();
     super.dispose();
   }
+@override
+Widget build(BuildContext context) {
+  // Get screen dimensions
+  final screenWidth = MediaQuery.of(context).size.width;
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 5,
-      color: const Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(17.0),
-        child: AnimatedContainer(
-          duration: const Duration(seconds: 1),
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: SweepGradient(
-              colors: [Colors.red, _colorAnimation.value!, Colors.redAccent],
-              stops: [0.0, 0.5, 1.0],
-            ),
+  // Adjust based on screen size
+  final isSmallScreen = screenWidth < 400;
+
+  return Card(
+    elevation: 5,
+    color: const Color(0xFF1E1E1E),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 15), // Adjust border radius for small screens
+    ),
+    child: Padding(
+      padding: EdgeInsets.all(isSmallScreen ? 15 : 20.0), // Adjust padding for small screens
+      child: AnimatedContainer(
+        duration: const Duration(seconds: 1),
+        width: isSmallScreen ? 60 : 70, // Adjust size for small screens
+        height: isSmallScreen ? 60 : 70, // Adjust size for small screens
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: SweepGradient(
+            colors: [Colors.red, _colorAnimation.value!, Colors.redAccent],
+            stops: [0.0, 0.5, 1.0],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.grey.shade900,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.stop, color: Colors.white, size: 32),
-                onPressed: widget.isStopButtonEnabled ? widget.onPressed : null,
-              ),
-
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(5.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade900,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.stop, color: Colors.white, size: 32),
+              onPressed: widget.isStopButtonEnabled ? widget.onPressed : null,
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }
 
 
@@ -2689,45 +2632,54 @@ class _DisableButtonWidgetState extends State<DisableButton>
     _controller.dispose();
     super.dispose();
   }
+@override
+Widget build(BuildContext context) {
+  // Get screen dimensions
+  final screenWidth = MediaQuery.of(context).size.width;
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 5,
-      color: const Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(17.0),
-        child: AnimatedContainer(
-          duration: const Duration(seconds: 1),
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: SweepGradient(
-              colors: [Colors.grey, _colorAnimation.value!, Colors.white10],
-              stops: [0.0, 0.5, 1.0],
-            ),
+  // Adjust based on screen size
+  final isSmallScreen = screenWidth < 400;
+
+  return Card(
+    elevation: 5,
+    color: const Color(0xFF1E1E1E),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 15), // Adjust border radius for small screens
+    ),
+    child: Padding(
+      padding: EdgeInsets.all(isSmallScreen ? 15 : 20.0), // Adjust padding for small screens
+      child: AnimatedContainer(
+        duration: const Duration(seconds: 1),
+        width: isSmallScreen ? 60 : 70, // Adjust width for small screens
+        height: isSmallScreen ? 60 : 70, // Adjust height for small screens
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: SweepGradient(
+            colors: [Colors.grey, _colorAnimation.value!, Colors.white10],
+            stops: [0.0, 0.5, 1.0],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.grey.shade900,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.power_off, color: Colors.white, size: 32), onPressed: () {  },
-              ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(5.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade900,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.power_off, color: Colors.white, size: 32),
+              onPressed: () {
+                // Add your onPressed functionality here
+              },
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
 }
+    }
+    
 class ErrorDialog extends StatelessWidget {
   final bool isErrorVisible;
   final List<Map<String, dynamic>> history;
@@ -2737,121 +2689,121 @@ class ErrorDialog extends StatelessWidget {
     required this.isErrorVisible,
     required this.history,
   }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Error History', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.black,
-        automaticallyImplyLeading: false, // Hides the default back arrow
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          color: Colors.black,
-          child: Column(
-            children: [
-              CustomGradientDivider(),
-              const SizedBox(height: 25),
-              history.isEmpty
-                  ? Container(
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Error History', style: TextStyle(color: Colors.white)),
+      backgroundColor: Colors.black,
+      automaticallyImplyLeading: false, // Hides the default back arrow
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Container(
+        color: Colors.black,
+        child: Column(
+          children: [
+            CustomGradientDivider(),
+            const SizedBox(height: 25),
+            history.isEmpty
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    padding: const EdgeInsets.all(20.0),
+                    child: const Center(
+                      child: Text(
+                        'History not found.',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                  )
+                : Expanded(
+                    child: Container(
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E1E1E),
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                       padding: const EdgeInsets.all(20.0),
-                      child: const Center(
-                        child: Text(
-                          'History not found.',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ),
-                    )
-                  : Flexible(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E1E),
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        padding: const EdgeInsets.all(20.0),
-                        child: Scrollbar(
-                          child: ListView.builder(
-                            shrinkWrap: true, // This ensures the ListView takes only the required space
-                            itemCount: history.length,
-                            padding: EdgeInsets.zero,
-                            itemBuilder: (context, index) {
-                              Map<String, dynamic> transaction = history[index];
-                              return Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(5.0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                transaction['chargerStatus'] ?? 'Unknown',
-                                                style: const TextStyle(
-                                                  fontSize: 20,
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
+                      child: Scrollbar(
+                        child: ListView.builder(
+                          shrinkWrap: true, // This ensures the ListView takes only the required space
+                          itemCount: history.length,
+                          padding: EdgeInsets.zero,
+                          itemBuilder: (context, index) {
+                            Map<String, dynamic> transaction = history[index];
+                            return Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              transaction['chargerStatus'] ?? 'Unknown',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
                                               ),
-                                              const SizedBox(height: 5),
-                                              Text(
-                                                (() {
-                                                  final timeString = transaction['currentTime'];
-                                                  if (timeString != null && timeString.isNotEmpty) {
-                                                    return timeString;
-                                                  }
-                                                  return 'N/A';
-                                                })(),
-                                                style: const TextStyle(
-                                                  fontSize: 11,
-                                                  color: Colors.white60,
-                                                ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              (() {
+                                                final timeString = transaction['currentTime'];
+                                                if (timeString != null && timeString.isNotEmpty) {
+                                                  return timeString;
+                                                }
+                                                return 'N/A';
+                                              })(),
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.white60,
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
-                                        Text(
-                                          transaction['errorCode'],
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.red,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        transaction['errorCode'],
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
-                                  if (index != history.length - 1) CustomGradientDivider(),
-                                ],
-                              );
-                            },
-                          ),
+                                ),
+                                if (index != history.length - 1)  CustomGradientDivider(),
+                              ],
+                            );
+                          },
                         ),
                       ),
-                    )
-            ],
-          ),
+                    ),
+                  ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class ChargingCompleteModal extends StatelessWidget {

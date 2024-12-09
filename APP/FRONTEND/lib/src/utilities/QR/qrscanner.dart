@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import '../../pages/home.dart';
  // Import your LoadingOverlay class
@@ -76,16 +77,7 @@ class _QRViewExampleState extends State<QRViewExample> {
           child: IconButton(
             icon: const Icon(Icons.close, color: Colors.white, size: 35),
             onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => HomePage(
-                    username: widget.username,
-                    userId: widget.userId,
-                    email: '',
-                  ),
-                ),
-              );
+              Navigator.pop(context);
             },
           ),
         ),
@@ -252,3 +244,107 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
     );
   }
 }
+
+
+class PermissionErrorPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Fetch screen size
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Wi-Fi Icon with Cross
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    Icons.camera_alt,
+                    size: screenWidth * 0.30, // Adjust size based on screen width
+                    color: Colors.blueGrey,
+                  ),
+                  Icon(
+                    Icons.close,
+                    size: screenWidth * 0.17, // Adjust size based on screen width
+                    color: Colors.red,
+                  ),
+                ],
+              ),
+              SizedBox(height: screenHeight * 0.05), // Adjust spacing
+              // Title
+              Text(
+                "Ooops!",
+                style: TextStyle(
+                  fontSize: screenWidth * 0.07, // Adjust font size dynamically
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white70,
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.02),
+              // Description
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.08),
+                child: Text(
+                  "We just need your camera permission to access QR. "
+                  "Try providing access to the camera by clicking the button below, "
+                  "then go to Settings and enable the camera.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.045, // Adjust font size dynamically
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.06),
+              // Enable Permissions Button
+              ElevatedButton(
+                onPressed: () {
+                  openAppSettings(); // Navigate to app settings
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.1, // Adjust padding dynamically
+                    vertical: screenHeight * 0.02,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text(
+                  "Enable Permissions!",
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.045, // Adjust font size dynamically
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.03),
+              // Back to Home Button
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Navigate back to the previous page
+                },
+                child: Text(
+                  "Back to Home",
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.045, // Adjust font size dynamically
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

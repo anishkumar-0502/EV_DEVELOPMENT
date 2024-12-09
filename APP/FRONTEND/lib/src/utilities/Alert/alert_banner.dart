@@ -54,4 +54,3 @@ class SussessBanner extends StatelessWidget {
     );
   }
 }
-

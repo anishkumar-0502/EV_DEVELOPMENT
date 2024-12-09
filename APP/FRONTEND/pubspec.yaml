@@ -2,7 +2,7 @@ name: ev_app
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.7+7
+version: 1.0.9+9
 
 environment:
   sdk: '>=3.4.4 <4.0.0'
@@ -29,7 +29,7 @@ dependencies:
   geolocator_android: ^4.6.1
   flutter_polyline_points: ^2.1.0
   flutter_background: ^1.2.0
-  permission_handler: ^10.2.0
+  permission_handler: ^11.3.1
   cupertino_icons: ^1.0.6
   image_picker: ^1.1.2
   path_provider: ^2.1.3
@@ -43,6 +43,7 @@ dependencies:
   flutter_typeahead: ^5.2.0
   geocoding: ^3.0.0
   async: ^2.10.0
+  camera: ^0.10.0
 
 dev_dependencies:
   flutter_test:
@@ -56,28 +57,32 @@ flutter:
   assets:
     - assets/Image/
     - assets/Map/map.json
+    - assets/Map/map_theme2.json
     - assets/icons/Charger.png
     - assets/icons/Google_map.png
     - assets/icons/EV_location_red.png 
     - assets/icons/EV_location_green.png
+    - assets/icons/EV_location_blue.png 
+    - assets/icons/EV_location_lightblue.png 
     - assets/gif/loading.gif 
     - assets/gif/current_location.gif 
     - assets/gif/map_permission.gif
-    
+
+
 flutter_launcher_icons:
   android: true
   ios: true
-  remove_alpha_ios: true # Add this line
-  image_path: "assets/Image/EV_logo.png"
-  min_sdk_android: 21 # android min sdk min:16, default 21
+  remove_alpha_ios: true # This removes transparency for iOS icons
+  image_path: "assets/Image/EV_ios_logo.png"
+  min_sdk_android: 21 # Android min SDK
   web:
     generate: true
     image_path: "assets/Image/EV_logo.png"
-    background_color: "#000000" # Set background color to black
+    background_color: "#000000" # Set background color to black for web
   windows:
     generate: true
     image_path: "assets/Image/EV_logo.png"
-    icon_size: 48 # min:48, max:256, default: 48
+    icon_size: 48
   macos:
     generate: true
     image_path: "assets/Image/EV_logo.png"
