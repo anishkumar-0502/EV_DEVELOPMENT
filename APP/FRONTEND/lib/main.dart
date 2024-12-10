@@ -163,7 +163,7 @@ if (initialisationError case final err?) {
         ChangeNotifierProvider(create: (_) => DownloadingProvider(), lazy: true),
       ],
       child: MaterialApp(
-        title: 'EV',
+        title: 'ChargeExpress',
         debugShowCheckedModeBanner: false,
         theme: customTheme,
         initialRoute: '/',

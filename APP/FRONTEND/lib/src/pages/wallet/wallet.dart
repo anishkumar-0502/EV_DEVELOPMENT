@@ -178,7 +178,7 @@ class _WalletPageState extends State<WalletPage> {
         //   'key': 'rzp_live_TFodb8l3ihW2nM',
         //   'amount': data['amount'],
         //   'currency': data['currency'],
-        //   'name': 'EV Power',
+        //   'name': 'ChargeExpress',
         //   'description': 'Wallet Recharge',
         //   'order_id': data['id'],
         //   'prefill': {'name': username},

@@ -336,7 +336,7 @@ Widget build(BuildContext context) {
                         double longitude = position.longitude;
 
                         String message =
-                            "Explore the EV POWER for seamless EV charging experience!\n\n"
+                            "Explore the ionHive for seamless EV charging experience!\n\n"
                             "Location: $location\n\n"
                             "Charge your EV now!\n"
                             "Check the location on the map: https://www.google.com/maps/search/?api=1&query=$latitude,$longitude";

@@ -29,7 +29,7 @@
     </queries>
 
     <application
-        android:label="Ev"
+        android:label="ChargeExpress"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

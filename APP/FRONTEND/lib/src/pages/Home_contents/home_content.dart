@@ -591,19 +591,19 @@ Future<void> _getCurrentLocation() async {
         ),
       );
 
-      // Optional: Add a subtle rotation/zoom for visual enhancement
-      await Future.delayed(
-          const Duration(milliseconds: 200)); // Delay for effect
-      await mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: endPosition,
-            zoom: 18.0, // Closer zoom for better focus
-            bearing: 90.0, // Rotate slightly for emphasis
-            tilt: 30.0, // Add slight tilt for 3D effect
-          ),
-        ),
-      );
+      // // Optional: Add a subtle rotation/zoom for visual enhancement
+      // await Future.delayed(
+      //     const Duration(milliseconds: 200)); // Delay for effect
+      // await mapController!.animateCamera(
+      //   CameraUpdate.newCameraPosition(
+      //     CameraPosition(
+      //       target: endPosition,
+      //       zoom: 18.0, // Closer zoom for better focus
+      //       bearing: 90.0, // Rotate slightly for emphasis
+      //       tilt: 30.0, // Add slight tilt for 3D effect
+      //     ),
+      //   ),
+      // );
     } catch (e) {
       print("Error animating to final position: $e");
     }
