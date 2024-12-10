@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:ev_app/src/pages/Charging/charging.dart';
-import 'package:ev_app/src/pages/Home_contents/home_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -77,11 +76,10 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
   }
 
   void showErrorDialog(BuildContext context, String message) {
-     setState(() {
+    setState(() {
       isSearching = false;
-              isLoading = false; // Set loading to false on error
-
-      });
+      isLoading = false; // Set loading to false on error
+    });
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -168,14 +166,15 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
             final long = double.tryParse(charger['long'] ?? '0');
 
             // Fetch address using the charger’s coordinates
-            String address = await _getPlaceName(LatLng(lat!, long!), chargerId);
+            String address =
+                await _getPlaceName(LatLng(lat!, long!), chargerId);
 
             String lastUsedTime = 'Not yet received';
             if (charger['status'] != null &&
                 charger['status'] is List &&
                 charger['status'].isNotEmpty) {
               final status = charger['status'].firstWhere(
-                    (status) => status['timestamp'] != null,
+                (status) => status['timestamp'] != null,
                 orElse: () => null,
               );
               if (status != null) {
@@ -189,18 +188,18 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
             if (charger['status'] != null &&
                 charger['status'] is List &&
                 charger['status'].isNotEmpty) {
-              final status = charger['status'].firstWhere(
-                    (status) => status['charger_status'] != null,
-                orElse: () => null,
-              );
-              if (status != null) {
-                chargerStatus = status['charger_status'];
+              // Collect all statuses that have a 'charger_status' key
+              final allStatuses = charger['status']
+                  .where((status) => status['charger_status'] != null)
+                  .map((status) => status['charger_status'])
+                  .toList();
+
+              if (allStatuses.isNotEmpty) {
+                chargerStatus =
+                    allStatuses.join(', '); // Concatenate statuses with a comma
               }
             }
-
-            // Include bluetooth_module and wifi_module in the data
-            final bluetoothModule = charger['bluetooth_module'] ?? false;
-            final wifiModule = charger['wifi_module'] ?? false;
+            print("chargerStatus: $chargerStatus");
             final gunConnector = charger['gun_connector'] ?? 0;
             final socketCount = charger['socket_count'] ?? 0;
 
@@ -220,15 +219,16 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
               'charger_type': charger['charger_type'] ?? 'Unknown Type',
               'last_used_time': lastUsedTime,
               'unit_price': charger['unit_price'] ?? 0.0,
-              'address': address,
+              'address': charger['address'] ?? 'Unknown address',
               'is_private': isPrivate,
               'status': chargerStatus,
               'gun_connector': gunConnector,
               'socket_count': socketCount,
-              'gun_socket_display': gunSocketDisplay,  // Store the display text
+              'gun_socket_display': gunSocketDisplay, // Store the display text
               'charger_model': charger['charger_model'] ?? 'Unknown Model',
               'bluetooth_module': charger['bluetooth_module'] ?? false,
-              'wifi_module': charger['wifi_module'] ?? false, // Include Wi-Fi status
+              'wifi_module':
+                  charger['wifi_module'] ?? false, // Include Wi-Fi status
             });
           }
         }
@@ -239,7 +239,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
 
           if (uniqueChargers.isNotEmpty) {
             final firstCharger = uniqueChargers.first;
-            print("firstCharger $firstCharger");
+            print("firstCharger $uniqueChargers[0]");
             charger = {
               'charger_id': firstCharger['charger_id'] ?? 'Unknown ID',
               'charger_type': firstCharger['charger_type'] ?? 'Unknown Type',
@@ -263,14 +263,13 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
       }
     } catch (error) {
       print('Internal server error: $error');
-      showErrorDialog(context, 'An unexpected error occurred. Please try again.');
+      showErrorDialog(
+          context, 'An unexpected error occurred. Please try again.');
       setState(() {
         isLoading = false;
       });
     }
   }
-
-
 
 // Function to format the timestamp
   String formatTimestamp(String? timestamp) {
@@ -293,6 +292,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
 @override
 Widget build(BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
   final String location = widget.address;
   final LatLng position = widget.position;
 
@@ -300,57 +300,54 @@ Widget build(BuildContext context) {
     body: Stack(
       children: [
         // The main content of the page
-        Column(
-          children: [
-            Stack(
-              children: [
-                Container(
-                  height: 250.0,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Colors.black,
+        SingleChildScrollView(
+          child: Column(
+            children: [
+              Stack(
+                children: [
+                  Container(
+                    height: screenHeight * 0.3, // Scalable height for image
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Colors.black,
+                    ),
+                    child: Image.asset(
+                      'assets/Image/Connecter_bg.png',
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  child: Image.asset(
-                    'assets/Image/Connecter_bg.png',
-                    fit: BoxFit.cover,
+                  Positioned(
+                    top: 30,
+                    left: 10,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
                   ),
-                ),
-                Positioned(
-                  top: 30,
-                  left: 10,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-                Positioned(
-                  top: 30,
-                  right: 10,
-                  child: IconButton(
-                    icon: const Icon(Icons.share, color: Colors.black),
-                    onPressed: () {
-                      // Extract latitude and longitude from the position variable
-                      double latitude = position.latitude;
-                      double longitude = position.longitude;
+                  Positioned(
+                    top: 30,
+                    right: 10,
+                    child: IconButton(
+                      icon: const Icon(Icons.share, color: Colors.black),
+                      onPressed: () {
+                        double latitude = position.latitude;
+                        double longitude = position.longitude;
 
-                      // Create the shareable message with a Google Maps link
-                      String message =
-                          "Explore the EV POWER for seamless EV charging experience!\n\n"
-                          "Location: $location\n\n"
-                          "Charge your EV now!\n"
-                          "Check the location on the map: https://www.google.com/maps/search/?api=1&query=$latitude,$longitude";
+                        String message =
+                            "Explore the EV POWER for seamless EV charging experience!\n\n"
+                            "Location: $location\n\n"
+                            "Charge your EV now!\n"
+                            "Check the location on the map: https://www.google.com/maps/search/?api=1&query=$latitude,$longitude";
 
-                      // Share the message
-                      Share.share(message);
-                    },
+                        Share.share(message);
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
-            Expanded(
-              child: Padding(
+                ],
+              ),
+              Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,8 +389,8 @@ Widget build(BuildContext context) {
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         // Conditionally render the loading overlay if `isSearching` is true
         if (isSearching)
@@ -407,7 +404,6 @@ Widget build(BuildContext context) {
     ),
   );
 }
-
 
   Widget _buildContent(double screenWidth) {
     // Calculate the available height
@@ -442,8 +438,8 @@ Widget build(BuildContext context) {
                   return _buildChargerDetails(screenWidth, charger);
                 }).toList()
               : List.generate(
-                  2, // Number of shimmer cards to show
-                  (index) => _buildShimmerCard(screenWidth),
+                  4, // Number of shimmer cards to show
+                  (index) => _buildShimmerCard(context),
                 ),
         ),
       ),
@@ -492,10 +488,11 @@ Widget build(BuildContext context) {
       showErrorDialog(context, 'Internal server error ');
     }
   }
+
   void showloadingpage() {
-     setState(() {
+    setState(() {
       isSearching = false;
-      });
+    });
 
     showDialog(
       context: context,
@@ -510,6 +507,7 @@ Widget build(BuildContext context) {
       },
     );
   }
+
   Future<Map<String, dynamic>?> handleSearchRequest(
       String searchChargerID) async {
     if (isSearching) return null;
@@ -524,7 +522,6 @@ Widget build(BuildContext context) {
     setState(() {
       isSearching = true;
     });
-
 
     try {
       final response = await http.post(
@@ -553,14 +550,13 @@ Widget build(BuildContext context) {
         return data;
       } else {
         final errorData = json.decode(response.body);
-        final errorDatas =  errorData['message'];
-         print("ododod 2: $errorDatas");
+        final errorDatas = errorData['message'];
+        print("ododod 2: $errorDatas");
 
         showErrorDialog(context, errorData['message']);
 
         // Dismiss the loading animation
         // if (mounted) Navigator.of(context).pop();
-
       }
     } catch (error) {
       showErrorDialog(context, 'Internal server error');
@@ -618,7 +614,8 @@ Widget build(BuildContext context) {
     }
   }
 
-  Widget _buildChargerDetails(double screenWidth, Map<String, dynamic> charger) {
+  Widget _buildChargerDetails(
+      double screenWidth, Map<String, dynamic> charger) {
     return GestureDetector(
       onTap: () async {
         final data = await handleSearchRequest(charger['charger_id']);
@@ -637,7 +634,8 @@ Widget build(BuildContext context) {
                   child: ConnectorSelectionDialog(
                     chargerData: data['socketGunConfig'] ?? {},
                     onConnectorSelected: (connectorId, connectorType) {
-                      updateConnectorUser(charger['charger_id'], connectorId, connectorType);
+                      updateConnectorUser(
+                          charger['charger_id'], connectorId, connectorType);
                     },
                     username: widget.username,
                     email: widget.email,
@@ -674,7 +672,6 @@ Widget build(BuildContext context) {
                         width: 2.0,
                       ),
                     ),
-                    
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Image.asset(
@@ -707,13 +704,18 @@ Widget build(BuildContext context) {
                           children: [
                             Icon(
                               Icons.wifi,
-                              color: charger['wifi_module'] == true ? Colors.blueAccent : Colors.grey,
+                              color: charger['wifi_module'] == true
+                                  ? Colors.blueAccent
+                                  : Colors.grey,
                               size: screenWidth * 0.05,
                             ),
-                            const SizedBox(width: 8), // Add spacing between icons
+                            const SizedBox(
+                                width: 8), // Add spacing between icons
                             Icon(
                               Icons.bluetooth,
-                              color: charger['bluetooth_module'] == true ? Colors.lightBlueAccent : Colors.grey,
+                              color: charger['bluetooth_module'] == true
+                                  ? Colors.lightBlueAccent
+                                  : Colors.grey,
                               size: screenWidth * 0.05,
                             ),
                           ],
@@ -722,25 +724,79 @@ Widget build(BuildContext context) {
                     ),
                     const SizedBox(height: 5),
                     // Row 2: Socket/Gun, AC/DC, and Status
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${charger['gun_socket_display'] ?? 'Unknown'} | ${charger['charger_type'] ?? 'AC/DC'}',
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.04,
-                            color: Colors.grey[400],
-                          ),
-                        ),
-                        Text(
-                          getStatusText(charger['status']),
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.04,
-                            color: getStatusColor(charger['status']),
-                          ),
-                        ),
-                      ],
+                  Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  crossAxisAlignment: CrossAxisAlignment.end, // Aligns items vertically
+  children: [
+    Expanded(
+      flex: 1,
+      child: Text(
+        '${charger['gun_socket_display'] ?? 'Unknown'} | ${charger['charger_type'] ?? 'AC/DC'}',
+        style: TextStyle(
+          fontSize: screenWidth * 0.04,
+          color: Colors.grey[400],
+        ),
+      ),
+    ),
+    if (charger['status'] != null && charger['status'].contains(','))
+Expanded(
+  flex: 1,
+  child: Align(
+    alignment: Alignment.centerRight,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.end, // Align text to the right
+      children: charger['status']
+          .split(',')
+          .asMap() // Use asMap() to include index if needed for specific labels
+          .entries
+          .map<Widget>(
+            (entry) {
+              final status = entry.value.trim();
+              final index = entry.key;
+              final label = index % 2 == 0 ? "S" : "G"; // Alternate label logic
+              return RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$label : ', // Label text
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        color: Colors.grey, // Grey color for label
+                      ),
                     ),
+                    TextSpan(
+                      text: status, // Status text
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        color: getStatusColor(status), // Dynamic color for status
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          )
+          .toList(),
+    ),
+  ),
+)
+    else
+      Expanded(
+        flex: 1,
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            getStatusText(charger['status']),
+            style: TextStyle(
+              fontSize: screenWidth * 0.04,
+              color: getStatusColor(charger['status']),
+            ),
+          ),
+        ),
+      ),
+  ],
+),
+
                     const SizedBox(height: 5),
                     // Row 3: Price per unit and Charger Model
                     Row(
@@ -748,10 +804,13 @@ Widget build(BuildContext context) {
                       children: [
                         // Price container with border
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(color: const Color.fromARGB(179, 48, 47, 47), width: 1.5),
+                            border: Border.all(
+                                color: const Color.fromARGB(179, 48, 47, 47),
+                                width: 1.5),
                           ),
                           child: Row(
                             children: [
@@ -775,10 +834,13 @@ Widget build(BuildContext context) {
                         const SizedBox(width: 10),
                         // kWh container with border
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(color: const Color.fromARGB(179, 40, 39, 39), width: 1.5),
+                            border: Border.all(
+                                color: const Color.fromARGB(179, 40, 39, 39),
+                                width: 1.5),
                           ),
                           child: Text(
                             "${charger['charger_model'] ?? 'Unknown Model'} kWh",
@@ -802,75 +864,26 @@ Widget build(BuildContext context) {
       ),
     );
   }
+// Shimmer loading card widget
+Widget _buildShimmerCard(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
 
-
-
-
-  Widget _buildShimmerCard(double screenWidth) {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[700]!,
-      child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8.0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        color: Colors.grey[900],
-        elevation: 4,
-        child: Padding(
-          padding: const EdgeInsets.all(3.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: screenWidth * 0.5,
-                height: 15, // Height for the shimmer effect
-                color: Colors.white,
-              ),
-              const SizedBox(height: 3),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    width: screenWidth * 0.3,
-                    height: 15, // Height for the shimmer effect
-                    color: Colors.white,
-                  ),
-                  Container(
-                    width: 22,
-                    height: 22,
-                    color: Colors.white,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 3),
-              Container(
-                width: screenWidth * 0.5,
-                height: 15, // Height for the shimmer effect
-                color: Colors.white,
-              ),
-              const SizedBox(height: 3),
-              Container(
-                width: screenWidth * 0.5,
-                height: 15, // Height for the shimmer effect
-                color: Colors.white,
-              ),
-              const SizedBox(height: 5),
-              CustomGradientDivider(),
-              const SizedBox(height: 5),
-              Center(
-                child: Container(
-                  width: screenWidth * 0.3,
-                  height: 30, // Height for the shimmer effect
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
+  return Shimmer.fromColors(
+    baseColor: Colors.grey[800]!,
+    highlightColor: Colors.grey[700]!,
+    child: Container(
+      width: screenWidth * 0.9, // Reduced width to make it smaller
+      height: screenHeight * 0.12, // Reduced height to make it smaller
+      margin: EdgeInsets.only(
+        left: screenWidth * 0.05, // Move the shimmer card slightly to the right
+        right: screenWidth * 0.02,
+        top: screenHeight * 0.01,
       ),
-    );
-  }
+      color: const Color(0xFF0E0E0E), // Background color of the shimmer
+    ),
+  );
+}
 
   Widget _buildNavigationBar(double screenWidth) {
     return Row(
@@ -1098,7 +1111,7 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
     }
     return 'Unknown';
   }
-  
+
   @override
   Widget build(BuildContext context) {
     // Get the screen size using MediaQuery
@@ -1143,79 +1156,84 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
           const SizedBox(height: 20),
 
           // Connector Grid
-  GridView.builder(
-  shrinkWrap: true, // Prevents unnecessary space
-  physics: const NeverScrollableScrollPhysics(),
-  itemCount: widget.chargerData.keys
-      .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
-      .length,
-  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-    crossAxisCount: 2,
-    mainAxisSpacing: 10,
-    crossAxisSpacing: 10,
-    childAspectRatio: 3,
-  ),
-  itemBuilder: (BuildContext context, int index) {
-    // Fetch the available connector keys dynamically
-    List<String> connectorKeys = widget.chargerData.keys
-        .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
-        .toList();
+          GridView.builder(
+            shrinkWrap: true, // Prevents unnecessary space
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: widget.chargerData.keys
+                .where((key) =>
+                    key.startsWith('connector_') && key.endsWith('_type'))
+                .length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 3,
+            ),
+            itemBuilder: (BuildContext context, int index) {
+              // Fetch the available connector keys dynamically
+              List<String> connectorKeys = widget.chargerData.keys
+                  .where((key) =>
+                      key.startsWith('connector_') && key.endsWith('_type'))
+                  .toList();
 
-    String connectorKey = connectorKeys[index]; // Use the key directly
-    int connectorId = index + 1; // Still keep the numbering for display purposes
-    int? connectorType = widget.chargerData[connectorKey];
+              String connectorKey =
+                  connectorKeys[index]; // Use the key directly
+              int connectorId =
+                  index + 1; // Still keep the numbering for display purposes
+              int? connectorType = widget.chargerData[connectorKey];
 
-    if (connectorType == null) {
-      return const SizedBox.shrink(); // Skip if there's no valid connector
-    }
+              if (connectorType == null) {
+                return const SizedBox
+                    .shrink(); // Skip if there's no valid connector
+              }
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedConnector = connectorId;
-          selectedConnectorType = connectorType;
-        });
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: selectedConnector == connectorId
-              ? Colors.green
-              : Colors.grey[800],
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                connectorType == 1 ? Icons.power : Icons.ev_station,
-                color: connectorType == 1 ? Colors.green : Colors.red,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _getConnectorTypeName(connectorType),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: isSmallScreen ? 14 : 16,
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedConnector = connectorId;
+                    selectedConnectorType = connectorType;
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: selectedConnector == connectorId
+                        ? Colors.green
+                        : Colors.grey[800],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          connectorType == 1 ? Icons.power : Icons.ev_station,
+                          color: connectorType == 1 ? Colors.green : Colors.red,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _getConnectorTypeName(connectorType),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isSmallScreen ? 14 : 16,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          ' - [ $connectorId ]',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isSmallScreen ? 14 : 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                ' - [ $connectorId ]',
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                  fontSize: isSmallScreen ? 14 : 16,
-                ),
-              ),
-            ],
+              );
+            },
           ),
-        ),
-      ),
-    );
-  },
-),
 
           const SizedBox(height: 10), // Adjust this spacing as needed
 
@@ -1264,8 +1282,6 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
   }
 }
 
-
-
 class ErrorDetails extends StatelessWidget {
   final String? errorData;
   final String username;
@@ -1307,8 +1323,8 @@ class ErrorDetails extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
-                  // Use Navigator.push to add the new page without disrupting other content  
-                                  // Navigate to HomePage without disrupting other content
+                  // Use Navigator.push to add the new page without disrupting other content
+                  // Navigate to HomePage without disrupting other content
                   // Navigator.push(
                   //   context,
                   //   MaterialPageRoute(

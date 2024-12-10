@@ -1155,7 +1155,7 @@ Widget _buildAnimatedTempColorCircle() {
 
 void thresholdlevel() {
   // Set the current based on chargerCapacity
-  String overCurrent = chargerCapacity == 3.5
+  String overCurrent = chargerCapacity == "3.5"
       ? 'Over Current - 17A'
       : 'Over Current - 33A';
   print("chargerCapacity $chargerCapacity");

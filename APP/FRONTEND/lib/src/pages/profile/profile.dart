@@ -338,7 +338,7 @@ Widget build(BuildContext context) {
             children: [
               TextSpan(text: 'Copyright © 2024 '),
               TextSpan(
-                text: 'EV Power',
+                text: 'ionHive',
                 style: TextStyle(color: Colors.green),
               ),
               TextSpan(text: '. All rights reserved.'),

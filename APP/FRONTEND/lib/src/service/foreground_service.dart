@@ -27,7 +27,7 @@ void startForegroundService() {
   );
 
   FlutterForegroundTask.startService(
-    notificationTitle: 'EV App is running',
+    notificationTitle: 'App is running',
     notificationText: 'Your app is running in the background',
     callback: startCallback,
   );
