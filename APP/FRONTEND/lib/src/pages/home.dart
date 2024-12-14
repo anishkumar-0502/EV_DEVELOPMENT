@@ -27,49 +27,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _pageIndex = 0;
   final GlobalKey<FooterState> _footerKey = GlobalKey();
-  late Connectivity _connectivity;
-  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
-  bool _isDialogOpen = false; // Track if the dialog is open
 
 
   @override
   void initState() {
     super.initState();
-     _connectivity = Connectivity();
-    // _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
-    // _checkInitialConnection();
     startForegroundService(); // Start the foreground service
   }
 
-// Future<void> _checkInitialConnection() async {
-//   var result = await _connectivity.checkConnectivity();
-//   _updateConnectionStatus(result);
-// }
-
-//   void _updateConnectionStatus(ConnectivityResult result) {
-//   // Check for internet connection
-//   if (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi) {
-//     _dismissNoConnectionPage(); // Dismiss the error page if internet is restored
-//   } else if (result == ConnectivityResult.none) {
-//     _showNoConnectionPage(context); // Show the no internet error page
-//   }
-// }
-// void _showNoConnectionPage(BuildContext context) {
-//   Navigator.push(
-//     context,
-//     MaterialPageRoute(
-//       builder: (context) => InternetErrorPage(),
-//     ),
-//   );
-// }
-
-
-
-// void _dismissNoConnectionPage() {
-//   if (Navigator.canPop(context)) {
-//     Navigator.pop(context); // Pop the InternetErrorPage if it is active
-//   }
-// }
   
   @override
   void dispose() {
@@ -141,6 +106,9 @@ class _HomePageState extends State<HomePage> {
       child: Scaffold(
         body: _pageOptions[_pageIndex],
         bottomNavigationBar: Footer(
+          username:widget.username,
+          userId:widget.userId,
+          email: widget.email,
           key: _footerKey,
           onTabChanged: _onTabChanged,
         ),

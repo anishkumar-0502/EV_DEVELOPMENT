@@ -262,7 +262,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
         });
       }
     } catch (error) {
-      print('Internal server error: $error');
+      print('Something went wrong, try again later: $error');
       showErrorDialog(
           context, 'An unexpected error occurred. Please try again.');
       setState(() {
@@ -288,8 +288,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
       // Otherwise, assume it's already in the desired format and return it
       return timestamp; // Or 'Invalid date' if you want to handle improperly formatted strings
     }
-  }
-@override
+  }@override
 Widget build(BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
   final screenHeight = MediaQuery.of(context).size.height;
@@ -299,99 +298,108 @@ Widget build(BuildContext context) {
   return Scaffold(
     body: Stack(
       children: [
-        // The main content of the page
-        SingleChildScrollView(
-          child: Column(
-            children: [
-              Stack(
-                children: [
-                  Container(
-                    height: screenHeight * 0.3, // Scalable height for image
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.black,
-                    ),
-                    child: Image.asset(
-                      'assets/Image/Connecter_bg.png',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Positioned(
-                    top: 30,
-                    left: 10,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ),
-                  Positioned(
-                    top: 30,
-                    right: 10,
-                    child: IconButton(
-                      icon: const Icon(Icons.share, color: Colors.black),
-                      onPressed: () {
-                        double latitude = position.latitude;
-                        double longitude = position.longitude;
-
-                        String message =
-                            "Explore the ionHive for seamless EV charging experience!\n\n"
-                            "Location: $location\n\n"
-                            "Charge your EV now!\n"
-                            "Check the location on the map: https://www.google.com/maps/search/?api=1&query=$latitude,$longitude";
-
-                        Share.share(message);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.address,
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white70,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Text(
-                          "Open Now",
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.04,
-                            color: Colors.green,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          "24 Hours",
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.04,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                        const Spacer(),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildNavigationBar(screenWidth),
-                    const SizedBox(height: 10),
-                    CustomGradientDivider(),
-                    _buildContent(screenWidth),
-                  ],
-                ),
-              ),
-            ],
+        // Background Image (fixed)
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: screenHeight * 0.3, // Scalable height for image
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Colors.black,
+            ),
+            child: Image.asset(
+              'assets/Image/Connecter_bg.png',
+              fit: BoxFit.cover,
+            ),
           ),
         ),
+        
+        // Main Content
+        Positioned(
+          top: screenHeight * 0.3, // Position the main content below the image
+          left: 0,
+          right: 0,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.address,
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.04,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Text(
+                        "Open Now",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.04,
+                          color: Colors.green,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        "24 Hours",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.04,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const Spacer(),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _buildNavigationBar(screenWidth),
+                  const SizedBox(height: 10),
+                  CustomGradientDivider(),
+                  _buildContent(screenWidth),
+                ],
+              ),
+            ),
+          ),
+        ),
+        
+        // Share button
+        Positioned(
+          top: 30,
+          right: 10,
+          child: IconButton(
+            icon: const Icon(Icons.share, color: Colors.black),
+            onPressed: () {
+              double latitude = position.latitude;
+              double longitude = position.longitude;
+
+              String message =
+                  "Explore the ChargeExpress for seamless EV charging experience!\n\n"
+                  "Location: $location\n\n"
+                  "Charge your EV now!\n"
+                  "Check the location on the map: https://www.google.com/maps/search/?api=1&query=$latitude,$longitude";
+
+              Share.share(message);
+            },
+          ),
+        ),
+        
+        // Back button
+        Positioned(
+          top: 30,
+          left: 10,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ),
+        
         // Conditionally render the loading overlay if `isSearching` is true
         if (isSearching)
           Container(
@@ -485,7 +493,7 @@ Widget build(BuildContext context) {
         showErrorDialog(context, errorData['message']);
       }
     } catch (error) {
-      showErrorDialog(context, 'Internal server error ');
+      showErrorDialog(context, 'Something went wrong, try again later ');
     }
   }
 
@@ -559,12 +567,12 @@ Widget build(BuildContext context) {
         // if (mounted) Navigator.of(context).pop();
       }
     } catch (error) {
-      showErrorDialog(context, 'Internal server error');
+      showErrorDialog(context, 'Something went wrong, try again later');
 
       // Dismiss the loading animation
       if (mounted) Navigator.of(context).pop();
 
-      return {'error': true, 'message': 'Internal server error'};
+      return {'error': true, 'message': 'Something went wrong, try again later'};
     } finally {
       if (mounted) {
         setState(() {

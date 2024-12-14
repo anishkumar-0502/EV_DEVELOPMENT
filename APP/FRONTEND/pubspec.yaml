@@ -2,7 +2,7 @@ name: ev_app
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.10+10
+version: 1.0.12+12
 
 environment:
   sdk: '>=3.4.4 <4.0.0'
@@ -67,6 +67,7 @@ flutter:
     - assets/gif/loading.gif 
     - assets/gif/current_location.gif 
     - assets/gif/map_permission.gif
+    - assets/Image/chargerImage.png
 
 
 flutter_launcher_icons:

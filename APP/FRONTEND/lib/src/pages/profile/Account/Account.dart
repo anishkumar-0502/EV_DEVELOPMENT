@@ -213,7 +213,7 @@ class _AccountPageState extends State<AccountPage> {
         if (mounted) _showAlertBanner(errorMessage);
       }
     } catch (e) {
-      if (mounted) _showAlertBanner('Internal server error');
+      if (mounted) _showAlertBanner('Something went wrong, try again later');
       print(e);
     } finally {
       // Hide loading overlay regardless of success or error

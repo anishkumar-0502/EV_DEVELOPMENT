@@ -957,8 +957,8 @@
 // //       return {'error': true, 'message': errorData['message']};
 // //     }
 // //   } catch (error) {
-// //     showErrorDialog(context, 'Internal server error ');
-// //     return {'error': true, 'message': 'Internal server error'};
+// //     showErrorDialog(context, 'Something went wrong, try again later ');
+// //     return {'error': true, 'message': 'Something went wrong, try again later'};
 // //   } finally {
 // //     setState(() {
 // //       isSearching = false;
@@ -1000,7 +1000,7 @@
 // //         showErrorDialog(context, errorData['message']);
 // //       }
 // //     } catch (error) {
-// //       showErrorDialog(context, 'Internal server error ');
+// //       showErrorDialog(context, 'Something went wrong, try again later ');
 // //     }
 // //   }
 
@@ -1116,7 +1116,7 @@
 // //         });
 // //       }
 // //     } catch (error) {
-// //       showErrorDialog(context, 'Internal server error ');
+// //       showErrorDialog(context, 'Something went wrong, try again later ');
 // //       setState(() {
 // //         isLoading = false;
 // //       });
@@ -1155,7 +1155,7 @@
 // //         });
 // //       }
 // //     } catch (error) {
-// //       print('Internal server error $error ');
+// //       print('Something went wrong, try again later $error ');
 // //       setState(() {
 // //         isLoading = false;
 // //       });
@@ -3664,8 +3664,8 @@
 //         return {'error': true, 'message': errorData['message']};
 //       }
 //     } catch (error) {
-//       showErrorDialog(context, 'Internal server error');
-//       return {'error': true, 'message': 'Internal server error'};
+//       showErrorDialog(context, 'Something went wrong, try again later');
+//       return {'error': true, 'message': 'Something went wrong, try again later'};
 //     } finally {
 //       setState(() {
 //         isSearching = false;
@@ -3711,7 +3711,7 @@
 //         showErrorDialog(context, errorData['message']);
 //       }
 //     } catch (error) {
-//       showErrorDialog(context, 'Internal server error ');
+//       showErrorDialog(context, 'Something went wrong, try again later ');
 //     }
 //   }
 
@@ -3858,7 +3858,7 @@
 //         });
 //       }
 //     } catch (error) {
-//       showErrorDialog(context, 'Internal server error ');
+//       showErrorDialog(context, 'Something went wrong, try again later ');
 //       setState(() {
 //         isLoading = false;
 //       });
@@ -3917,7 +3917,7 @@
 //         });
 //       }
 //     } catch (error) {
-//       print('Internal server error: $error');
+//       print('Something went wrong, try again later: $error');
 //       // Handle general errors
 //       setState(() {
 //         isLoading = false; // Set loading to false on error

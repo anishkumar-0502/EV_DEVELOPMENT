@@ -12,7 +12,6 @@ import 'src/pages/home.dart';
 import 'src/utilities/User_Model/user.dart';
 import 'src/utilities/User_Model/ImageProvider.dart';
 import 'src/pages/wallet/wallet.dart';
-import 'src/pages/profile/Account/Transaction_Details/transaction_details.dart';
 
 
 void main() async {
@@ -174,10 +173,7 @@ if (initialisationError case final err?) {
             final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
             return WalletPage(username: args['username'], userId: args['userId'], email: args['email_id'],);
           },
-          '/transaction_details': (context) => TransactionDetailsWidget(
-            transactionDetails: ModalRoute.of(context)?.settings.arguments as List<Map<String, dynamic>>,
-            username: AutofillHints.username,
-          ),
+  
         },
       ),
     );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';  // Import shimmer package
 
 class TransactionHistoryPage extends StatefulWidget {
@@ -17,6 +16,7 @@ class TransactionHistoryPage extends StatefulWidget {
 class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   List<Map<String, dynamic>> transactionDetails = [];
   bool isLoading = true;
+  String selectedFilter = 'All';
 
   @override
   void initState() {
@@ -49,10 +49,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username}),
       );
-
-      print('Response status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
         if (data['value'] is List) {
@@ -77,6 +73,11 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     }
   }
 
+  List<Map<String, dynamic>> get filteredTransactions {
+    if (selectedFilter == 'All') return transactionDetails;
+    return transactionDetails.where((txn) => txn['status'] == selectedFilter).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,26 +92,258 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CustomGradientDivider(),
-              const SizedBox(height: 15),
-              TransactionDetailsWidget(
-                transactionDetails: transactionDetails,
-                isLoading: isLoading, // Pass loading state
+      body: Stack(
+        children: [
+          // The main scrollable content below the fixed filter row
+          SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04), // Adjust padding based on screen size
+              child: Column(
+                children: [
+                  const SizedBox(height: 90), // Add space for the fixed filter row
+                  // Transaction Details Widget wrapped inside a scrollable widget
+                  isLoading
+                      ? _buildShimmerCard()
+                      : filteredTransactions.isEmpty
+                      ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
+                          child: Image.asset(
+                            'assets/Image/search.png', // Use the correct path to your asset
+                            width: MediaQuery.of(context).size.width * 0.6, // Adjust image size based on screen width
+                          ),
+                        ),
+                        const SizedBox(height: 10), // Add some space between the image and the text
+                        const Text(
+                          'No Payment History Found!', // Add your desired text
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.white70, // Optional: Adjust text color
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                      : Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05), // Adjust padding
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          for (int index = 0; index < filteredTransactions.length; index++)
+                            Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(5.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              filteredTransactions[index]['status'] ?? 'Unknown',
+                                              style: TextStyle(
+                                                fontSize: MediaQuery.of(context).size.width * 0.05, // Adjust font size based on screen width
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              (() {
+                                                final timeString = filteredTransactions[index]['time'];
+                                                if (timeString != null && timeString.isNotEmpty) {
+                                                  try {
+                                                    final dateTime = DateTime.parse(timeString).toLocal();
+                                                    return '${dateTime.day}-${dateTime.month}-${dateTime.year} at ${dateTime.hour}:${dateTime.minute}';
+                                                  } catch (e) {
+                                                    return 'Invalid date format';
+                                                  }
+                                                } else {
+                                                  return 'No Date Available';
+                                                }
+                                              })(),
+                                              style: TextStyle(
+                                                fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size based on screen width
+                                                color: Colors.white70,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      // Conditional color for amount based on status
+                                      Text(
+                                        '₹${filteredTransactions[index]['amount'] ?? '0.00'}',
+                                        style: TextStyle(
+                                          fontSize: MediaQuery.of(context).size.width * 0.05, // Adjust font size based on screen width
+                                          color: filteredTransactions[index]['status'] == 'Deducted'
+                                              ? Colors.red // Red color for debited transactions
+                                              : Colors.green, // Green for other transactions
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (index != filteredTransactions.length - 1) // Ensure divider is shown only for the first 5
+                                  CustomGradientDivider(),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 15),
-            ],
+            ),
           ),
-        ),
+          // Fixed filter buttons row
+          Positioned(
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).size.height * 0.02, // Adjust top padding based on screen height
+                bottom: MediaQuery.of(context).size.height * 0.02, // Adjust bottom padding based on screen height
+                left: MediaQuery.of(context).size.width * 0.05, // Adjust left padding based on screen width
+                right: MediaQuery.of(context).size.width * 0.05, // Adjust right padding based on screen width
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  double buttonWidth = constraints.maxWidth * 0.3; // Each filter takes 30% of the available width
+                  double lineWidth = buttonWidth * 0.4; // Set the line width to be 60% of the button width
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(16.0), // Set the border radius here
+                    ),
+                    padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04), // Adjust padding based on screen width
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // 'All' Filter
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedFilter = 'All'; // Show all transactions
+                            });
+                          },
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'All',
+                                style: TextStyle(
+                                  fontSize: MediaQuery.of(context).size.width * 0.05, // Adjust font size based on screen width
+                                  fontWeight: FontWeight.bold,
+                                  color: selectedFilter == 'All' ? Colors.blueAccent : Colors.white70, // Change color if selected
+                                ),
+                              ),
+                              // Line under the selected filter
+                              if (selectedFilter == 'All')
+                                Container(
+                                  margin: const EdgeInsets.only(top: 4),
+                                  width: lineWidth, // Smaller line width
+                                  height: 2,
+                                  color: Colors.blueAccent, // Color for the underline
+                                ),
+                            ],
+                          ),
+                        ),
+                        // 'Credited' Filter
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedFilter = 'Credited'; // Show credited transactions
+                            });
+                          },
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Credited',
+                                style: TextStyle(
+                                  fontSize: MediaQuery.of(context).size.width * 0.05, // Adjust font size based on screen width
+                                  fontWeight: FontWeight.bold,
+                                  color: selectedFilter == 'Credited' ? Colors.green : Colors.white70, // Change color if selected
+                                ),
+                              ),
+                              // Line under the selected filter
+                              if (selectedFilter == 'Credited')
+                                Container(
+                                  margin: const EdgeInsets.only(top: 4),
+                                  width: lineWidth, // Smaller line width
+                                  height: 2,
+                                  color: Colors.green, // Color for the underline
+                                ),
+                            ],
+                          ),
+                        ),
+                        // 'Debited' Filter
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedFilter = 'Deducted'; // Show debited transactions
+                            });
+                          },
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Debited',
+                                style: TextStyle(
+                                  fontSize: MediaQuery.of(context).size.width * 0.05, // Adjust font size based on screen width
+                                  fontWeight: FontWeight.bold,
+                                  color: selectedFilter == 'Deducted' ? Colors.red : Colors.white70, // Change color if selected
+                                ),
+                              ),
+                              // Line under the selected filter
+                              if (selectedFilter == 'Deducted')
+                                Container(
+                                  margin: const EdgeInsets.only(top: 4),
+                                  width: lineWidth, // Smaller line width
+                                  height: 2,
+                                  color: Colors.red, // Color for the underline
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+
+
+
+
 }
+
+
+  Widget _buildShimmerCard() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[700]!,
+      child: Container(
+        width: double.infinity, // Make it fill the available width
+        height: 120, // Height of the shimmer effect
+        margin: const EdgeInsets.symmetric(vertical: 10),
+
+        color: const Color(0xFF0E0E0E), // Background color of the shimmer
+      ),
+    );
+  }
 
 class CustomGradientDivider extends StatelessWidget {
   @override
@@ -155,162 +388,7 @@ class GradientPainter extends CustomPainter {
   }
 }
 
-class TransactionDetailsWidget extends StatelessWidget {
-  final List<Map<String, dynamic>> transactionDetails;
-  final bool isLoading;
 
-  const TransactionDetailsWidget({
-    Key? key,
-    required this.transactionDetails,
-    required this.isLoading,
-  }) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    return isLoading
-        ? _buildShimmer()
-        : transactionDetails.isEmpty
-        ? Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Image.asset(
-              'assets/Image/search.png', // Use the correct path to your asset
-              width: 300, // Optional: Adjust image size
-            ),
-          ),
-          const SizedBox(height: 10), // Add some space between the image and the text
-          const Text(
-            'No Payment History Found!', // Add your desired text
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.white70, // Optional: Adjust text color
-            ),
-          ),
-        ],
-      ),
-    )
-        : Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        children: [
-          for (int index = 0; index < transactionDetails.length; index++)
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(5.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              transactionDetails[index]['status'] ?? 'Unknown',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              (() {
-                                final timeString = transactionDetails[index]['time'];
-                                if (timeString != null && timeString.isNotEmpty) {
-                                  try {
-                                    final dateTime = DateTime.parse(timeString).toLocal();
-                                    return DateFormat('MM/dd/yyyy, hh:mm:ss a').format(dateTime);
-                                  } catch (e) {
-                                    print('Error parsing date: $e');
-                                  }
-                                }
-                                return 'N/A';
-                              })(),
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.white60,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        '${transactionDetails[index]['status'] == 'Credited'
-                            ? '+ ₹'
-                            : '- ₹'}${transactionDetails[index]['amount']}',
-                        style: TextStyle(
-                          fontSize: 19,
-                          color: transactionDetails[index]['status'] == 'Credited' ? Colors.green : Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (index != transactionDetails.length - 1) CustomGradientDivider(),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildShimmer() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey.shade700,
-      highlightColor: Colors.grey.shade500,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: List.generate(3, (index) => _buildShimmerItem()),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildShimmerItem() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 20,
-                  width: double.infinity,
-                  color: Colors.grey,
-                ),
-                const SizedBox(height: 5),
-                Container(
-                  height: 15,
-                  width: 100,
-                  color: Colors.grey,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            height: 20,
-            width: 80,
-            color: Colors.grey,
-          ),
-        ],
-      ),
-    );
-  }
-}

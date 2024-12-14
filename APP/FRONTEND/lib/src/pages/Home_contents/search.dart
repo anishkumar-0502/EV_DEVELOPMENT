@@ -104,7 +104,7 @@ Future<void> updateConnectorUser(String searchChargerID, int connectorId, int co
       showErrorDialog(context, errorData['message']);
     }
   } catch (error) {
-    showErrorDialog(context, 'Internal server error');
+    showErrorDialog(context, 'Something went wrong, try again later');
   // } finally {
   //   setState(() {
   //         _isLoadingBolt = false;
@@ -195,8 +195,8 @@ Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async 
     });
                       Navigator.pop(context);
 
-    showErrorDialog(context, 'Internal server error');
-    return {'error': true, 'message': 'Internal server error'};
+    showErrorDialog(context, 'Something went wrong, try again later');
+    return {'error': true, 'message': 'Something went wrong, try again later'};
   } finally {
     // setState(() {
     //       _isLoadingBolt = false;
@@ -292,77 +292,98 @@ void _searchChargerId(String chargerId) async {
     );
   }
 
-  Future<void> _loadRecentLocations() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String>? storedLocations = prefs.getStringList('recentLocations');
 
-    if (storedLocations != null) {
-      recentLocations = storedLocations.map((location) {
-        var parts = location.split('|');
-        return {
-          'name': parts[0],
-          'address': parts[1],
-          'latitude': parts[2],
-          'longitude': parts[3],
-        };
-      }).toList();
+Future<void> _loadRecentLocations() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
 
-      setState(() {});
+  // Retrieve stored locations
+  List<String>? storedLocations = prefs.getStringList('recentLocations');
+
+  if (storedLocations != null) {
+    // Convert stored locations back to a list of maps
+    recentLocations = storedLocations.map((loc) {
+      List<String> parts = loc.split('|');
+      return {
+        'name': parts[0],
+        'address': parts[1],
+        'latitude': parts[2],
+        'longitude': parts[3],
+      };
+    }).toList();
+  }
+
+  setState(() {}); // Update the UI
+}
+Future<void> _saveRecentLocation(Map<String, dynamic> location) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  print("location: $location");
+
+  // Ensure all values in location are Strings
+  final locationAsStringMap = {
+    'name': location['name'].toString(),
+    'address': location['address'].toString(),
+    'latitude': location['latitude'].toString(),
+    'longitude': location['longitude'].toString(),
+  };
+
+  // Check if the location already exists in recentLocations
+  if (!recentLocations.any((loc) =>
+      loc['name'] == locationAsStringMap['name'] &&
+      loc['address'] == locationAsStringMap['address'])) {
+    // Add to the top of the list
+    recentLocations.insert(0, locationAsStringMap);
+
+    // Limit the list to 7 items
+    if (recentLocations.length > 7) {
+      recentLocations = recentLocations.sublist(0, 7); // Keep only the first 7
     }
+
+    // Convert the recentLocations list to a List<String> for storage, including latitude and longitude
+    List<String> storedLocations = recentLocations.map((loc) {
+      return '${loc['name']}|${loc['address']}|${loc['latitude']}|${loc['longitude']}';
+    }).toList();
+
+    // Save the recent locations list to SharedPreferences
+    await prefs.setStringList('recentLocations', storedLocations);
+
+    // Update the UI
+    setState(() {});
   }
+}
 
-  Future<void> _saveRecentLocation(Map<String, dynamic> location) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    print("location: $location");
 
-    // Ensure all values in location are Strings
-    final locationAsStringMap = {
-      'name': location['name'].toString(),
-      'address': location['address'].toString(),
-      'latitude': location['latitude'].toString(),
-      'longitude': location['longitude'].toString(),
-    };
+Future<void> _clearRecentLocations() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    // Check if the location already exists in recentLocations
-    if (!recentLocations.any((loc) =>
-        loc['name'] == locationAsStringMap['name'] &&
-        loc['address'] == locationAsStringMap['address'])) {
-      // Add to the top of the list
-      recentLocations.insert(0, locationAsStringMap);
+  // Clear from SharedPreferences
+  await prefs.remove('recentLocations');
 
-      // Convert the recentLocations list to a List<String> for storage, including latitude and longitude
-      List<String> storedLocations = recentLocations.map((loc) {
-        return '${loc['name']}|${loc['address']}|${loc['latitude']}|${loc['longitude']}';
-      }).toList();
+  // Clear the local list and update UI
+  setState(() {
+    recentLocations.clear();
+  });
+}
 
-      // Save the recent locations list to SharedPreferences
-      await prefs.setStringList('recentLocations', storedLocations);
+Future<void> _deleteRecentLocation(int index) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
 
-      // Update the UI
-      setState(() {});
-    }
-  }
+  // Remove the location from the local list
+  recentLocations.removeAt(index);
 
-  Future<void> _clearRecentLocations() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('recentLocations'); // Clear from SharedPreferences
-    setState(() {
-      recentLocations.clear(); // Clear the local list
-    });
-  }
+  // Update the stored locations in SharedPreferences
+  List<String> storedLocations = recentLocations.map((loc) {
+    return '${loc['name']}|${loc['address']}|${loc['latitude']}|${loc['longitude']}';
+  }).toList();
 
-  Future<void> _deleteRecentLocation(int index) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    recentLocations.removeAt(index); // Remove the location from the local list
-    List<String> storedLocations = recentLocations
-        .map((loc) => '${loc['name']}|${loc['address']}')
-        .toList();
-    await prefs.setStringList(
-        'recentLocations', storedLocations); // Update SharedPreferences
-    setState(() {}); // Update the UI
-  }
+  // Save the updated list to SharedPreferences
+  await prefs.setStringList('recentLocations', storedLocations);
+
+  // Update the UI
+  setState(() {});
+}
+
+
 Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
-  print("query: $query");
   const String apiKey =
       'AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo'; // Replace with your actual API key
   final String apiUrl =

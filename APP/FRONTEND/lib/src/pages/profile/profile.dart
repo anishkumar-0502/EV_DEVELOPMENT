@@ -26,7 +26,7 @@ class _ProfilePageState extends State<ProfilePage> {
   int? phoneNo;
   String? password;
   int _selectedTileIndex = -1; // Index of the selected tile
-  final String _version = '1.0.10'; // Default value, in case fetching fails
+  final String _version = '1.0.12'; // Default value, in case fetching fails
 
   @override
   void initState() {

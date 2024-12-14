@@ -12,7 +12,6 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import '../ChargerDetails/ChargerConnectorPage.dart';
 import '../Charging/charging.dart';
-import '../../utilities/QR/qrscanner.dart';
 import 'dart:ui' as ui;
 import 'dart:async';
 import 'package:shimmer/shimmer.dart';
@@ -848,8 +847,8 @@ Future<void> _getCurrentLocation() async {
         return {'error': true, 'message': errorData['message']};
       }
     } catch (error) {
-      showErrorDialog(context, 'Internal server error');
-      return {'error': true, 'message': 'Internal server error'};
+      showErrorDialog(context, 'Something went wrong, try again later');
+      return {'error': true, 'message': 'Something went wrong, try again later'};
     } finally {
       setState(() {
         isSearching = false;
@@ -895,237 +894,11 @@ Future<void> _getCurrentLocation() async {
         showErrorDialog(context, errorData['message']);
       }
     } catch (error) {
-      showErrorDialog(context, 'Internal server error ');
+      showErrorDialog(context, 'Something went wrong, try again later ');
     }
   }
 
-// void navigateToQRViewExample() async {
-//   if (Platform.isIOS) {
-//     // If the platform is iOS, directly navigate to the QR scanner screen
-//     final scannedCode = await Navigator.push<String>(
-//       context,
-//       MaterialPageRoute(
-//         builder: (context) => QRViewExample(
-//           handleSearchRequestCallback: handleSearchRequest,
-//           username: widget.username,
-//           userId: widget.userId,
-//         ),
-//       ),
-//     );
 
-//     if (scannedCode != null) {
-//       setState(() {
-//         searchChargerID = scannedCode;
-//         isSearching = false;
-//       });
-//     }
-//   } else if (Platform.isAndroid) {
-//     // If the platform is Android, check for camera permission
-//     PermissionStatus permissionStatus = await Permission.camera.request();
-
-//     if (permissionStatus.isGranted) {
-//       // Navigate to the QR scanner screen if permission is granted
-//       final scannedCode = await Navigator.push<String>(
-//         context,
-//         MaterialPageRoute(
-//           builder: (context) => QRViewExample(
-//             handleSearchRequestCallback: handleSearchRequest,
-//             username: widget.username,
-//             userId: widget.userId,
-//           ),
-//         ),
-//       );
-
-//       if (scannedCode != null) {
-//         setState(() {
-//           searchChargerID = scannedCode;
-//           isSearching = false;
-//         });
-//       }
-//     } else {
-//       // Show a custom dialog if permission is not granted
-//       showDialog(
-//         context: context,
-//         barrierDismissible: false,
-//         builder: (BuildContext context) {
-//           return AlertDialog(
-//             backgroundColor: const Color(0xFF1E1E1E),
-//             shape: RoundedRectangleBorder(
-//               borderRadius: BorderRadius.circular(15),
-//             ),
-//             title: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 const Row(
-//                   children: [
-//                     Icon(Icons.camera_alt, color: Colors.blue, size: 35),
-//                     SizedBox(width: 10),
-//                     Text(
-//                       "Permission Denied",
-//                       style: TextStyle(
-//                           color: Colors.white,
-//                           fontSize: 18,
-//                           fontWeight: FontWeight.bold),
-//                     ),
-//                   ],
-//                 ),
-//                 const SizedBox(height: 10),
-//                 CustomGradientDivider(),
-//               ],
-//             ),
-//             content: const Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 Text(
-//                   'To Scan QR codes, allow this app access to your camera. Tap Settings > Permissions, and turn Camera on.',
-//                   textAlign: TextAlign.center,
-//                   style: TextStyle(color: Colors.white70),
-//                 ),
-//               ],
-//             ),
-//             actions: <Widget>[
-//               TextButton(
-//                 onPressed: () {
-//                   Navigator.of(context).pop();
-//                 },
-//                 child: const Text("Cancel", style: TextStyle(color: Colors.white)),
-//               ),
-//               TextButton(
-//                 onPressed: () {
-//                   openAppSettings();
-//                   Navigator.of(context).pop();
-//                 },
-//                 child: const Text("Settings", style: TextStyle(color: Colors.blue)),
-//               ),
-//             ],
-//           );
-//         },
-//       );
-//     }
-//   }
-// }
-
-Future<void> navigateToQRViewExample() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool isFirstTime = prefs.getBool('isFirstTimeQR') ?? true;
-
-  if (Platform.isIOS) {
-    if (isFirstTime) {
-      // Navigate without checking permission for the first time
-      await _navigateToQRView();
-      prefs.setBool('isFirstTimeQR', false); // Set to false after the first navigation
-    } else {
-
-      var status = await Permission.camera.status;
-      print("camera status: $status ");
-      if (status.isGranted) {
-        await _navigateToQRView();
-      } else {
-        // Navigate to a permission error page like the image provided
-        _navigateToPermissionErrorPage();
-      }
-    }
-  } else if (Platform.isAndroid) {
-    // For Android, always check permissions
-    PermissionStatus permissionStatus = await Permission.camera.request();
-
-    if (permissionStatus.isGranted) {
-      await _navigateToQRView();
-    } else {
-      // Show a dialog if permission is denied
-        _navigateToPermissionErrorPage();
-    }
-  }
-}
-
-Future<void> _navigateToQRView() async {
-  final scannedCode = await Navigator.push<String>(
-    context,
-    MaterialPageRoute(
-      builder: (context) => QRViewExample(
-        handleSearchRequestCallback: handleSearchRequest,
-        username: widget.username,
-        userId: widget.userId,
-      ),
-    ),
-  );
-
-  if (scannedCode != null) {
-    setState(() {
-      searchChargerID = scannedCode;
-      isSearching = false;
-    });
-  }
-}
-
-void _navigateToPermissionErrorPage() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => PermissionErrorPage(), // Custom page like the image
-    ),
-  );
-}
-
-void _showPermissionDeniedDialogQR() {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.camera_alt, color: Colors.blue, size: 35),
-                SizedBox(width: 10),
-                Text(
-                  "Permission Denied",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            CustomGradientDivider(),
-          ],
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'To Scan QR codes, allow this app access to your camera. Tap Settings > Permissions, and turn Camera on.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70),
-            ),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text("Cancel", style: TextStyle(color: Colors.white)),
-          ),
-          TextButton(
-            onPressed: () {
-              openAppSettings();
-              Navigator.of(context).pop();
-            },
-            child: const Text("Settings", style: TextStyle(color: Colors.blue)),
-          ),
-        ],
-      );
-    },
-  );
-}
 
   void showErrorDialog(BuildContext context, String message) {
     showModalBottomSheet(
@@ -1183,7 +956,7 @@ void _showPermissionDeniedDialogQR() {
         });
       }
     } catch (error) {
-      showErrorDialog(context, 'Internal server error ');
+      showErrorDialog(context, 'Something went wrong, try again later ');
       setState(() {
         isLoading = false;
       });
@@ -1242,7 +1015,7 @@ void _showPermissionDeniedDialogQR() {
         });
       }
     } catch (error) {
-      print('Internal server error: $error');
+      print('Something went wrong, try again later: $error');
       // Handle general errors
       setState(() {
         isLoading = false; // Set loading to false on error
@@ -1564,13 +1337,13 @@ void _showPermissionDeniedDialogQR() {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            Icons.qr_code,
+                            Icons.filter_list_alt,
                             color: Colors.white,
                             size: screenWidth *
                                 0.06, // Adjust icon size proportionally
                           ),
                           onPressed: () {
-                            navigateToQRViewExample();
+                            // navigateFilter();
                           },
                         ),
                       ),

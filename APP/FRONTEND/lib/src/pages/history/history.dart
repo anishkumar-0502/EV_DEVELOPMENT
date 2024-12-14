@@ -51,7 +51,6 @@ class _HistoryPageState extends State<HistoryPage> {
 
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
-        print(data);
         if (data['value'] is List) {
           List<dynamic> chargingSessionData = data['value'];
           List<Map<String, dynamic>> sessionDetails = chargingSessionData.cast<Map<String, dynamic>>();
@@ -416,163 +415,175 @@ Widget build(BuildContext context) {
 
   bool isLoading = sessionData.isEmpty; // Example condition, adapt based on your logic
 
-  return Container(
-    padding: EdgeInsets.all(scalePadding(16.0)),
-    decoration: const BoxDecoration(
-      color: Colors.black,
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Session Details',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: scaleFont(20),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            IconButton(
-              icon: Icon(Icons.close, color: Colors.white, size: scaleIconSize(24)),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
-        SizedBox(height: scalePadding(10)),
-        CustomGradientDivider(),
-        SizedBox(height: scalePadding(10)),
-
-        // Show shimmer placeholders if data is loading
-        if (isLoading)
-          _buildShimmerCard(context)
-        else
-          Column(
-            children: [
-              _buildListTile(
-                context,
-                icon: Icons.ev_station,
-                title: 'Charger ID',
-                subtitle: '${sessionData['charger_id']}',
-                scaleFont: scaleFont,
-                scaleIconSize: scaleIconSize,
-              ),
-              _buildListTile(
-                context,
-                icon: Icons.numbers,
-                title: 'Connector Id',
-                subtitle: '${sessionData['connector_id']}',
-                scaleFont: scaleFont,
-                scaleIconSize: scaleIconSize,
-              ),
-              _buildListTile(
-                context,
-                icon: Icons.numbers,
-                title: 'Connector Type',
-                subtitle: _getConnectorTypeName(sessionData['connector_type']),
-                scaleFont: scaleFont,
-                scaleIconSize: scaleIconSize,
-              ),
-              _buildListTile(
-                context,
-                icon: Icons.numbers,
-                title: 'Session ID',
-                subtitle: '${sessionData['session_id']}',
-                scaleFont: scaleFont,
-                scaleIconSize: scaleIconSize,
-              ),
-              _buildListTile(
-                context,
-                icon: Icons.access_time,
-                title: 'Start Time',
-                subtitle: sessionData['start_time'] != null
-                    ? DateFormat('MM/dd/yyyy, hh:mm:ss a')
-                        .format(DateTime.parse(sessionData['start_time']).toLocal())
-                    : "-",
-                scaleFont: scaleFont,
-                scaleIconSize: scaleIconSize,
-              ),
-              _buildListTile(
-                context,
-                icon: Icons.stop,
-                title: 'Stop Time',
-                subtitle: sessionData['stop_time'] != null
-                    ? DateFormat('MM/dd/yyyy, hh:mm:ss a')
-                        .format(DateTime.parse(sessionData['stop_time']).toLocal())
-                    : "-",
-                scaleFont: scaleFont,
-                scaleIconSize: scaleIconSize,
-              ),
-              _buildListTile(
-                context,
-                icon: Icons.electric_car,
-                title: 'Units Consumed',
-                subtitle: '${sessionData['unit_consummed']} kWh',
-                scaleFont: scaleFont,
-                scaleIconSize: scaleIconSize,
-              ),
-        _buildListTile(
-  context,
-  icon: null, // No icon, as we're using a custom CircleAvatar
-  title: 'Price',
-  subtitle: 'Rs. ${sessionData['price']}',
-  customIcon: CircleAvatar(
-    backgroundColor: Colors.grey.shade600,
-    child: Text(
-      '\u20B9', // Indian Rupee symbol
-      style: TextStyle(
-        color: Colors.white,
-        fontSize: scaleFont(24),
-        fontWeight: FontWeight.bold,
+  return SingleChildScrollView(
+    child: Container(
+      padding: EdgeInsets.all(scalePadding(16.0)),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-    ),
-  ),
-  scaleFont: scaleFont,
-  scaleIconSize: scaleIconSize,
-),
-
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Session Details',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: scaleFont(20),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.close, color: Colors.white, size: scaleIconSize(24)),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
             ],
           ),
-      ],
+          SizedBox(height: scalePadding(10)),
+          CustomGradientDivider(),
+          SizedBox(height: scalePadding(10)),
+
+          // Show shimmer placeholders if data is loading
+          if (isLoading)
+            _buildShimmerCard(context)
+          else
+            Column(
+              children: [
+                _buildListTile(
+                  context,
+                  icon: Icons.ev_station,
+                  title: 'Charger ID',
+                  subtitle: '${sessionData['charger_id']}',
+                  scaleFont: scaleFont,
+                  scaleIconSize: scaleIconSize,
+                ),
+                _buildListTile(
+                  context,
+                  icon: Icons.numbers,
+                  title: 'Connector Id',
+                  subtitle: '${sessionData['connector_id']}',
+                  scaleFont: scaleFont,
+                  scaleIconSize: scaleIconSize,
+                ),
+                _buildListTile(
+                  context,
+                  icon: Icons.numbers,
+                  title: 'Connector Type',
+                  subtitle: _getConnectorTypeName(sessionData['connector_type']),
+                  scaleFont: scaleFont,
+                  scaleIconSize: scaleIconSize,
+                ),
+                _buildListTile(
+                  context,
+                  icon: Icons.numbers,
+                  title: 'Session ID',
+                  subtitle: '${sessionData['session_id']}',
+                  scaleFont: scaleFont,
+                  scaleIconSize: scaleIconSize,
+                ),
+                _buildListTile(
+                  context,
+                  icon: Icons.access_time,
+                  title: 'Start Time',
+                  subtitle: sessionData['start_time'] != null
+                      ? DateFormat('MM/dd/yyyy, hh:mm:ss a')
+                          .format(DateTime.parse(sessionData['start_time']).toLocal())
+                      : "-",
+                  scaleFont: scaleFont,
+                  scaleIconSize: scaleIconSize,
+                ),
+                _buildListTile(
+                  context,
+                  icon: Icons.stop,
+                  title: 'Stop Time',
+                  subtitle: sessionData['stop_time'] != null
+                      ? DateFormat('MM/dd/yyyy, hh:mm:ss a')
+                          .format(DateTime.parse(sessionData['stop_time']).toLocal())
+                      : "-",
+                  scaleFont: scaleFont,
+                  scaleIconSize: scaleIconSize,
+                ),
+                _buildListTile(
+                  context,
+                  icon: Icons.electric_car,
+                  title: 'Units Consumed',
+                  subtitle: '${sessionData['unit_consummed']} kWh',
+                  scaleFont: scaleFont,
+                  scaleIconSize: scaleIconSize,
+                ),  
+                _buildListTile(
+                  context,
+                  icon: Icons.error,
+                  title: 'Error',
+                  subtitle: sessionData['Error'] ?? 'No Error', // If 'error' is null, display 'No Error'
+                  scaleFont: scaleFont,
+                  scaleIconSize: scaleIconSize,
+                ),
+
+                _buildListTile(
+    context,
+    icon: null, // No icon, as we're using a custom CircleAvatar
+    title: 'Price',
+    subtitle: 'Rs. ${sessionData['price']}',
+    customIcon: CircleAvatar(
+      backgroundColor: Colors.grey.shade600,
+      child: Text(
+        '\u20B9', // Indian Rupee symbol
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: scaleFont(24),
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+    scaleFont: scaleFont,
+    scaleIconSize: scaleIconSize,
+    ),
+
+              ],
+            ),
+        ],
+      ),
     ),
   );
 }
 
 // Helper function to build ListTile
-Widget _buildListTile(
-  BuildContext context, {
-  required IconData? icon,
-  required String title,
-  required String subtitle,
-  Widget? customIcon,
-  required double Function(double) scaleFont,
-  required double Function(double) scaleIconSize,
-}) {
-  return Column(
-    children: [
-      ListTile(
-        leading: customIcon ??
-            CircleAvatar(
-              backgroundColor: Colors.grey.shade600,
-              child: Icon(icon, color: Colors.white, size: scaleIconSize(24)),
-            ),
-        title: Text(
-          title,
-          style: TextStyle(fontSize: scaleFont(18), color: Colors.white),
+  Widget _buildListTile(
+      BuildContext context, {
+        required IconData? icon,
+        required String title,
+        required String subtitle,
+        Widget? customIcon,
+        required double Function(double) scaleFont,
+        required double Function(double) scaleIconSize,
+      }) {
+    return Column(
+      children: [
+        ListTile(
+          leading: customIcon ??
+              CircleAvatar(
+                backgroundColor: Colors.grey.shade600,
+                child: Icon(icon, color: Colors.white, size: scaleIconSize(24)),
+              ),
+          title: Text(
+            title,
+            style: TextStyle(fontSize: scaleFont(18), color: Colors.white),
+          ),
+          subtitle: Text(
+            subtitle.isEmpty || subtitle == 'null' ? 'No Error' : subtitle,
+            style: TextStyle(fontSize: scaleFont(16), color: Colors.white70),
+          ),
         ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(fontSize: scaleFont(16), color: Colors.white70),
-        ),
-      ),
-      SizedBox(height: scaleFont(8)),
-    ],
-  );
-}
+        SizedBox(height: scaleFont(8)),
+      ],
+    );
+  }
+
 
 }
 // Help modal widget

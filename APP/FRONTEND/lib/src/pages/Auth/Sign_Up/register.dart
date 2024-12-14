@@ -157,7 +157,7 @@ class _RegisterPageState extends State<RegisterPage> {
           isSearching = false;
         });
       print('register $e');
-      _showAlertBanner('Internal server error');
+      _showAlertBanner('Something went wrong, try again later');
     }
   }
 

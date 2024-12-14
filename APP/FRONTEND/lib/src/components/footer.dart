@@ -1,134 +1,462 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../pages/Charging/charging.dart';
+import '../pages/Home_contents/home_content.dart';
+import '../utilities/QR/qrscanner.dart';
+import 'package:http/http.dart' as http;
 
 class Footer extends StatefulWidget {
   final Function(int) onTabChanged;
+  final String username;
+  final int? userId;
+  final String email;
 
-  const Footer({required this.onTabChanged, super.key});
+  const Footer({
+    required this.onTabChanged,
+    Key? key,
+    required this.username,
+    this.userId,
+    required this.email,
+  }) : super(key: key);
 
   @override
   FooterState createState() => FooterState();
 }
 
 class FooterState extends State<Footer> with SingleTickerProviderStateMixin {
-  final GlobalKey<CurvedNavigationBarState> _bottomNavigationKey = GlobalKey();
   int _currentIndex = 0;
-  late AnimationController _animationController;
-  final List<int> _navigationStack = [0]; // Navigation stack for back press handling
-
+  final List<int> _navigationStack = []; // Navigation stack to track history
+  bool isSearching = false;
+  String searchChargerID = '';
+  
   @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    )..forward(); // Start the animation immediately
-  }
+Widget build(BuildContext context) {
+  final double screenWidth = MediaQuery.of(context).size.width;
+  final double screenHeight = MediaQuery.of(context).size.height;
 
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+  // Define screen size categories
+  bool isSmallScreen = screenWidth <= 400; // For small devices like phones
+  bool isMediumScreen = screenWidth > 400 && screenWidth <= 800; // For tablets
+  bool isLargeScreen = screenWidth > 800; // For large devices like desktops
 
-  @override
-  Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double screenHeight = MediaQuery.of(context).size.height;
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: screenHeight * 0.03), // Adjust footer position
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(screenWidth * 0.08),
-            topRight: Radius.circular(screenWidth * 0.08),
-            bottomLeft: Radius.circular(screenWidth * 0.13),
-            bottomRight: Radius.circular(screenWidth * 0.13),
+  return Stack(
+    children: [
+      // Footer container
+      Positioned(
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: isLargeScreen
+                ? screenHeight * 0.02
+                : isMediumScreen
+                    ? screenHeight * 0.015
+                    : screenHeight * 0.01, // Adjust for floating button space
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(
+                  isLargeScreen
+                      ? screenWidth * 0.05
+                      : isMediumScreen
+                          ? screenWidth * 0.07
+                          : screenWidth * 0.1,
+                ),
+                topRight: Radius.circular(
+                  isLargeScreen
+                      ? screenWidth * 0.05
+                      : isMediumScreen
+                          ? screenWidth * 0.07
+                          : screenWidth * 0.1,
+                ),
+                bottomLeft: Radius.circular(
+                  isLargeScreen
+                      ? screenWidth * 0.08
+                      : isMediumScreen
+                          ? screenWidth * 0.1
+                          : screenWidth * 0.12,
+                ),
+                bottomRight: Radius.circular(
+                  isLargeScreen
+                      ? screenWidth * 0.08
+                      : isMediumScreen
+                          ? screenWidth * 0.1
+                          : screenWidth * 0.12,
+                ),
+              ),
+            ),
+            child: BottomAppBar(
+              notchMargin: isLargeScreen
+                  ? screenWidth * 0.03
+                  : isMediumScreen
+                      ? screenWidth * 0.04
+                      : screenWidth * 0.05,
+              color: Colors.black,
+              clipBehavior: Clip.antiAlias,
+              shape: const CircularNotchedRectangle(),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(
+                    icon: Icons.home,
+                    label: "Home",
+                    index: 0,
+                    isSelected: _currentIndex == 0,
+                    onTap: _onTabTapped,
+                    screenWidth: screenWidth,
+                    screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
+                  ),
+                  _buildNavItem(
+                    icon: Icons.wallet_outlined,
+                    label: "Wallet",
+                    index: 1,
+                    isSelected: _currentIndex == 1,
+                    onTap: _onTabTapped,
+                    screenWidth: screenWidth,
+                    screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
+                  ),
+                  SizedBox(
+                    width: isLargeScreen
+                        ? screenWidth * 0.12
+                        : isMediumScreen
+                            ? screenWidth * 0.1
+                            : screenWidth * 0.08, // Space for the floating button
+                  ),
+                  _buildNavItem(
+                    icon: Icons.history,
+                    label: "History",
+                    index: 2,
+                    isSelected: _currentIndex == 2,
+                    onTap: _onTabTapped,
+                    screenWidth: screenWidth,
+                    screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
+                  ),
+                  _buildNavItem(
+                    icon: Icons.account_circle,
+                    label: "Profile",
+                    index: 3,
+                    isSelected: _currentIndex == 3,
+                    onTap: _onTabTapped,
+                    screenWidth: screenWidth,
+                    screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        child: CurvedNavigationBar(
-          key: _bottomNavigationKey,
-          index: _currentIndex,
-          height: screenHeight * 0.07, // Adjust the height proportionally
-          items: List<Widget>.generate(4, (index) {
-            return AnimatedBuilder(
-              animation: _animationController,
-              builder: (context, child) {
-                return ShaderMask(
-                  shaderCallback: (bounds) {
-                    return LinearGradient(
-                      colors: [_getColor(index), Colors.black],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ).createShader(bounds);
-                  },
-                  child: Icon(
-                    _getIconData(index),
-                    size: screenWidth * 0.09, // Adjust icon size proportionally
-                    color: Colors.white, // Keep the icon color white for ShaderMask
-                  ),
-                );
-              },
-            );
-          }),
-          color: Colors.black,
-          buttonBackgroundColor: const Color(0xFF1E1E1E),
-          backgroundColor: Colors.black,
-          animationCurve: Curves.easeInOut,
-          animationDuration: const Duration(milliseconds: 500),
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-              _animationController.forward(from: 0.0);
-              if (_navigationStack.isEmpty || _navigationStack.last != index) {
-                _navigationStack.add(index);
-              }
-            });
-            widget.onTabChanged(index);
-          },
+      ),
+
+      // FloatingActionButton
+      Positioned(
+        bottom: isLargeScreen
+            ? screenHeight * 0.03
+            : isMediumScreen
+                ? screenHeight * 0.03
+                : screenHeight * 0.02,
+        left: screenWidth * 0.5 - (screenWidth * 0.075),
+        child: FloatingActionButton(
+          backgroundColor: Colors.green,
+          onPressed: navigateToQRViewExample,
+          child: Icon(
+            Icons.qr_code_scanner,
+            color: Colors.white,
+            size: isLargeScreen
+                ? 40
+                : isMediumScreen
+                    ? 35
+                    : 28, // Adjust size for small screens
+          ),
         ),
       ),
-    );
+    ],
+  );
+}
+
+// Helper function for determining screen category
+String _getScreenCategory(bool isSmallScreen, bool isMediumScreen) {
+  if (isSmallScreen) {
+    return "small";
+  } else if (isMediumScreen) {
+    return "medium";
+  } else {
+    return "large";
+  }
+}
+
+
+Widget _buildNavItem({
+  required IconData icon,
+  required String label,
+  required int index,
+  required bool isSelected,
+  required ValueChanged<int> onTap,
+  required double screenWidth,
+  required String screenCategory,
+}) {
+  double iconSize = 0;
+  double fontSize = 0;
+
+  // Adjust icon size and font size based on screen category
+  if (screenCategory == "large") {
+    iconSize = 36;
+    fontSize = 16;
+  } else if (screenCategory == "medium") {
+    iconSize = 30;
+    fontSize = 14;
+  } else {
+    iconSize = 24;
+    fontSize = 12;
   }
 
-  /// Get the corresponding icon for each index
-  IconData _getIconData(int index) {
-    switch (index) {
-      case 0:
-        return Icons.home;
-      case 1:
-        return Icons.wallet_outlined;
-      case 2:
-        return Icons.history;
-      case 3:
-        return Icons.account_circle;
-      default:
-        return Icons.home;
-    }
-  }
+  return GestureDetector(
+    onTap: () => onTap(index),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: iconSize,
+          color: isSelected ? const Color.fromARGB(255, 104, 251, 109) : Colors.grey,
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? const Color.fromARGB(255, 104, 251, 109) : Colors.grey,
+            fontSize: fontSize,
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
-  /// Animate the color change of the icons
-  Color _getColor(int index) {
-    return _currentIndex == index
-        ? ColorTween(
-            begin: Colors.black,
-            end: const Color.fromARGB(255, 104, 251, 109),
-          ).evaluate(_animationController)!
-        : const Color.fromARGB(255, 79, 192, 83);
+  void _onTabTapped(int index) {
+    setState(() {
+      _navigationStack.add(_currentIndex); // Add current index to the stack
+      _currentIndex = index;
+    });
+    widget.onTabChanged(index);
   }
 
   /// Handle back button press to navigate backward in the stack
   bool handleBackPress() {
-    if (_navigationStack.length > 1) {
+    if (_navigationStack.isNotEmpty) {
       setState(() {
-        _navigationStack.removeLast();
-        _currentIndex = _navigationStack.last;
-        _bottomNavigationKey.currentState?.setPage(_currentIndex);
+        _currentIndex = _navigationStack.removeLast(); // Go back to the previous tab
       });
       widget.onTabChanged(_currentIndex);
-      return false;
+      return false; // Prevent exiting the app
     }
-    return true;
+    return true; // Allow exiting the app
   }
+
+
+
+Future<void> navigateToQRViewExample() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool isFirstTime = prefs.getBool('isFirstTimeQR') ?? true;
+
+  if (Platform.isIOS) {
+    if (isFirstTime) {
+      // Navigate without checking permission for the first time
+      await _navigateToQRView();
+      prefs.setBool('isFirstTimeQR', false); // Set to false after the first navigation
+    } else {
+
+      var status = await Permission.camera.status;
+      print("camera status: $status ");
+      if (status.isGranted) {
+        await _navigateToQRView();
+      } else {
+        // Navigate to a permission error page like the image provided
+        _navigateToPermissionErrorPage();
+      }
+    }
+  } else if (Platform.isAndroid) {
+    // For Android, always check permissions
+    PermissionStatus permissionStatus = await Permission.camera.request();
+
+    if (permissionStatus.isGranted) {
+      await _navigateToQRView();
+    } else {
+      // Show a dialog if permission is denied
+        _navigateToPermissionErrorPage();
+    }
+  }
+}
+
+
+
+void _navigateToPermissionErrorPage() {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => PermissionErrorPage(), // Custom page like the image
+    ),
+  );
+}
+Future<void> _navigateToQRView() async {
+  final scannedCode = await Navigator.push<String>(
+    context,
+    MaterialPageRoute(
+      builder: (context) => QRViewExample(
+        handleSearchRequestCallback: handleSearchRequest,
+        username: widget.username,
+        userId: widget.userId,
+      ),
+    ),
+  );
+
+  if (scannedCode != null) {
+    setState(() {
+      searchChargerID = scannedCode;
+      isSearching = false;
+    });
+  }
+}
+  Future<Map<String, dynamic>?> handleSearchRequest(
+      String searchChargerID) async {
+    if (isSearching) return null;
+
+    print("response: handleSearchRequest");
+
+    if (searchChargerID.isEmpty) {
+      showErrorDialog(context, 'Please enter a charger ID.');
+      return {'error': true, 'message': 'Charger ID is empty'};
+    }
+
+    setState(() {
+      isSearching = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://122.166.210.142:4444/searchCharger'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'searchChargerID': searchChargerID,
+          'Username': widget.username,
+          'user_id': widget.userId,
+        }),
+      );
+
+      // Delay to keep the loading indicator visible
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          this.searchChargerID = searchChargerID;
+          isSearching = false;
+        });
+
+        await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          isDismissible: false,
+          enableDrag: false,
+          backgroundColor: Colors.black,
+          builder: (BuildContext context) {
+            return Padding(
+              padding: MediaQuery.of(context).viewInsets,
+              child: ConnectorSelectionDialog(
+                chargerData: data['socketGunConfig'] ?? {},
+                onConnectorSelected: (connectorId, connectorType) {
+                  updateConnectorUser(
+                      searchChargerID, connectorId, connectorType);
+                },
+                username: widget.username,
+                email: widget.email,
+                userId: widget.userId,
+              ),
+            );
+          },
+        );
+        return data; // Return the successful response data
+      } else {
+        final errorData = json.decode(response.body);
+        showErrorDialog(context, errorData['message']);
+        setState(() {
+          isSearching = false;
+        });
+        return {'error': true, 'message': errorData['message']};
+      }
+    } catch (error) {
+      showErrorDialog(context, 'Something went wrong, try again later');
+      return {'error': true, 'message': 'Something went wrong, try again later'};
+    } finally {
+      setState(() {
+        isSearching = false;
+      });
+    }
+  }
+
+
+  void showErrorDialog(BuildContext context, String message) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.black,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: MediaQuery.of(context).viewInsets,
+          child: ErrorDetails(
+              errorData: message,
+              username: widget.username,
+              email: widget.email,
+              userId: widget.userId),
+        );
+      },
+    ).then((_) {});
+  }
+  
+
+  Future<void> updateConnectorUser(
+      String searchChargerID, int connectorId, int connectorType) async {
+    setState(() {
+      isSearching = false;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'searchChargerID': searchChargerID,
+          'Username': widget.username,
+          'user_id': widget.userId,
+          'connector_id': connectorId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Charging(
+              searchChargerID: searchChargerID,
+              username: widget.username,
+              userId: widget.userId,
+              connector_id: connectorId,
+              connector_type: connectorType,
+              email: widget.email,
+            ),
+          ),
+        );
+      } else {
+        final errorData = json.decode(response.body);
+        showErrorDialog(context, errorData['message']);
+      }
+    } catch (error) {
+      showErrorDialog(context, 'Something went wrong, try again later ');
+    }
+  }
+
 }
