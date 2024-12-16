@@ -50,7 +50,7 @@
 // //   LatLng? _previousPosition;
 // //   double? _previousBearing;
 // //   bool _isCheckingPermission = false; // Flag to prevent repeated permission checks
-// //   static const String apiKey = 'AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo';
+// //   static const String apiKey = 'AIzaSyDdBinCjuyocru7Lgi6YT3FZ1P6_xi0tco';
 
 // //  @override
 // //   void initState() {
@@ -726,7 +726,7 @@
 // // Future<void> _getPolyline(LatLng start, LatLng end) async {
 // //   print('Fetching polyline from $start to $end');
 // //   final response = await http.get(Uri.parse(
-// //         'https://maps.googleapis.com/maps/api/directions/json?origin=${start.latitude},${start.longitude}&destination=${end.latitude},${end.longitude}&key=AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo'));
+// //         'https://maps.googleapis.com/maps/api/directions/json?origin=${start.latitude},${start.longitude}&destination=${end.latitude},${end.longitude}&key=AIzaSyDdBinCjuyocru7Lgi6YT3FZ1P6_xi0tco'));
 
 // //   if (response.statusCode == 200) {
 // //     final data = json.decode(response.body);
@@ -2663,7 +2663,7 @@
 //   bool LocationEnabled = false;
 //   final PageController _pageController = PageController(
 //       viewportFraction: 0.85); // Page controller for scrolling cards
-//   static const String apiKey = 'AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo';
+//   static const String apiKey = 'AIzaSyDdBinCjuyocru7Lgi6YT3FZ1P6_xi0tco';
 //   Map<String, String> _addressCache = {};
 //   GoogleMapController? _mapController;
 //   List<String> chargerIdsList = [];

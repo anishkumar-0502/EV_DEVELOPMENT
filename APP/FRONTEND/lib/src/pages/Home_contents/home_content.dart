@@ -61,7 +61,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   bool LocationEnabled = false;
   final PageController _pageController = PageController(
       viewportFraction: 0.85); // Page controller for scrolling cards
-  static const String apiKey = 'AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo';
+  static const String apiKey = 'AIzaSyDdBinCjuyocru7Lgi6YT3FZ1P6_xi0tco';
   GoogleMapController? _mapController;
   List<String> chargerIdsList = [];
   bool _isAnimationInProgress = false       ;

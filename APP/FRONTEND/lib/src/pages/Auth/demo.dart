@@ -30,7 +30,202 @@ class ChargerListPage extends StatelessWidget {
       "time": "4 Min",
       "image": "assets/Image/chargerImage.png"
     },
-    // Add more chargers as needed
+        {
+      "title": "Tesla EV Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Reliance Station",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Triumph EV",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Super Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+        {
+      "title": "Tesla EV Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Reliance Station",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Triumph EV",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Super Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+        {
+      "title": "Tesla EV Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Reliance Station",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Triumph EV",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Super Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+        {
+      "title": "Tesla EV Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Reliance Station",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Triumph EV",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Super Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+        {
+      "title": "Tesla EV Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Reliance Station",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Triumph EV",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Super Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+        {
+      "title": "Tesla EV Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Reliance Station",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Triumph EV",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Super Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+        {
+      "title": "Tesla EV Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Reliance Station",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Triumph EV",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
+    {
+      "title": "Super Point",
+      "address": "13, Time Square, CA",
+      "distance": "2 Km",
+      "time": "4 Min",
+      "image": "assets/Image/chargerImage.png"
+    },
   ];
 
   @override
@@ -44,48 +239,46 @@ class ChargerListPage extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Charging Session",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: chargers.length,
-                itemBuilder: (context, index) {
-                  // Determine zig-zag alignment
-                  final isLeftAligned = index % 2 == 0;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      mainAxisAlignment: isLeftAligned
-                          ? MainAxisAlignment.start // Left alignment
-                          : MainAxisAlignment.end, // Right alignment
-                      children: [
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.45,
-                          child: ChargerCard(
-                            title: chargers[index]["title"]!,
-                            address: chargers[index]["address"]!,
-                            distance: chargers[index]["distance"]!,
-                            time: chargers[index]["time"]!,
-                            imageUrl: chargers[index]["image"]!,
-                          ),
-                        ),
-                      ],
+        child: SingleChildScrollView(
+          child: SizedBox(
+            height: chargers.length * 180 + 50, // Adjust for the heading
+            child: Stack(
+              children: [
+                const Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Text(
+                    "Charging Session",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                ...List.generate(chargers.length, (index) {
+                  final isLeftAligned = index % 2 != 0; // Switch alignment
+                  return Positioned(
+                    top: index * 100.0 + 50, // Adjust top to add space for heading
+                    left: isLeftAligned ? 0 : null,
+                    right: isLeftAligned ? null : 0,
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.45,
+                      child: ChargerCard(
+                        title: chargers[index]["title"]!,
+                        address: chargers[index]["address"]!,
+                        distance: chargers[index]["distance"]!,
+                        time: chargers[index]["time"]!,
+                        imageUrl: chargers[index]["image"]!,
+                      ),
                     ),
                   );
-                },
-              ),
+                }),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

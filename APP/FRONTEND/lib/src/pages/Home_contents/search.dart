@@ -385,7 +385,7 @@ Future<void> _deleteRecentLocation(int index) async {
 
 Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
   const String apiKey =
-      'AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo'; // Replace with your actual API key
+      'AIzaSyDdBinCjuyocru7Lgi6YT3FZ1P6_xi0tco'; // Replace with your actual API key
   final String apiUrl =
       'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=$apiKey';
 
