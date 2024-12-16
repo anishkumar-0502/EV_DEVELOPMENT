@@ -11,9 +11,7 @@ import '../../../utilities/User_Model/user.dart';
 import '../../home.dart';
 import '../Sign_Up/register.dart';
 import '../../../utilities/Alert/alert_banner.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import '../Forgot_password/forgot_password.dart';
-import '../demo.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -26,11 +24,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  late Connectivity _connectivity;
-
-  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
-  bool _isDialogOpen = false; // Track if the dialog is open
-
 
   final _formKey = GlobalKey<FormState>();
 

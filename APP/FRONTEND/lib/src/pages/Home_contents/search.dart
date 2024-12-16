@@ -37,7 +37,6 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
   // Sample recent locations
   List<Map<String, String>> recentLocations = [];
   List<Map<String, Object>> filteredLocations = [];
-  LatLng? _currentPosition;
   bool _isLoading = false; // Add this variable to manage loading state
   bool _isLoadingBolt = false; // Add this variable to manage loading state
   bool _isDialogShown = false;
@@ -105,11 +104,7 @@ Future<void> updateConnectorUser(String searchChargerID, int connectorId, int co
     }
   } catch (error) {
     showErrorDialog(context, 'Something went wrong, try again later');
-  // } finally {
-  //   setState(() {
-  //         _isLoadingBolt = false;
-  //         _isDialogShown = false; // Reset dialog shown status
-  //   });
+
   }
 }
 
@@ -749,7 +744,6 @@ Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
       if (currentLocation != null) {
         // Update the current position
         setState(() {
-          _currentPosition = currentLocation;
         });
 
         // Call the _onLocationSelected function with the current location data

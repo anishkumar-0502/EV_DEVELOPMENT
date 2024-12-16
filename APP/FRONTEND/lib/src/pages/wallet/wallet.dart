@@ -1,3 +1,5 @@
+// ignore_for_file: dead_code
+
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:http/http.dart' as http;
@@ -782,7 +784,6 @@ class HelpModal extends StatelessWidget {
 
           // Conditional rendering: shimmer or content
           if (!isDataLoaded) ...[
-            _buildShimmerCard(context),
           ] else ...[
             _buildSection(
               'How to use the Wallet',
@@ -1053,8 +1054,6 @@ class _RechargeModelState extends State<RechargeModel>
         10000 - widget.walletBalance; // Calculate max allowed balance
     maxAmount = double.parse(maxAmount.toStringAsFixed(2));
 
-    // Fetch user data from the provider
-    UserData userData = Provider.of<UserData>(context);
 
     // Handle payment process
     void handlePayment(double amount) async {

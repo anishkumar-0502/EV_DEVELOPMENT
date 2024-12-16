@@ -162,13 +162,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
 
           if (!chargerIds.contains(chargerId)) {
             chargerIds.add(chargerId);
-            final lat = double.tryParse(charger['lat'] ?? '0');
-            final long = double.tryParse(charger['long'] ?? '0');
-
-            // Fetch address using the charger’s coordinates
-            String address =
-                await _getPlaceName(LatLng(lat!, long!), chargerId);
-
+      
             String lastUsedTime = 'Not yet received';
             if (charger['status'] != null &&
                 charger['status'] is List &&

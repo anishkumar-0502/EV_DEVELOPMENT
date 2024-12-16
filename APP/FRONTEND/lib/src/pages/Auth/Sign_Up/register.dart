@@ -6,7 +6,6 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:http/http.dart' as http;
 import '../Log_In/login.dart';
 import '../../../utilities/Alert/alert_banner.dart'; // Import the alert banner
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -29,9 +28,7 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _alertMessage;
   bool _isLoading = false;
   String? successMsg;
-  late Connectivity _connectivity;
-  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
-  bool _isDialogOpen = false;
+
   bool isSearching = false;
 
   @override

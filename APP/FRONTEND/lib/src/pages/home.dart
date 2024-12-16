@@ -9,7 +9,6 @@ import 'history/history.dart';
 import 'profile/profile.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart'; // Import the foreground task package
 // import 'package:flutter/services.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 class HomePage extends StatefulWidget {
   final String username;
