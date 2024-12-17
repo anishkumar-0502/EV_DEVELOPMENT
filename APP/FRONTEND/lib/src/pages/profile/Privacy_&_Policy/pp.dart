@@ -54,7 +54,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFF3E3E3E).withOpacity(0.8),
                     borderRadius: const BorderRadius.all(
-                    Radius.circular(30),
+                      Radius.circular(30),
                     ),
                   ),
                   child: const SingleChildScrollView(
@@ -72,7 +72,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                           ),
                           SizedBox(height: 5),
                           Text(
-                            "Last updated: 4 October 2023",
+                            "Last updated: 16 December 2024",
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey,
@@ -80,57 +80,87 @@ class PrivacyPolicyPage extends StatelessWidget {
                           ),
                           SizedBox(height: 20),
                           Text(
-                            "This Privacy Policy describes how DailyUI collects, uses, and protects your personal information when you use our mobile application (\"app\", \"service\").",
+                            "We value your privacy and are committed to protecting your personal data. This Privacy Policy outlines how we collect, use, and protect your information when you use our EV charging mobile application.",
                             style: TextStyle(fontSize: 16),
                           ),
                           SizedBox(height: 20),
                           Text(
-                            "1. Information Collection",
+                            "1. Information We Collect",
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 5),
                           Text(
-                            "We collect information that you provide directly to us, such as when you register for an account, update your profile, or interact with the app. This information may include your name, email address, phone number, and other personal details.",
+                            "Personal Information: When you register an account, we collect your mobile number and email address.\n\nUser Credentials: We encrypt your password and store it securely in our database.\n\nPayment Information: We do not store or process sensitive payment information (e.g., credit card numbers, UPI IDs). All payment transactions are securely processed through Razorpay.\n\nLocation Information: We do not collect or store location data. The App uses Google Maps APIs solely to help you find nearby EV chargers.",
                             style: TextStyle(fontSize: 16),
                           ),
                           SizedBox(height: 20),
                           Text(
-                            "2. Use of Information",
+                            "2. How We Use Your Data",
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 5),
                           Text(
-                            "We use the information we collect to provide, maintain, and improve our services, and to communicate with you. This includes using your information to respond to your inquiries, send updates, and provide customer support.",
+                            "We use your mobile number and email address for account creation, login, and password recovery purposes.\n\nNo promotional emails or marketing messages will be sent to you, except for essential notifications like password reset emails.",
                             style: TextStyle(fontSize: 16),
                           ),
                           SizedBox(height: 20),
                           Text(
-                            "3. Information Sharing",
+                            "3. Data Security",
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 5),
                           Text(
-                            "We do not share your personal information with third parties except as necessary to provide our services or as required by law. We may share information with our affiliates and service providers who assist us in operating our app and providing services.",
+                            "We take reasonable measures to protect your personal data from unauthorized access or disclosure. Passwords are stored using encryption, and access to personal information is restricted to authorized personnel only.\n\nWe recommend that you do not jailbreak or root your device, as it may compromise security and interfere with the App's functionality.",
                             style: TextStyle(fontSize: 16),
                           ),
                           SizedBox(height: 20),
                           Text(
-                            "4. Data Security",
+                            "4. Third-Party Services",
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 5),
                           Text(
-                            "We implement appropriate security measures to protect your personal information from unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the internet or electronic storage is completely secure.",
+                            "The App integrates Razorpay for payment processing. Razorpay handles all sensitive payment data, and you are bound by their privacy policy when making payments through the App.",
                             style: TextStyle(fontSize: 16),
                           ),
                           SizedBox(height: 20),
                           Text(
-                            "5. Changes to this Privacy Policy",
+                            "5. Data Retention",
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 5),
                           Text(
-                            "We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. You are advised to review this Privacy Policy periodically for any changes.",
+                            "We retain your personal data as long as your account is active. If you wish to delete your account, you can contact our support team, and your data will be permanently deleted.",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            "6. User Rights",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "You have the right to access, update, or delete your account information at any time. Contact us at [Support Email Address] for assistance with any data-related requests.",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            "7. Changes to This Privacy Policy",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "We may update this Privacy Policy from time to time. Any changes will be posted on this page, and your continued use of the App will signify your acceptance of the updated terms.",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            "8. Account Deletion",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "To delete your account, you can either click the \"Delete Account\" option within the app or send an email to info@outdidunified.com. Your account will be permanently deleted upon email confirmation, and all your data will be permanently removed.",
                             style: TextStyle(fontSize: 16),
                           ),
                         ],
@@ -139,6 +169,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   ),
                 ),
               ),
+
             ],
           ),
         ),

@@ -162,7 +162,7 @@ if (initialisationError case final err?) {
         ChangeNotifierProvider(create: (_) => DownloadingProvider(), lazy: true),
       ],
       child: MaterialApp(
-        title: 'ChargeExpress',
+        title: 'ion Hive',
         debugShowCheckedModeBanner: false,
         theme: customTheme,
         initialRoute: '/',

@@ -55,8 +55,7 @@ class TermsPage extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFF3E3E3E).withOpacity(0.8),
                     borderRadius: const BorderRadius.all(
-                       Radius.circular(30),
-
+                      Radius.circular(30),
                     ),
                   ),
                   child: const SingleChildScrollView(
@@ -74,7 +73,7 @@ class TermsPage extends StatelessWidget {
                           ),
                           SizedBox(height: 5),
                           Text(
-                            "Last updated: 4 October 2023",
+                            "Last updated: 16 December 2024",
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey,
@@ -82,37 +81,72 @@ class TermsPage extends StatelessWidget {
                           ),
                           SizedBox(height: 20),
                           Text(
-                            "Please read these terms and conditions (\"terms and conditions\", \"terms\") carefully before using DailyUI mobile application (\"app\", \"service\") operated by DailyUI (\"us\", \"we\", \"our\").",
-                            style: TextStyle(fontSize: 16),
-                          ),
-                          SizedBox(height: 20),
-                          Text(
-                            "1. Conditions of use",
+                            "1. Service Overview",
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 5),
                           Text(
-                            "By using this app, you certify that you have read and reviewed this Agreement and that you agree to comply with its terms. If you do not want to be bound by the terms of this Agreement, you are advised to stop using the app accordingly. DailyUI only grants use and access of this app, its products, and its services to those who have accepted its terms.",
+                            "The App provides a platform for users to locate and charge their electric vehicles at designated stations. Payment for charging services is facilitated through Razorpay, an integrated payment gateway.\n\nBy using the App, you agree to comply with these terms and any local regulations governing EV charging.",
                             style: TextStyle(fontSize: 16),
                           ),
                           SizedBox(height: 20),
                           Text(
-                            "2. Privacy policy",
+                            "2. User Account Responsibilities",
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 5),
                           Text(
-                            "Before you continue using our app, we advise you to read our privacy policy regarding our user data collection. It will help you better understand our practices.",
+                            "You are required to create an account to use the App. Your account must be linked to a valid mobile number and email address.\n\nYou are responsible for maintaining the security of your account by using a strong password. Any unauthorized use of your account should be reported to our support team immediately.",
                             style: TextStyle(fontSize: 16),
                           ),
                           SizedBox(height: 20),
                           Text(
-                            "3. Intellectual property",
+                            "3. Payment Processing",
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 5),
                           Text(
-                            "You agree that all materials, products, and services provided on this app are the property of DailyUI, its affiliates, directors, officers, employees, agents, suppliers, or licensors including all copyrights, trade secrets, trademarks, patents, and other intellectual property. You also agree that you will not reproduce or redistribute the DailyUI’s intellectual property in any way, including electronic, digital, or new trademark registrations.",
+                            "All payments are processed by Razorpay. We do not store or handle any sensitive payment data, such as credit card numbers or UPI IDs. Razorpay’s terms and conditions govern all payment-related activities, and you are responsible for any issues arising from payment disputes.",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            "4. App Permissions",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "The App requires certain device permissions, such as access to location services to help you find nearby chargers and camera access to scan QR codes at the charging stations. By granting these permissions, you acknowledge that the App can function correctly.\n\nWe do not collect location data; it is used solely to facilitate the location of charging stations via Google Maps APIs.",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            "5. App Updates and Modifications",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "We reserve the right to modify or update the App at any time to improve its functionality, fix bugs, or introduce new features. It is your responsibility to keep the App updated to ensure it works as intended.\n\nWe may choose to discontinue the App without prior notice. Upon termination of service, your rights to use the App will end, and any related licenses will be revoked.",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            "6. Liability Disclaimer",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "While we strive to provide accurate information and reliable functionality, the App may sometimes rely on third-party services (e.g., Razorpay, Google Maps) for certain features. We are not responsible for any losses or damages caused by service interruptions, incorrect data, or reliance on third-party services.\n\nUsers are responsible for ensuring their devices are charged and functional. We are not liable for any issues caused by your device being offline or out of battery during a charging session.",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            "7. Changes to These Terms",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "We may update these Terms of Service from time to time. Continued use of the App after changes have been made indicates acceptance of the updated terms.",
                             style: TextStyle(fontSize: 16),
                           ),
                         ],
@@ -121,6 +155,7 @@ class TermsPage extends StatelessWidget {
                   ),
                 ),
               ),
+
             ],
           ),
         ),

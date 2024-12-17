@@ -53,7 +53,7 @@ class _AccountPageState extends State<AccountPage> {
       enableDrag: false,
       builder: (BuildContext context) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.7, // Set height to 70% of the screen
+          height: MediaQuery.of(context).size.height * 0.8, // Set height to 70% of the screen
           child: Padding(
             padding: MediaQuery.of(context).viewInsets,
             child: Rfidpage(
@@ -475,14 +475,25 @@ class _RfidpageState extends State<Rfidpage> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              SizedBox(height: screenHeight * 0.02), // Responsive space
-              Center(
-                child: Image.asset(
-                  'assets/Image/rfid2.png', // Use the correct path to your asset
-                  width: screenWidth * 0.6, // Responsive image width
+              // Responsive space
+              SizedBox(height: screenHeight * 0.02),
+              Padding(
+                padding: EdgeInsets.all(screenWidth * 0.04), // Respo
+
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: 1, // Maintain square aspect ratio (512x512 image)
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10), // Optional rounded corners
+                      child: Image.asset(
+                        'assets/Image/rfidcard.png', // Use the correct path to your asset
+                        fit: BoxFit.contain, // Dynamically scale the image
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              SizedBox(height: screenHeight * 0.02), // Space between image and button
+           // Space between image and other content
 
               // Show shimmer effect while fetching data
               if (isLoading)
@@ -512,101 +523,101 @@ class _RfidpageState extends State<Rfidpage> {
                   ),
                 )
               else ...[
-                // Display the fetched data with unique designs
-                Center(
-                  child: Container(
-                    padding: EdgeInsets.all(screenWidth * 0.04), // Responsive padding
-                    margin: EdgeInsets.only(bottom: screenHeight * 0.02), // Responsive margin
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3E3E3E).withOpacity(0.8),
-                      borderRadius: const BorderRadius.all(
-                        Radius.circular(10),
+                  Center(
+                    child: Container(
+                      padding: EdgeInsets.all(screenWidth * 0.04), // Responsive padding
+                      margin: EdgeInsets.only(bottom: screenHeight * 0.02), // Responsive margin
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3E3E3E).withOpacity(0.8),
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(10),
+                        ),
                       ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Text(
-                            '📋 RFID Information',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.045, // Responsive font size
-                              fontWeight: FontWeight.bold,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Text(
+                              '📋 RFID Information',
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.045, // Responsive font size
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(height: screenHeight * 0.02), // Responsive space
-                        CustomGradientDivider(),
-                        SizedBox(height: screenHeight * 0.02), // Responsive space
-                        Padding(
-                          padding: EdgeInsets.only(left: screenWidth * 0.04, top: screenHeight * 0.02, bottom: screenHeight * 0.01),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    'RFID Name: ',
-                                    style: TextStyle(
-                                      fontSize: screenWidth * 0.045, // Responsive font size
-                                      fontWeight: FontWeight.bold,
-                                    ), // Bold RFID name heading
-                                  ),
-                                  SizedBox(width: screenWidth * 0.02), // Responsive space
-                                  Text(
-                                    '$tagId',
-                                    style: TextStyle(fontSize: screenWidth * 0.045), // Responsive font size
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: screenHeight * 0.015), // Responsive space
-                              Row(
-                                children: [
-                                  Text(
-                                    'Expiry Date: ',
-                                    style: TextStyle(
-                                      fontSize: screenWidth * 0.045, // Responsive font size
-                                      fontWeight: FontWeight.bold,
-                                    ), // Bold Expiry Date heading
-                                  ),
-                                  SizedBox(width: screenWidth * 0.02), // Responsive space
-                                  Text(
-                                    '${formatDate(tagIdExpiryDate)}',
-                                    style: TextStyle(fontSize: screenWidth * 0.045), // Responsive font size
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: screenHeight * 0.015), // Responsive space
-                              RichText(
-                                text: TextSpan(
-                                  style: TextStyle(
-                                    fontSize: screenWidth * 0.045, // Responsive font size
-                                    color: Colors.white,
-                                  ),
+                          SizedBox(height: screenHeight * 0.02), // Responsive space
+                          CustomGradientDivider(),
+                          SizedBox(height: screenHeight * 0.02), // Responsive space
+                          Padding(
+                            padding: EdgeInsets.only(
+                                left: screenWidth * 0.04, top: screenHeight * 0.02, bottom: screenHeight * 0.01),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                                   children: [
-                                    TextSpan(
-                                      text: 'Status: ',
+                                    Text(
+                                      'RFID Name: ',
                                       style: TextStyle(
+                                        fontSize: screenWidth * 0.045, // Responsive font size
                                         fontWeight: FontWeight.bold,
-                                      ), // Bold Status heading
-                                    ),
-                                    TextSpan(
-                                      text: status == true ? 'Active' : 'Inactive',
-                                      style: TextStyle(
-                                        color: status == true ? Colors.green : Colors.red, // Status color
                                       ),
+                                    ),
+                                    SizedBox(width: screenWidth * 0.02),
+                                    Text(
+                                      '$tagId',
+                                      style: TextStyle(fontSize: screenWidth * 0.045), // Responsive font size
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+                                SizedBox(height: screenHeight * 0.015),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Expiry Date: ',
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.045, // Responsive font size
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(width: screenWidth * 0.02),
+                                    Text(
+                                      '${formatDate(tagIdExpiryDate)}',
+                                      style: TextStyle(fontSize: screenWidth * 0.045), // Responsive font size
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: screenHeight * 0.015),
+                                RichText(
+                                  text: TextSpan(
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.045, // Responsive font size
+                                      color: Colors.white,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: 'Status: ',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: status == true ? 'Active' : 'Inactive',
+                                        style: TextStyle(
+                                          color: status == true ? Colors.green : Colors.red, // Status color
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
 
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start, // Align the text and icon
@@ -620,8 +631,8 @@ class _RfidpageState extends State<Rfidpage> {
                       'Minimum wallet balance should be maintained to access RFID card',
                       style: TextStyle(
                         fontSize: screenWidth * 0.04, // Responsive font size
-                        color: Colors.white70, // Match text color with the icon
-                        height: 1.5, // Increase line height for better readability
+                        color: Colors.white70,
+                        height: 1.5, // Better readability
                       ),
                     ),
                   ),
@@ -631,6 +642,7 @@ class _RfidpageState extends State<Rfidpage> {
           ),
         ),
       ),
+
     );
   }
 

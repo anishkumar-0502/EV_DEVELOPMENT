@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.ev_app">
+    package="com.outdidev.ev_app">
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -29,7 +29,7 @@
     </queries>
 
     <application
-        android:label="ChargeExpress"
+        android:label="ion Hive"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
