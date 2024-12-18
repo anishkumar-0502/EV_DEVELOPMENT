@@ -1423,7 +1423,7 @@ Future<void> _getCurrentLocation() async {
                 // ),
                 SizedBox(
                     height: screenHeight *
-                        0.60), // Adjust height based on screen size
+                        0.58), // Adjust height based on screen size
                 _buildChargerListContainer()
               ],
             ),

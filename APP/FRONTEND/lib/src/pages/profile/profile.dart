@@ -52,6 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
           (route) => false,
     );
+    
   }
 
   void _showEditUserModal() {
@@ -63,7 +64,7 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: Colors.black,
       builder: (BuildContext context) {
 
-        return Container(
+        return SizedBox(
           height: MediaQuery.of(context).size.height * 0.75,
           child:  EditUserModal(
             username: widget.username,
@@ -93,7 +94,7 @@ void _showHelpModal() {
       double screenHeight = MediaQuery.of(context).size.height;
       double modalHeight = screenHeight * 0.6; // Adjust this percentage as needed
 
-      return Container(
+      return SizedBox(
         height: modalHeight, // Dynamic height based on screen size
         child: Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom), // Only add padding for the keyboard area
@@ -112,7 +113,7 @@ void _showHelpModal() {
       isDismissible: false,
       enableDrag: false,
       builder: (BuildContext context) {
-        return Container(
+        return SizedBox(
           height: MediaQuery.of(context).size.height * 0.97, // Set height to 70% of the screen
           child: Padding(
             padding: MediaQuery.of(context).viewInsets,
@@ -333,15 +334,15 @@ Widget build(BuildContext context) {
           style: const TextStyle(color: Colors.white70, fontSize: 12),
         ),
         RichText(
-          text: const TextSpan(
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+          text:  TextSpan(
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
             children: [
-              TextSpan(text: 'Copyright © 2024 '),
-              TextSpan(
+              TextSpan(text: 'Copyright © ${DateTime.now().year} '),
+              const TextSpan(
                 text: 'ion Hive',
                 style: TextStyle(color: Colors.green),
               ),
-              TextSpan(text: '. All rights reserved.'),
+              const TextSpan(text: '. All rights reserved.'),
             ],
           ),
         ),

@@ -104,7 +104,8 @@ class _HomePageState extends State<HomePage> {
       },
       child: Scaffold(
         body: _pageOptions[_pageIndex],
-        bottomNavigationBar: Footer(
+        bottomNavigationBar: 
+        Footer(
           username:widget.username,
           userId:widget.userId,
           email: widget.email,

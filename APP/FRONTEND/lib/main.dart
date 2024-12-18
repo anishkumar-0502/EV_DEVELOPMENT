@@ -49,7 +49,6 @@ class SessionHandler extends StatefulWidget {
 
 class _SessionHandlerState extends State<SessionHandler> {
   late StreamSubscription<ConnectivityResult> _connectivitySubscription;
-  late Connectivity _connectivity;
 
   @override
   void initState() {
@@ -70,10 +69,6 @@ class _SessionHandlerState extends State<SessionHandler> {
     }
   }
 
-Future<void> _checkInitialConnection() async {
-  var result = await _connectivity.checkConnectivity();
-  _updateConnectionStatus(result);
-}
 
   void _updateConnectionStatus(ConnectivityResult result) {
   // Check for internet connection
@@ -87,7 +82,7 @@ void _showNoConnectionPage(BuildContext context) {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => InternetErrorPage(),
+      builder: (context) => const InternetErrorPage(),
     ),
   );
 }
@@ -119,7 +114,7 @@ void _dismissNoConnectionPage() {
 
 // App Container to manage initialization error and app state
 class MyApp extends StatelessWidget {
-  const MyApp({required this.initialisationError});
+  const MyApp({super.key, required this.initialisationError});
 
   final Object? initialisationError;
 
@@ -272,7 +267,7 @@ class RegionSelectionProvider with ChangeNotifier {
 class InitialisationError extends StatelessWidget {
   final Object error;
 
-  const InitialisationError({Key? key, required this.error}) : super(key: key);
+  const InitialisationError({super.key, required this.error});
 
   @override
   Widget build(BuildContext context) {
@@ -314,6 +309,8 @@ class InitialisationError extends StatelessWidget {
 
 
 class InternetErrorPage extends StatelessWidget {
+  const InternetErrorPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     // Fetch screen size

@@ -1091,7 +1091,7 @@ class _RechargeModelState extends State<RechargeModel>
           print("WalletResponse: $data");
         //LIVE
         Map<String, dynamic> options = {
-          'key': 'rzp_live_TFodb8l3ihW2nM',
+          'key': 'rzp_live_62NvZ13QGMQk1S',
           'amount': data['amount'],
           'currency': data['currency'],
           'name': 'EV Power',
@@ -1345,7 +1345,7 @@ class _RechargeModelState extends State<RechargeModel>
                       constraints: BoxConstraints(
                         maxWidth: showAlertLoading
                             ? MediaQuery.of(context).size.width *
-                            0.1 // Reduced width when loading
+                            0.15 // Reduced width when loading
                             : MediaQuery.of(context).size.width *
                             0.7, // Normal width
                         minHeight: 45,

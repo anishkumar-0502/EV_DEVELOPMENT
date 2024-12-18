@@ -17,11 +17,11 @@ class Footer extends StatefulWidget {
 
   const Footer({
     required this.onTabChanged,
-    Key? key,
+    super.key,
     required this.username,
     this.userId,
     required this.email,
-  }) : super(key: key);
+  });
 
   @override
   FooterState createState() => FooterState();
@@ -32,207 +32,143 @@ class FooterState extends State<Footer> with SingleTickerProviderStateMixin {
   final List<int> _navigationStack = []; // Navigation stack to track history
   bool isSearching = false;
   String searchChargerID = '';
-  
+
   @override
-Widget build(BuildContext context) {
-  final double screenWidth = MediaQuery.of(context).size.width;
-  final double screenHeight = MediaQuery.of(context).size.height;
+  Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
 
-  // Define screen size categories
-  bool isSmallScreen = screenWidth <= 400; // For small devices like phones
-  bool isMediumScreen = screenWidth > 400 && screenWidth <= 800; // For tablets
-  bool isLargeScreen = screenWidth > 800; // For large devices like desktops
+    // Define screen size categories
+    bool isSmallScreen = screenWidth <= 400; // For small devices like phones
+    bool isMediumScreen =
+        screenWidth > 400 && screenWidth <= 800; // For tablets
+    bool isLargeScreen = screenWidth > 800; // For large devices like desktops
 
-  return Stack(
-    children: [
-      // Footer container
-      Positioned(
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: isLargeScreen
-                ? screenHeight * 0.02
-                : isMediumScreen
-                    ? screenHeight * 0.015
-                    : screenHeight * 0.01, // Adjust for floating button space
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(
-                  isLargeScreen
-                      ? screenWidth * 0.05
-                      : isMediumScreen
-                          ? screenWidth * 0.07
-                          : screenWidth * 0.1,
-                ),
-                topRight: Radius.circular(
-                  isLargeScreen
-                      ? screenWidth * 0.05
-                      : isMediumScreen
-                          ? screenWidth * 0.07
-                          : screenWidth * 0.1,
-                ),
-                bottomLeft: Radius.circular(
-                  isLargeScreen
-                      ? screenWidth * 0.08
-                      : isMediumScreen
-                          ? screenWidth * 0.1
-                          : screenWidth * 0.12,
-                ),
-                bottomRight: Radius.circular(
-                  isLargeScreen
-                      ? screenWidth * 0.08
-                      : isMediumScreen
-                          ? screenWidth * 0.1
-                          : screenWidth * 0.12,
-                ),
+    return SafeArea(top: false,
+      child: Container(
+        padding: const EdgeInsets.only(top:8),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(
+              icon: Icons.home,
+              label: "Home",
+              index: 0,
+              isSelected: _currentIndex == 0,
+              onTap: _onTabTapped,
+              screenWidth: screenWidth,
+              screenCategory:
+                  _getScreenCategory(isSmallScreen, isMediumScreen),
+            ),
+            _buildNavItem(
+              icon: Icons.wallet_outlined,
+              label: "Wallet",
+              index: 1,
+              isSelected: _currentIndex == 1,
+              onTap: _onTabTapped,
+              screenWidth: screenWidth,
+              screenCategory:
+                  _getScreenCategory(isSmallScreen, isMediumScreen),
+            ),
+            FloatingActionButton(
+              backgroundColor: Colors.green,
+              onPressed: navigateToQRViewExample,
+              child: Icon(
+                Icons.qr_code_scanner,
+                color: Colors.white,
+                size: isLargeScreen
+                    ? 40
+                    : isMediumScreen
+                        ? 35
+                        : 28, // Adjust size for small screens
               ),
             ),
-            child: BottomAppBar(
-              notchMargin: isLargeScreen
-                  ? screenWidth * 0.03
-                  : isMediumScreen
-                      ? screenWidth * 0.04
-                      : screenWidth * 0.05,
-              color: Colors.black,
-              clipBehavior: Clip.antiAlias,
-              shape: const CircularNotchedRectangle(),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(
-                    icon: Icons.home,
-                    label: "Home",
-                    index: 0,
-                    isSelected: _currentIndex == 0,
-                    onTap: _onTabTapped,
-                    screenWidth: screenWidth,
-                    screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
-                  ),
-                  _buildNavItem(
-                    icon: Icons.wallet_outlined,
-                    label: "Wallet",
-                    index: 1,
-                    isSelected: _currentIndex == 1,
-                    onTap: _onTabTapped,
-                    screenWidth: screenWidth,
-                    screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
-                  ),
-                  SizedBox(
-                    width: isLargeScreen
-                        ? screenWidth * 0.12
-                        : isMediumScreen
-                            ? screenWidth * 0.1
-                            : screenWidth * 0.08, // Space for the floating button
-                  ),
-                  _buildNavItem(
-                    icon: Icons.history,
-                    label: "History",
-                    index: 2,
-                    isSelected: _currentIndex == 2,
-                    onTap: _onTabTapped,
-                    screenWidth: screenWidth,
-                    screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
-                  ),
-                  _buildNavItem(
-                    icon: Icons.account_circle,
-                    label: "Profile",
-                    index: 3,
-                    isSelected: _currentIndex == 3,
-                    onTap: _onTabTapped,
-                    screenWidth: screenWidth,
-                    screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
-                  ),
-                ],
-              ),
+            _buildNavItem(
+              icon: Icons.history,
+              label: "History",
+              index: 2,
+              isSelected: _currentIndex == 2,
+              onTap: _onTabTapped,
+              screenWidth: screenWidth,
+              screenCategory:
+                  _getScreenCategory(isSmallScreen, isMediumScreen),
             ),
-          ),
+            _buildNavItem(
+              icon: Icons.account_circle,
+              label: "Profile",
+              index: 3,
+              isSelected: _currentIndex == 3,
+              onTap: _onTabTapped,
+              screenWidth: screenWidth,
+              screenCategory:
+                  _getScreenCategory(isSmallScreen, isMediumScreen),
+            ),
+          ],
         ),
       ),
-
-      // FloatingActionButton
-      Positioned(
-        bottom: isLargeScreen
-            ? screenHeight * 0.03
-            : isMediumScreen
-                ? screenHeight * 0.03
-                : screenHeight * 0.02,
-        left: screenWidth * 0.5 - (screenWidth * 0.075),
-        child: FloatingActionButton(
-          backgroundColor: Colors.green,
-          onPressed: navigateToQRViewExample,
-          child: Icon(
-            Icons.qr_code_scanner,
-            color: Colors.white,
-            size: isLargeScreen
-                ? 40
-                : isMediumScreen
-                    ? 35
-                    : 28, // Adjust size for small screens
-          ),
-        ),
-      ),
-    ],
-  );
-}
+    );
+  }
 
 // Helper function for determining screen category
-String _getScreenCategory(bool isSmallScreen, bool isMediumScreen) {
-  if (isSmallScreen) {
-    return "small";
-  } else if (isMediumScreen) {
-    return "medium";
-  } else {
-    return "large";
-  }
-}
-
-
-Widget _buildNavItem({
-  required IconData icon,
-  required String label,
-  required int index,
-  required bool isSelected,
-  required ValueChanged<int> onTap,
-  required double screenWidth,
-  required String screenCategory,
-}) {
-  double iconSize = 0;
-  double fontSize = 0;
-
-  // Adjust icon size and font size based on screen category
-  if (screenCategory == "large") {
-    iconSize = 36;
-    fontSize = 16;
-  } else if (screenCategory == "medium") {
-    iconSize = 30;
-    fontSize = 14;
-  } else {
-    iconSize = 24;
-    fontSize = 12;
+  String _getScreenCategory(bool isSmallScreen, bool isMediumScreen) {
+    if (isSmallScreen) {
+      return "small";
+    } else if (isMediumScreen) {
+      return "medium";
+    } else {
+      return "large";
+    }
   }
 
-  return GestureDetector(
-    onTap: () => onTap(index),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: iconSize,
-          color: isSelected ? const Color.fromARGB(255, 104, 251, 109) : Colors.grey,
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? const Color.fromARGB(255, 104, 251, 109) : Colors.grey,
-            fontSize: fontSize,
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required int index,
+    required bool isSelected,
+    required ValueChanged<int> onTap,
+    required double screenWidth,
+    required String screenCategory,
+  }) {
+    double iconSize = 0;
+    double fontSize = 0;
+
+    // Adjust icon size and font size based on screen category
+    if (screenCategory == "large") {
+      iconSize = 36;
+      fontSize = 16;
+    } else if (screenCategory == "medium") {
+      iconSize = 30;
+      fontSize = 14;
+    } else {
+      iconSize = 24;
+      fontSize = 12;
+    }
+
+    return GestureDetector(
+      onTap: () => onTap(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: iconSize,
+            color: isSelected
+                ? const Color.fromARGB(255, 104, 251, 109)
+                : Colors.grey,
           ),
-        ),
-      ],
-    ),
-  );
-}
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected
+                  ? const Color.fromARGB(255, 104, 251, 109)
+                  : Colors.grey,
+              fontSize: fontSize,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _onTabTapped(int index) {
     setState(() {
@@ -246,7 +182,8 @@ Widget _buildNavItem({
   bool handleBackPress() {
     if (_navigationStack.isNotEmpty) {
       setState(() {
-        _currentIndex = _navigationStack.removeLast(); // Go back to the previous tab
+        _currentIndex =
+            _navigationStack.removeLast(); // Go back to the previous tab
       });
       widget.onTabChanged(_currentIndex);
       return false; // Prevent exiting the app
@@ -254,75 +191,75 @@ Widget _buildNavItem({
     return true; // Allow exiting the app
   }
 
+  Future<void> navigateToQRViewExample() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isFirstTime = prefs.getBool('isFirstTimeQR') ?? true;
 
+    if (Platform.isIOS) {
+      if (isFirstTime) {
+        // Navigate without checking permission for the first time
+        await _navigateToQRView();
+        prefs.setBool(
+            'isFirstTimeQR', false); // Set to false after the first navigation
+      } else {
+        var status = await Permission.camera.status;
+        debugPrint("camera status: $status ");
+        if (status == PermissionStatus.denied) {
+          await Permission.camera.request();
+        }
 
-Future<void> navigateToQRViewExample() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool isFirstTime = prefs.getBool('isFirstTimeQR') ?? true;
+        if (status.isGranted) {
+          await _navigateToQRView();
+        } else {
+          _navigateToPermissionErrorPage();
+        }
+      }
+    } else if (Platform.isAndroid) {
+      // For Android, always check permissions
+      PermissionStatus permissionStatus = await Permission.camera.request();
 
-  if (Platform.isIOS) {
-    if (isFirstTime) {
-      // Navigate without checking permission for the first time
-      await _navigateToQRView();
-      prefs.setBool('isFirstTimeQR', false); // Set to false after the first navigation
-    } else {
-
-      var status = await Permission.camera.status;
-      print("camera status: $status ");
-      if (status.isGranted) {
+      if (permissionStatus.isGranted) {
         await _navigateToQRView();
       } else {
-        // Navigate to a permission error page like the image provided
+        // Show a dialog if permission is denied
         _navigateToPermissionErrorPage();
       }
     }
-  } else if (Platform.isAndroid) {
-    // For Android, always check permissions
-    PermissionStatus permissionStatus = await Permission.camera.request();
+  }
 
-    if (permissionStatus.isGranted) {
-      await _navigateToQRView();
-    } else {
-      // Show a dialog if permission is denied
-        _navigateToPermissionErrorPage();
+  void _navigateToPermissionErrorPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            PermissionErrorPage(), // Custom page like the image
+      ),
+    );
+  }
+
+  Future<void> _navigateToQRView() async {
+    final scannedCode = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QRViewExample(
+          handleSearchRequestCallback: handleSearchRequest,
+          username: widget.username,
+          userId: widget.userId,
+        ),
+      ),
+    );
+
+    if (scannedCode != null) {
+      setState(() {
+        searchChargerID = scannedCode;
+        isSearching = false;
+      });
     }
   }
-}
 
-
-
-void _navigateToPermissionErrorPage() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => PermissionErrorPage(), // Custom page like the image
-    ),
-  );
-}
-Future<void> _navigateToQRView() async {
-  final scannedCode = await Navigator.push<String>(
-    context,
-    MaterialPageRoute(
-      builder: (context) => QRViewExample(
-        handleSearchRequestCallback: handleSearchRequest,
-        username: widget.username,
-        userId: widget.userId,
-      ),
-    ),
-  );
-
-  if (scannedCode != null) {
-    setState(() {
-      searchChargerID = scannedCode;
-      isSearching = false;
-    });
-  }
-}
   Future<Map<String, dynamic>?> handleSearchRequest(
       String searchChargerID) async {
     if (isSearching) return null;
-
-    print("response: handleSearchRequest");
 
     if (searchChargerID.isEmpty) {
       showErrorDialog(context, 'Please enter a charger ID.');
@@ -387,14 +324,16 @@ Future<void> _navigateToQRView() async {
       }
     } catch (error) {
       showErrorDialog(context, 'Something went wrong, try again later');
-      return {'error': true, 'message': 'Something went wrong, try again later'};
+      return {
+        'error': true,
+        'message': 'Something went wrong, try again later'
+      };
     } finally {
       setState(() {
         isSearching = false;
       });
     }
   }
-
 
   void showErrorDialog(BuildContext context, String message) {
     showModalBottomSheet(
@@ -415,7 +354,6 @@ Future<void> _navigateToQRView() async {
       },
     ).then((_) {});
   }
-  
 
   Future<void> updateConnectorUser(
       String searchChargerID, int connectorId, int connectorType) async {
@@ -458,5 +396,4 @@ Future<void> _navigateToQRView() async {
       showErrorDialog(context, 'Something went wrong, try again later ');
     }
   }
-
 }
