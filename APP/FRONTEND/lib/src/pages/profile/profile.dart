@@ -15,7 +15,8 @@ class ProfilePage extends StatefulWidget {
   final int? userId;
   final String? email;
 
-  const ProfilePage({super.key, required this.username, this.userId,this.email});
+  const ProfilePage(
+      {super.key, required this.username, this.userId, this.email});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -26,18 +27,18 @@ class _ProfilePageState extends State<ProfilePage> {
   int? phoneNo;
   String? password;
   int _selectedTileIndex = -1; // Index of the selected tile
-  final String _version = '1.0.0'; // Default value, in case fetching fails
+  final String _version = '1.0.1'; // Default value, in case fetching fails
 
   @override
   void initState() {
     super.initState();
     // fetchUserDetails();
     email = widget.email;
-    final userImageProvider = Provider.of<UserImageProvider>(context, listen: false);
-    userImageProvider.loadImage(); // Load user image when the profile page is initialized
-
+    final userImageProvider =
+        Provider.of<UserImageProvider>(context, listen: false);
+    userImageProvider
+        .loadImage(); // Load user image when the profile page is initialized
   }
-
 
   Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -50,9 +51,8 @@ class _ProfilePageState extends State<ProfilePage> {
       MaterialPageRoute(
         builder: (context) => const LoginPage(),
       ),
-          (route) => false,
+      (route) => false,
     );
-    
   }
 
   void _showEditUserModal() {
@@ -63,15 +63,12 @@ class _ProfilePageState extends State<ProfilePage> {
       enableDrag: true,
       backgroundColor: Colors.black,
       builder: (BuildContext context) {
-
         return SizedBox(
           height: MediaQuery.of(context).size.height * 0.75,
-          child:  EditUserModal(
+          child: EditUserModal(
             username: widget.username,
             email: email ?? '',
-
             userId: widget.userId,
-
           ),
         );
       },
@@ -79,32 +76,38 @@ class _ProfilePageState extends State<ProfilePage> {
       //   // Check if result is 'refresh' to trigger data fetch
       if (result == 'refresh') {
         // fetchUserDetails();
-        final userImageProvider = Provider.of<UserImageProvider>(context, listen: false);
-        userImageProvider.loadImage(); // Reload user image when the modal is closed
+        final userImageProvider =
+            Provider.of<UserImageProvider>(context, listen: false);
+        userImageProvider
+            .loadImage(); // Reload user image when the modal is closed
       }
     });
   }
-void _showHelpModal() {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    isDismissible: false,
-    enableDrag: false,
-    builder: (BuildContext context) {
-      double screenHeight = MediaQuery.of(context).size.height;
-      double modalHeight = screenHeight * 0.6; // Adjust this percentage as needed
 
-      return SizedBox(
-        height: modalHeight, // Dynamic height based on screen size
-        child: Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom), // Only add padding for the keyboard area
-          child: const HelpPage(), // Make sure to use the correct widget
-        ),
-      );
-    },
-  );
-}
+  void _showHelpModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      builder: (BuildContext context) {
+        double screenHeight = MediaQuery.of(context).size.height;
+        double modalHeight =
+            screenHeight * 0.6; // Adjust this percentage as needed
 
+        return SizedBox(
+          height: modalHeight, // Dynamic height based on screen size
+          child: Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context)
+                    .viewInsets
+                    .bottom), // Only add padding for the keyboard area
+            child: const HelpPage(), // Make sure to use the correct widget
+          ),
+        );
+      },
+    );
+  }
 
   void _showAccountModal() {
     showModalBottomSheet(
@@ -114,169 +117,190 @@ void _showHelpModal() {
       enableDrag: false,
       builder: (BuildContext context) {
         return SizedBox(
-          height: MediaQuery.of(context).size.height * 0.97, // Set height to 70% of the screen
+          height: MediaQuery.of(context).size.height *
+              0.97, // Set height to 70% of the screen
           child: Padding(
             padding: MediaQuery.of(context).viewInsets,
-            child: AccountPage(username: widget.username,userId: widget.userId,email:widget.email), // Ensure this is the correct widget name
+            child: AccountPage(
+                username: widget.username,
+                userId: widget.userId,
+                email: widget.email), // Ensure this is the correct widget name
           ),
         );
       },
     );
   }
-@override
-Widget build(BuildContext context) {
-  final userImageProvider = Provider.of<UserImageProvider>(context);
-  final screenHeight = MediaQuery.of(context).size.height;
-  final screenWidth = MediaQuery.of(context).size.width;
 
-  return Scaffold(
-    backgroundColor: Colors.black,
-    body: Stack(
-      children: [
-        Column(
-          children: [
-            ClipPath(
-              clipper: CustomClipPath(),
-              child: Container(
-                height: screenHeight * 0.5, // Set height to 40% of screen height
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.green.shade800.withOpacity(0), Colors.black],
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomCenter,
+  @override
+  Widget build(BuildContext context) {
+    final userImageProvider = Provider.of<UserImageProvider>(context);
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              ClipPath(
+                clipper: CustomClipPath(),
+                child: Container(
+                  height:
+                      screenHeight * 0.5, // Set height to 40% of screen height
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.green.shade800.withOpacity(0),
+                        Colors.black
+                      ],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(0),
+                      bottomRight: Radius.circular(0),
+                    ),
                   ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(0),
-                    bottomRight: Radius.circular(0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: screenWidth *
+                            0.15, // Adjust the radius based on screen width
+                        backgroundImage: userImageProvider.userImage != null
+                            ? FileImage(userImageProvider.userImage!)
+                            : const AssetImage('assets/Image/avatar.png')
+                                as ImageProvider,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        widget.username,
+                        style:
+                            const TextStyle(fontSize: 23, color: Colors.white),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        widget.email ?? '',
+                        style: TextStyle(color: Colors.grey[400], fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: screenWidth *
+                                0.5, // Make button width responsive
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.lightGreenAccent.withOpacity(0.3),
+                                  Colors.lightGreen.withOpacity(0.6),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: ElevatedButton(
+                              onPressed: _showEditUserModal,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                elevation: 1,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth *
+                                      0.1, // Adjust padding based on screen width
+                                  vertical: screenHeight *
+                                      0.02, // Adjust padding based on screen height
+                                ),
+                                shadowColor: Colors.transparent,
+                                minimumSize: Size(
+                                    screenWidth * 0.4,
+                                    screenHeight *
+                                        0.06), // Make button size responsive
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.edit,
+                                      size: 16, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text('Edit profile',
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 14)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              ),
+              Expanded(
+                child: ListView(
                   children: [
-                    CircleAvatar(
-                      radius: screenWidth * 0.15, // Adjust the radius based on screen width
-                      backgroundImage: userImageProvider.userImage != null
-                          ? FileImage(userImageProvider.userImage!)
-                          : const AssetImage('assets/Image/avatar.png') as ImageProvider,
+                    _buildListTile(
+                      title: 'Account',
+                      icon: Icons.account_circle,
+                      onTap: _showAccountModal,
+                      index: 0,
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      widget.username,
-                      style: const TextStyle(fontSize: 23, color: Colors.white),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      widget.email ?? '',
-                      style: TextStyle(color: Colors.grey[400], fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: screenWidth * 0.5, // Make button width responsive
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.lightGreenAccent.withOpacity(0.3),
-                                Colors.lightGreen.withOpacity(0.6),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                    _buildListTile(
+                      title: 'Terms and Conditions',
+                      icon: Icons.description,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TermsPage(),
                           ),
-                          child: ElevatedButton(
-                            onPressed: _showEditUserModal,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              elevation: 1,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.1, // Adjust padding based on screen width
-                                vertical: screenHeight * 0.02, // Adjust padding based on screen height
-                              ),
-                              shadowColor: Colors.transparent,
-                              minimumSize: Size(screenWidth * 0.4, screenHeight * 0.06), // Make button size responsive
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.edit, size: 16, color: Colors.white),
-                                SizedBox(width: 8),
-                                Text('Edit profile', style: TextStyle(color: Colors.white, fontSize: 14)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                        );
+                      },
+                      index: 1,
                     ),
+                    _buildListTile(
+                      title: 'Privacy Policy',
+                      icon: Icons.policy,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PrivacyPolicyPage(),
+                          ),
+                        );
+                      },
+                      index: 2,
+                    ),
+                    const SizedBox(height: 30),
+                    CustomGradientDivider(),
+                    const SizedBox(height: 5),
+                    _buildLogoutTile(),
+                    const SizedBox(height: 100),
+                    _buildFooter(),
                   ],
                 ),
               ),
-            ),
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildListTile(
-                    title: 'Account',
-                    icon: Icons.account_circle,
-                    onTap: _showAccountModal,
-                    index: 0,
-                  ),
-                  _buildListTile(
-                    title: 'Terms and Conditions',
-                    icon: Icons.description,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TermsPage(),
-                        ),
-                      );
-                    },
-                    index: 1,
-                  ),
-                  _buildListTile(
-                    title: 'Privacy Policy',
-                    icon: Icons.policy,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PrivacyPolicyPage(),
-                        ),
-                      );
-                    },
-                    index: 2,
-                  ),
-                  const SizedBox(height: 30),
-                  CustomGradientDivider(),
-                  const SizedBox(height: 5),
-                  _buildLogoutTile(),
-                  const SizedBox(height: 100),
-                  _buildFooter(),
-                ],
-              ),
-            ),
-          ],
-        ),
-        Positioned(
-          top: 61,
-          right: 12,
-          child: GestureDetector(
-            onTap: _showHelpModal,
-            child: const Icon(Icons.help_outline, color: Colors.white),
+            ],
           ),
-        ),
-      ],
-    ),
-  );
-}
+          Positioned(
+            top: 61,
+            right: 12,
+            child: GestureDetector(
+              onTap: _showHelpModal,
+              child: const Icon(Icons.help_outline, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   GestureDetector _buildListTile({
     required String title,
@@ -330,11 +354,11 @@ Widget build(BuildContext context) {
     return Column(
       children: [
         Text(
-          'Version: alpha $_version',
+          'Version: $_version',
           style: const TextStyle(color: Colors.white70, fontSize: 12),
         ),
         RichText(
-          text:  TextSpan(
+          text: TextSpan(
             style: const TextStyle(color: Colors.white70, fontSize: 12),
             children: [
               TextSpan(text: 'Copyright © ${DateTime.now().year} '),
@@ -356,7 +380,8 @@ class CustomClipPath extends CustomClipper<Path> {
   Path getClip(Size size) {
     Path path = Path();
     path.lineTo(0, size.height - 30);
-    path.quadraticBezierTo(size.width / 2, size.height, size.width, size.height - 30);
+    path.quadraticBezierTo(
+        size.width / 2, size.height, size.width, size.height - 30);
     path.lineTo(size.width, 0);
     path.close();
     return path;
@@ -365,7 +390,6 @@ class CustomClipPath extends CustomClipper<Path> {
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
-
 
 class CustomGradientDivider extends StatelessWidget {
   @override

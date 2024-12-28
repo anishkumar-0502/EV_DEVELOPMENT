@@ -43,9 +43,10 @@ class FooterState extends State<Footer> with SingleTickerProviderStateMixin {
         screenWidth > 400 && screenWidth <= 800; // For tablets
     bool isLargeScreen = screenWidth > 800; // For large devices like desktops
 
-    return SafeArea(top: false,
+    return SafeArea(
+      top: false,
       child: Container(
-        padding: const EdgeInsets.only(top:8),
+        padding: const EdgeInsets.only(top: 8),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -57,8 +58,7 @@ class FooterState extends State<Footer> with SingleTickerProviderStateMixin {
               isSelected: _currentIndex == 0,
               onTap: _onTabTapped,
               screenWidth: screenWidth,
-              screenCategory:
-                  _getScreenCategory(isSmallScreen, isMediumScreen),
+              screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
             ),
             _buildNavItem(
               icon: Icons.wallet_outlined,
@@ -67,8 +67,7 @@ class FooterState extends State<Footer> with SingleTickerProviderStateMixin {
               isSelected: _currentIndex == 1,
               onTap: _onTabTapped,
               screenWidth: screenWidth,
-              screenCategory:
-                  _getScreenCategory(isSmallScreen, isMediumScreen),
+              screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
             ),
             FloatingActionButton(
               backgroundColor: Colors.green,
@@ -90,8 +89,7 @@ class FooterState extends State<Footer> with SingleTickerProviderStateMixin {
               isSelected: _currentIndex == 2,
               onTap: _onTabTapped,
               screenWidth: screenWidth,
-              screenCategory:
-                  _getScreenCategory(isSmallScreen, isMediumScreen),
+              screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
             ),
             _buildNavItem(
               icon: Icons.account_circle,
@@ -100,8 +98,7 @@ class FooterState extends State<Footer> with SingleTickerProviderStateMixin {
               isSelected: _currentIndex == 3,
               onTap: _onTabTapped,
               screenWidth: screenWidth,
-              screenCategory:
-                  _getScreenCategory(isSmallScreen, isMediumScreen),
+              screenCategory: _getScreenCategory(isSmallScreen, isMediumScreen),
             ),
           ],
         ),

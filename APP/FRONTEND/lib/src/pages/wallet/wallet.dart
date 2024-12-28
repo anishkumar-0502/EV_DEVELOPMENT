@@ -116,7 +116,7 @@ class _WalletPageState extends State<WalletPage> {
         if (data['value'] is List) {
           List<dynamic> transactionData = data['value'];
           List<Map<String, dynamic>> transactionDetailsList =
-          transactionData.map((transaction) {
+              transactionData.map((transaction) {
             return {
               'status': transaction['status'] ?? 'Unknown',
               'amount': transaction['amount'] ?? '0.00',
@@ -252,7 +252,7 @@ class _WalletPageState extends State<WalletPage> {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize:
-                            headingFontSize, // Dynamically adjusted font size
+                                headingFontSize, // Dynamically adjusted font size
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -260,7 +260,7 @@ class _WalletPageState extends State<WalletPage> {
                         ),
                         const SizedBox(
                             width:
-                            8), // Add some spacing between the text and the icon
+                                8), // Add some spacing between the text and the icon
                         const Icon(
                           Icons.speed, // Choose the relevant icon
                           color: Colors.white,
@@ -275,7 +275,7 @@ class _WalletPageState extends State<WalletPage> {
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize:
-                        subHeadingFontSize, // Dynamically adjusted font size
+                            subHeadingFontSize, // Dynamically adjusted font size
                         fontWeight: FontWeight.w200,
                         color: Colors.white,
                       ),
@@ -286,189 +286,189 @@ class _WalletPageState extends State<WalletPage> {
                     isLoadingwallet
                         ? _buildShimmerCard()
                         : Container(
-                      padding: EdgeInsets.all(screenWidth > 400
-                          ? 15
-                          : 10), // Adjust padding dynamically
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E1E1E),
-                        borderRadius: BorderRadius.circular(
-                            screenWidth > 400 ? 15 : 10), // Adjust radius
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.5),
-                            blurRadius: screenWidth > 400
-                                ? 10
-                                : 5, // Adjust blur for smaller screens
-                            offset: const Offset(0, 5),
-                          ),
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            spreadRadius: screenWidth > 400
-                                ? 1
-                                : 0.5, // Adjust spread
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // First Column: Wallet Icon in a Rounded Container
-                          Container(
-                            width: screenWidth > 600
-                                ? 60
-                                : screenWidth > 400
-                                ? 50
-                                : 40,
-                            height: screenWidth > 600
-                                ? 60
-                                : screenWidth > 400
-                                ? 50
-                                : 40,
+                            padding: EdgeInsets.all(screenWidth > 400
+                                ? 15
+                                : 10), // Adjust padding dynamically
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.blue,
-                                  Colors.blueAccent.shade700
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.account_balance_wallet,
-                              color: Colors.white,
-                              size: screenWidth > 600
-                                  ? 40
-                                  : screenWidth > 400
-                                  ? 30
-                                  : 25, // Adjust size
-                            ),
-                          ),
-
-                          // Second Column: Balance Details
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Total Balance",
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: screenWidth > 400
-                                        ? (screenWidth > 600
-                                        ? 16
-                                        : 14) // Adjust for larger screens
-                                        : 12, // Smaller font for very small screens
-                                    fontWeight: FontWeight.w300,
-                                    color: Colors.white,
-                                  ),
+                              color: const Color(0xFF1E1E1E),
+                              borderRadius: BorderRadius.circular(
+                                  screenWidth > 400 ? 15 : 10), // Adjust radius
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.5),
+                                  blurRadius: screenWidth > 400
+                                      ? 10
+                                      : 5, // Adjust blur for smaller screens
+                                  offset: const Offset(0, 5),
                                 ),
-                                SizedBox(
-                                    height: screenWidth > 400
-                                        ? 5
-                                        : 3), // Adjust spacing for smaller screens
-                                Text(
-                                  "₹ ${walletBalance.toStringAsFixed(2)}", // Display the balance
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: screenWidth > 400
-                                        ? (screenWidth > 600
-                                        ? 24
-                                        : 20) // Adjust for larger screens
-                                        : 18, // Smaller font for very small screens
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.greenAccent,
-                                  ),
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  spreadRadius: screenWidth > 400
+                                      ? 1
+                                      : 0.5, // Adjust spread
                                 ),
                               ],
                             ),
-                          ),
-
-                          // Third Column: Add Credits Button
-                          // Third Column: Add Credits Button
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              ElevatedButton(
-                                onPressed: () {
-                                  showRechargeModel(
-                                    walletBalance,
-                                    fetchWallet,
-                                    fetchTransactionDetails, // Pass the callback function here
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: screenWidth > 400
-                                        ? 20
-                                        : 15, // Adjust padding
-                                    vertical: screenWidth > 400
-                                        ? 12
-                                        : 10, // Adjust padding
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                        screenWidth > 400 ? 25 : 20),
-                                  ),
-                                  elevation: screenWidth > 400
-                                      ? 8
-                                      : 5, // Adjust elevation
-                                  backgroundColor: Colors.transparent,
-                                ).copyWith(
-                                  foregroundColor:
-                                  WidgetStateProperty.all(
-                                      Colors.white),
-                                  shadowColor: WidgetStateProperty.all(
-                                      Colors.transparent),
-                                ),
-                                child: Ink(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // First Column: Wallet Icon in a Rounded Container
+                                Container(
+                                  width: screenWidth > 600
+                                      ? 60
+                                      : screenWidth > 400
+                                          ? 50
+                                          : 40,
+                                  height: screenWidth > 600
+                                      ? 60
+                                      : screenWidth > 400
+                                          ? 50
+                                          : 40,
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
+                                    gradient: LinearGradient(
                                       colors: [
-                                        Colors.green,
-                                        Colors.lightGreen
+                                        Colors.blue,
+                                        Colors.blueAccent.shade700
                                       ],
-                                      begin: Alignment.centerLeft,
-                                      end: Alignment.centerRight,
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
                                     ),
-                                    borderRadius:
-                                    BorderRadius.circular(5),
+                                    shape: BoxShape.circle,
                                   ),
-                                  child: Container(
-                                    constraints: BoxConstraints(
-                                      maxWidth: screenWidth > 600
-                                          ? 200
-                                          : 100, // Adjust width
-                                      minHeight: screenWidth > 600
-                                          ? 55
-                                          : 45, // Adjust height
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      "Recharge now",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: screenWidth > 600
-                                            ? 16
-                                            : screenWidth > 400
-                                            ? 12
-                                            : 12, // Adjust font size
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors
-                                            .white, // Ensure contrast with the background gradient
+                                  child: Icon(
+                                    Icons.account_balance_wallet,
+                                    color: Colors.white,
+                                    size: screenWidth > 600
+                                        ? 40
+                                        : screenWidth > 400
+                                            ? 30
+                                            : 25, // Adjust size
+                                  ),
+                                ),
+
+                                // Second Column: Balance Details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Total Balance",
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: screenWidth > 400
+                                              ? (screenWidth > 600
+                                                  ? 16
+                                                  : 14) // Adjust for larger screens
+                                              : 12, // Smaller font for very small screens
+                                          fontWeight: FontWeight.w300,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                          height: screenWidth > 400
+                                              ? 5
+                                              : 3), // Adjust spacing for smaller screens
+                                      Text(
+                                        "₹ ${walletBalance.toStringAsFixed(2)}", // Display the balance
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: screenWidth > 400
+                                              ? (screenWidth > 600
+                                                  ? 24
+                                                  : 20) // Adjust for larger screens
+                                              : 18, // Smaller font for very small screens
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.greenAccent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Third Column: Add Credits Button
+                                // Third Column: Add Credits Button
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        showRechargeModel(
+                                          walletBalance,
+                                          fetchWallet,
+                                          fetchTransactionDetails, // Pass the callback function here
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: screenWidth > 400
+                                              ? 20
+                                              : 15, // Adjust padding
+                                          vertical: screenWidth > 400
+                                              ? 12
+                                              : 10, // Adjust padding
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                              screenWidth > 400 ? 25 : 20),
+                                        ),
+                                        elevation: screenWidth > 400
+                                            ? 8
+                                            : 5, // Adjust elevation
+                                        backgroundColor: Colors.transparent,
+                                      ).copyWith(
+                                        foregroundColor:
+                                            WidgetStateProperty.all(
+                                                Colors.white),
+                                        shadowColor: WidgetStateProperty.all(
+                                            Colors.transparent),
+                                      ),
+                                      child: Ink(
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Colors.green,
+                                              Colors.lightGreen
+                                            ],
+                                            begin: Alignment.centerLeft,
+                                            end: Alignment.centerRight,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                        ),
+                                        child: Container(
+                                          constraints: BoxConstraints(
+                                            maxWidth: screenWidth > 600
+                                                ? 200
+                                                : 100, // Adjust width
+                                            minHeight: screenWidth > 600
+                                                ? 55
+                                                : 45, // Adjust height
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            "Recharge now",
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: screenWidth > 600
+                                                  ? 16
+                                                  : screenWidth > 400
+                                                      ? 12
+                                                      : 12, // Adjust font size
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors
+                                                  .white, // Ensure contrast with the background gradient
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
+                                  ],
+                                )
+                              ],
+                            ),
+                          ),
 
                     // Display alert if balance is less than 100
                     if (_isAlertVisible && walletBalance < 100)
@@ -492,11 +492,11 @@ class _WalletPageState extends State<WalletPage> {
                             ),
                             IconButton(
                               icon:
-                              const Icon(Icons.close, color: Colors.white),
+                                  const Icon(Icons.close, color: Colors.white),
                               onPressed: () {
                                 setState(() {
                                   _isAlertVisible =
-                                  false; // Hide the alert when the button is clicked
+                                      false; // Hide the alert when the button is clicked
                                 });
                               },
                             ),
@@ -520,9 +520,9 @@ class _WalletPageState extends State<WalletPage> {
                                     'Payment history',
                                     style: TextStyle(
                                       fontSize: MediaQuery.of(context)
-                                          .size
-                                          .width >
-                                          600
+                                                  .size
+                                                  .width >
+                                              600
                                           ? 24
                                           : 22, // Adjust font size based on screen width
                                       fontWeight: FontWeight.normal,
@@ -535,7 +535,7 @@ class _WalletPageState extends State<WalletPage> {
                                   Icon(
                                     Icons.history_outlined, // History icon
                                     size: MediaQuery.of(context).size.width >
-                                        600
+                                            600
                                         ? 26
                                         : 22, // Adjust icon size based on screen width
                                     color: Colors.white, // Icon color
@@ -551,9 +551,9 @@ class _WalletPageState extends State<WalletPage> {
                                       'View all',
                                       style: TextStyle(
                                         fontSize: MediaQuery.of(context)
-                                            .size
-                                            .width >
-                                            600
+                                                    .size
+                                                    .width >
+                                                600
                                             ? 16
                                             : 14, // Adjust font size based on screen width
                                         color: Colors
@@ -562,12 +562,12 @@ class _WalletPageState extends State<WalletPage> {
                                     ),
                                     const SizedBox(
                                         width:
-                                        4), // Space between text and icon
+                                            4), // Space between text and icon
                                     Icon(
                                       Icons
                                           .arrow_forward_ios, // Arrow icon for 'view all'
                                       size: MediaQuery.of(context).size.width >
-                                          600
+                                              600
                                           ? 18
                                           : 14, // Adjust icon size based on screen width
                                       color: Colors.blue, // Icon color
@@ -585,150 +585,150 @@ class _WalletPageState extends State<WalletPage> {
                             child: isLoading
                                 ? _buildShimmerCard()
                                 : transactionDetails.isEmpty
-                                ? Center(
-                              child: Column(
-                                mainAxisAlignment:
-                                MainAxisAlignment.center,
-                                children: [
-                                  Padding(
-                                    padding:
-                                    const EdgeInsets.all(20.0),
-                                    child: Image.asset(
-                                      'assets/Image/search.png', // Use the correct path to your asset
-                                      width:
-                                      300, // Optional: Adjust image size
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                      height:
-                                      10), // Add some space between the image and the text
-                                  const Text(
-                                    'No Payment History Found!', // Add your desired text
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      color: Colors
-                                          .white70, // Optional: Adjust text color
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                                : Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1E1E1E),
-                                borderRadius:
-                                BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.all(20.0),
-                              child: Column(
-                                children: [
-                                  for (int index = 0;
-                                  index <
-                                      transactionDetails
-                                          .length &&
-                                      index < 7;
-                                  index++) // Limit to 6 items
-                                    Column(
-                                      children: [
-                                        Padding(
-                                          padding:
-                                          const EdgeInsets.all(
-                                              5.0),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment
-                                                .spaceBetween,
-                                            children: [
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                  CrossAxisAlignment
-                                                      .start,
-                                                  children: [
-                                                    Text(
-                                                      transactionDetails[
-                                                      index]
-                                                      [
-                                                      'status'] ??
-                                                          'Unknown',
-                                                      style:
-                                                      const TextStyle(
-                                                        fontSize: 20,
-                                                        color: Colors
-                                                            .white,
-                                                        fontWeight:
-                                                        FontWeight
-                                                            .bold,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(
-                                                        height: 5),
-                                                    Text(
-                                                      (() {
-                                                        final timeString =
-                                                        transactionDetails[
-                                                        index]
-                                                        [
-                                                        'time'];
-                                                        if (timeString !=
-                                                            null &&
-                                                            timeString
-                                                                .isNotEmpty) {
-                                                          try {
-                                                            final dateTime =
-                                                            DateTime.parse(timeString)
-                                                                .toLocal();
-                                                            return DateFormat(
-                                                                'MM/dd/yyyy, hh:mm:ss a')
-                                                                .format(
-                                                                dateTime);
-                                                          } catch (e) {
-                                                            print(
-                                                                'Error parsing date: $e');
-                                                          }
-                                                        }
-                                                        return 'N/A';
-                                                      })(),
-                                                      style:
-                                                      const TextStyle(
-                                                        fontSize: 11,
-                                                        color: Colors
-                                                            .white60,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
+                                    ? Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(20.0),
+                                              child: Image.asset(
+                                                'assets/Image/search.png', // Use the correct path to your asset
+                                                width:
+                                                    300, // Optional: Adjust image size
                                               ),
-                                              Text(
-                                                '${transactionDetails[index]['status'] == 'Credited' ? '+ ₹' : '- ₹'}${transactionDetails[index]['amount']}',
-                                                style: TextStyle(
-                                                  fontSize: 19,
-                                                  color: transactionDetails[
-                                                  index]
-                                                  [
-                                                  'status'] ==
-                                                      'Credited'
-                                                      ? Colors.green
-                                                      : Colors.red,
-                                                  fontWeight:
-                                                  FontWeight.bold,
-                                                ),
+                                            ),
+                                            const SizedBox(
+                                                height:
+                                                    10), // Add some space between the image and the text
+                                            const Text(
+                                              'No Payment History Found!', // Add your desired text
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                color: Colors
+                                                    .white70, // Optional: Adjust text color
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
-                                        if (index !=
-                                            transactionDetails
-                                                .length -
-                                                1 &&
-                                            index <
-                                                6) // Ensure divider is shown only for the first 5
-                                          CustomGradientDivider(),
-                                      ],
-                                    ),
-                                ],
-                              ),
-                            ),
+                                      )
+                                    : Container(
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF1E1E1E),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        padding: const EdgeInsets.all(20.0),
+                                        child: Column(
+                                          children: [
+                                            for (int index = 0;
+                                                index <
+                                                        transactionDetails
+                                                            .length &&
+                                                    index < 7;
+                                                index++) // Limit to 6 items
+                                              Column(
+                                                children: [
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            5.0),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Text(
+                                                                transactionDetails[
+                                                                            index]
+                                                                        [
+                                                                        'status'] ??
+                                                                    'Unknown',
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 20,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                  height: 5),
+                                                              Text(
+                                                                (() {
+                                                                  final timeString =
+                                                                      transactionDetails[
+                                                                              index]
+                                                                          [
+                                                                          'time'];
+                                                                  if (timeString !=
+                                                                          null &&
+                                                                      timeString
+                                                                          .isNotEmpty) {
+                                                                    try {
+                                                                      final dateTime =
+                                                                          DateTime.parse(timeString)
+                                                                              .toLocal();
+                                                                      return DateFormat(
+                                                                              'MM/dd/yyyy, hh:mm:ss a')
+                                                                          .format(
+                                                                              dateTime);
+                                                                    } catch (e) {
+                                                                      print(
+                                                                          'Error parsing date: $e');
+                                                                    }
+                                                                  }
+                                                                  return 'N/A';
+                                                                })(),
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 11,
+                                                                  color: Colors
+                                                                      .white60,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          '${transactionDetails[index]['status'] == 'Credited' ? '+ ₹' : '- ₹'}${transactionDetails[index]['amount']}',
+                                                          style: TextStyle(
+                                                            fontSize: 19,
+                                                            color: transactionDetails[
+                                                                            index]
+                                                                        [
+                                                                        'status'] ==
+                                                                    'Credited'
+                                                                ? Colors.green
+                                                                : Colors.red,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  if (index !=
+                                                          transactionDetails
+                                                                  .length -
+                                                              1 &&
+                                                      index <
+                                                          6) // Ensure divider is shown only for the first 5
+                                                    CustomGradientDivider(),
+                                                ],
+                                              ),
+                                          ],
+                                        ),
+                                      ),
                           )
                         ],
                       ),
@@ -785,28 +785,28 @@ class HelpModal extends StatelessWidget {
 
           // Conditional rendering: shimmer or content
           if (!isDataLoaded)
-            ...[]
+            _buildShimmerCard(context)
           else ...[
             _buildSection(
-              'How to use the Wallet',
-              '1. Add Money: Use the "Add Money" section to recharge your wallet. Enter the amount and click "Add ₹".\n'
-                  '2. Balance: View your current wallet balance and its level (Low, Medium, Full).\n'
-                  '3. Transaction History: Check your recent transactions and their status (Credited, Debited).\n'
-                  '4. Payment Methods: Use Razorpay for secure and quick transactions.\n'
-                  '5. Max Limit: The wallet has a maximum limit of ₹10,000.',
+              'How to Recharge the Wallet',
+              '1. Click on the "Recharge Now" button to open the recharge dialog.\n'
+                  '2. In the dialog, enter the amount you want to add to your wallet. The amount must not exceed the wallet limit (₹10,000).\n'
+                  '3. Use the quick buttons (₹500, ₹1000, Maximum) to quickly add predefined amounts to the input field.\n'
+                  '4. Click on "Continue" to proceed with the payment.\n'
+                  '5. Once the payment is successful, the wallet balance will be updated.',
             ),
             const SizedBox(height: 16),
             _buildSection(
               'Need More Help?',
-              'For further assistance, contact our support team at support@outdidtech.com.',
+              'For further assistance, contact our support team at info@outdidunified.com.',
             ),
-          ],
+          ]
         ],
       ),
     );
   }
 
-// Shimmer loading card widget
+  // Shimmer loading card widget
   Widget _buildShimmerCard(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
@@ -819,7 +819,7 @@ class HelpModal extends StatelessWidget {
         height: screenHeight * 0.12, // Reduced height to make it smaller
         margin: EdgeInsets.only(
           left:
-          screenWidth * 0.05, // Move the shimmer card slightly to the right
+              screenWidth * 0.05, // Move the shimmer card slightly to the right
           right: screenWidth * 0.02,
           top: screenHeight * 0.01,
         ),
@@ -851,13 +851,13 @@ class HelpModal extends StatelessWidget {
 class RechargeModel extends StatefulWidget {
   final double walletBalance;
   final Function
-  fetchWallet; // Change this to fetchWallet instead of onRechargeComplete
+      fetchWallet; // Change this to fetchWallet instead of onRechargeComplete
   final Function fetchTransactionDetails;
 
   RechargeModel(
       {required this.walletBalance,
-        required this.fetchWallet,
-        required this.fetchTransactionDetails}); // Update constructor
+      required this.fetchWallet,
+      required this.fetchTransactionDetails}); // Update constructor
 
   @override
   _RechargeModelState createState() => _RechargeModelState();
@@ -1089,29 +1089,29 @@ class _RechargeModelState extends State<RechargeModel>
         if (response.statusCode == 200) {
           var data = json.decode(response.body);
           print("WalletResponse: $data");
-        //LIVE
-        Map<String, dynamic> options = {
-          'key': 'rzp_live_62NvZ13QGMQk1S',
-          'amount': data['amount'],
-          'currency': data['currency'],
-          'name': 'EV Power',
-          'description': 'Wallet Recharge',
-          'order_id': data['id'],
-          'prefill': {'name': username},
-          'theme': {'color': '#3399cc'},
-        };
-        
-        // //TEST
-        //   Map<String, dynamic> options = {
-        //     'key': 'rzp_test_dcep4q6wzcVYmr',
-        //     'amount': data['amount'],
-        //     'currency': data['currency'],
-        //     'name': "Charger Express",
-        //     'description': 'Wallet Recharge',
-        //     'order_id': data['id'],
-        //     'prefill': {'name': username},
-        //     'theme': {'color': '#3399cc'},
-        //   };
+          //LIVE
+          Map<String, dynamic> options = {
+            'key': 'rzp_live_62NvZ13QGMQk1S',
+            'amount': data['amount'],
+            'currency': data['currency'],
+            'name': 'ion Hive',
+            'description': 'Wallet Recharge',
+            'order_id': data['id'],
+            'prefill': {'name': username},
+            'theme': {'color': '#3399cc'},
+          };
+
+          //TEST
+          // Map<String, dynamic> options = {
+          //   'key': 'rzp_test_dcep4q6wzcVYmr',
+          //   'amount': data['amount'],
+          //   'currency': data['currency'],
+          //   'name': "Charger Express",
+          //   'description': 'Wallet Recharge',
+          //   'order_id': data['id'],
+          //   'prefill': {'name': username},
+          //   'theme': {'color': '#3399cc'},
+          // };
 
           _lastPaymentAmount = amount;
 
@@ -1174,7 +1174,7 @@ class _RechargeModelState extends State<RechargeModel>
 
     return Scaffold(
       resizeToAvoidBottomInset:
-      false, // Prevent resizing when the keyboard appears
+          false, // Prevent resizing when the keyboard appears
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
@@ -1266,7 +1266,7 @@ class _RechargeModelState extends State<RechargeModel>
                     if (!regExp.hasMatch(value)) {
                       setState(() {
                         _errorMessage =
-                        'Amount cannot exceed ₹$maxAmount. \nThe total wallet balance cannot exceed ₹10,000.';
+                            'The total wallet balance cannot exceed ₹10,000.';
                       });
                       return;
                     }
@@ -1332,12 +1332,11 @@ class _RechargeModelState extends State<RechargeModel>
                       elevation: 8,
                       backgroundColor: showAlertLoading
                           ? Colors
-                          .grey.shade400 // Change button color when loading
+                              .grey.shade400 // Change button color when loading
                           : Colors.transparent,
                     ).copyWith(
-                      foregroundColor: MaterialStateProperty.all(Colors.white),
-                      shadowColor:
-                      MaterialStateProperty.all(Colors.transparent),
+                      foregroundColor: WidgetStateProperty.all(Colors.white),
+                      shadowColor: WidgetStateProperty.all(Colors.transparent),
                     ),
                     child: AnimatedContainer(
                       duration: const Duration(
@@ -1345,9 +1344,9 @@ class _RechargeModelState extends State<RechargeModel>
                       constraints: BoxConstraints(
                         maxWidth: showAlertLoading
                             ? MediaQuery.of(context).size.width *
-                            0.15 // Reduced width when loading
+                                0.15 // Reduced width when loading
                             : MediaQuery.of(context).size.width *
-                            0.7, // Normal width
+                                0.7, // Normal width
                         minHeight: 45,
                       ),
                       decoration: BoxDecoration(
@@ -1366,24 +1365,24 @@ class _RechargeModelState extends State<RechargeModel>
                       alignment: Alignment.center,
                       child: showAlertLoading
                           ? const SizedBox(
-                        width: 25, // Smaller spinner size
-                        height: 25,
-                        child: CircularProgressIndicator(
-                          valueColor:
-                          AlwaysStoppedAnimation<Color>(Colors.white),
-                          strokeWidth: 3, // Reduced stroke width
-                        ),
-                      )
+                              width: 25, // Smaller spinner size
+                              height: 25,
+                              child: CircularProgressIndicator(
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                strokeWidth: 3, // Reduced stroke width
+                              ),
+                            )
                           : Text(
-                        "Continue",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize:
-                          MediaQuery.of(context).size.width * 0.04,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                              "Continue",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.04,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                     ),
                   ),
                 )
@@ -1398,7 +1397,7 @@ class _RechargeModelState extends State<RechargeModel>
   // Method to build the animated amount buttons
   Widget _buildAnimatedAmountButton(dynamic amount) {
     String amountText =
-    amount is double ? amount.toStringAsFixed(2) : amount.toString();
+        amount is double ? amount.toStringAsFixed(2) : amount.toString();
 
     return ScaleTransition(
       scale: _scaleAnimation,
@@ -1539,7 +1538,7 @@ class PaymentSuccessModal extends StatelessWidget {
     return Column(
       children: List.generate(
         3,
-            (index) => Padding(
+        (index) => Padding(
           padding: EdgeInsets.only(bottom: screenHeight * 0.02),
           child: Shimmer.fromColors(
             baseColor: Colors.grey.shade700,

@@ -64,7 +64,7 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
   static const String apiKey = 'AIzaSyDdBinCjuyocru7Lgi6YT3FZ1P6_xi0tco';
   GoogleMapController? _mapController;
   List<String> chargerIdsList = [];
-  bool _isAnimationInProgress = false       ;
+  bool _isAnimationInProgress = false;
   CancelableOperation? _currentAnimationOperation;
   Timer? _debounceTimer;
 
@@ -90,20 +90,20 @@ class _HomeContentState extends State<HomeContent> with WidgetsBindingObserver {
     super.dispose(); // Call the super class dispose method
   }
 
-Future<void> _checkLocationPermission() async {
-  if (_isCheckingPermission) return; // Prevent multiple permission checks
+  Future<void> _checkLocationPermission() async {
+    if (_isCheckingPermission) return; // Prevent multiple permission checks
 
-  _isCheckingPermission = true;
+    _isCheckingPermission = true;
 
-  // Load the saved flag from SharedPreferences
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool locationPromptClosed = prefs.getBool('LocationPromptClosed') ?? false;
+    // Load the saved flag from SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool locationPromptClosed = prefs.getBool('LocationPromptClosed') ?? false;
 
-  // If the user has closed the dialog before, don't show it again
-  if (locationPromptClosed) {
-    _isCheckingPermission = false;
-    return;
-  }
+    // If the user has closed the dialog before, don't show it again
+    if (locationPromptClosed) {
+      _isCheckingPermission = false;
+      return;
+    }
 
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -112,104 +112,102 @@ Future<void> _checkLocationPermission() async {
       _isCheckingPermission = false;
       return;
     }
-  
 
-  // Request location permission (Android specific, iOS handles it automatically)
-  if (Platform.isAndroid) {
-    PermissionStatus permission = await Permission.location.request();
-    if (permission.isGranted) {
+    // Request location permission (Android specific, iOS handles it automatically)
+    if (Platform.isAndroid) {
+      PermissionStatus permission = await Permission.location.request();
+      if (permission.isGranted) {
+        await _getCurrentLocation();
+        // Reset the flag, because location is now enabled
+        await prefs.setBool('LocationPromptClosed', false);
+      } else {
+        // Do nothing if permission is denied; no alert is shown
+        _isCheckingPermission = false;
+        return;
+      }
+    } else if (Platform.isIOS) {
+      // For iOS, we assume location permission is automatically handled by the system
       await _getCurrentLocation();
-      // Reset the flag, because location is now enabled
-      await prefs.setBool('LocationPromptClosed', false);
-    } else {
-      // Do nothing if permission is denied; no alert is shown
       _isCheckingPermission = false;
-      return;
     }
-  } else if (Platform.isIOS) {
-    // For iOS, we assume location permission is automatically handled by the system
-    await _getCurrentLocation();
-    _isCheckingPermission = false;
   }
-}
 
+  Future<void> _getCurrentLocation() async {
+    // If a location fetch is already in progress, don't start a new one
+    if (_isFetchingLocation) return;
 
-Future<void> _getCurrentLocation() async {
-  // If a location fetch is already in progress, don't start a new one
-  if (_isFetchingLocation) return;
-
-  setState(() {
-    _isFetchingLocation = true;
-  });
-
-  try {
-    // Ensure location services are enabled and permission is granted before fetching location
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await _showLocationServicesDialog();
-      return;
-    }
-
-    PermissionStatus permission;
-
-    if (Platform.isIOS) {
-      // iOS-specific permission check
-      permission = await Permission.location.status;
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        await _showPermissionDeniedDialog();
-        return;
-      }
-    } else if (Platform.isAndroid) {
-      // Android-specific permission check
-      permission = await Permission.location.status;
-      if (permission.isDenied) {
-        await _showPermissionDeniedDialog();
-        return;
-      } else if (permission.isPermanentlyDenied) {
-        await _showPermanentlyDeniedDialog();
-        return;
-      }
-    }
-
-    // Fetch the current location if permission is granted
-    LatLng? currentLocation = await LocationService.instance.getCurrentLocation();
-    print("_onMapCreated currentLocation $currentLocation");
-
-    if (currentLocation != null) {
-      // Update the current position
-      setState(() {
-        _currentPosition = currentLocation;
-      });
-
-      // Smoothly animate the camera to the new position if the mapController is available
-      if (mapController != null) {
-        await mapController!.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: _currentPosition!,
-              zoom: 18.0, // Adjust zoom level as needed
-              tilt: 45.0, // Add a tilt for a 3D effect
-            ),
-          ),
-        );
-      }
-
-      // Update the current location marker on the map
-      _updateMarkers();
-      fetchAllChargers();
-    } else {
-      print('Current location could not be determined.');
-    }
-  } catch (e) {
-    print('Error occurred while fetching the current location: $e');
-  } finally {
     setState(() {
-      _isFetchingLocation = false;
+      _isFetchingLocation = true;
     });
-  }
-}
 
+    try {
+      // Ensure location services are enabled and permission is granted before fetching location
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await _showLocationServicesDialog();
+        return;
+      }
+
+      PermissionStatus permission;
+
+      if (Platform.isIOS) {
+        // iOS-specific permission check
+        permission = await Permission.location.status;
+        if (permission == LocationPermission.denied ||
+            permission == LocationPermission.deniedForever) {
+          await _showPermissionDeniedDialog();
+          return;
+        }
+      } else if (Platform.isAndroid) {
+        // Android-specific permission check
+        permission = await Permission.location.status;
+        if (permission.isDenied) {
+          await _showPermissionDeniedDialog();
+          return;
+        } else if (permission.isPermanentlyDenied) {
+          await _showPermanentlyDeniedDialog();
+          return;
+        }
+      }
+
+      // Fetch the current location if permission is granted
+      LatLng? currentLocation =
+          await LocationService.instance.getCurrentLocation();
+      print("_onMapCreated currentLocation $currentLocation");
+
+      if (currentLocation != null) {
+        // Update the current position
+        setState(() {
+          _currentPosition = currentLocation;
+        });
+
+        // Smoothly animate the camera to the new position if the mapController is available
+        if (mapController != null) {
+          await mapController!.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: _currentPosition!,
+                zoom: 18.0, // Adjust zoom level as needed
+                tilt: 45.0, // Add a tilt for a 3D effect
+              ),
+            ),
+          );
+        }
+
+        // Update the current location marker on the map
+        _updateMarkers();
+        fetchAllChargers();
+      } else {
+        print('Current location could not be determined.');
+      }
+    } catch (e) {
+      print('Error occurred while fetching the current location: $e');
+    } finally {
+      setState(() {
+        _isFetchingLocation = false;
+      });
+    }
+  }
 
   void _resetSelectedLocationAndFetchCurrent() {
     setState(() {
@@ -446,7 +444,7 @@ Future<void> _getCurrentLocation() async {
     mapController = controller;
 
     // Load and set the map style
-    String mapStyle = await rootBundle.loadString('assets/Map/map_theme2.json');
+    String mapStyle = await rootBundle.loadString('assets/Map/map.json');
     mapController?.setMapStyle(mapStyle);
 
     await Future.delayed(const Duration(seconds: 1));
@@ -848,7 +846,10 @@ Future<void> _getCurrentLocation() async {
       }
     } catch (error) {
       showErrorDialog(context, 'Something went wrong, try again later');
-      return {'error': true, 'message': 'Something went wrong, try again later'};
+      return {
+        'error': true,
+        'message': 'Something went wrong, try again later'
+      };
     } finally {
       setState(() {
         isSearching = false;
@@ -897,8 +898,6 @@ Future<void> _getCurrentLocation() async {
       showErrorDialog(context, 'Something went wrong, try again later ');
     }
   }
-
-
 
   void showErrorDialog(BuildContext context, String message) {
     showModalBottomSheet(
@@ -1559,52 +1558,26 @@ Future<void> _getCurrentLocation() async {
     });
   }
 
-  // Future<String> _getPlaceName(LatLng position, String chargerId) async {
-  //   // Check if the address is already cached
-  //   if (_addressCache.containsKey(chargerId)) {
-  //     return _addressCache[chargerId]!;
-  //   }
+  Widget _buildShimmerCard(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-  //   final String url =
-  //       'https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=$apiKey';
-
-  //   final response = await http.get(Uri.parse(url));
-
-  //   if (response.statusCode == 200) {
-  //     final Map<String, dynamic> data = json.decode(response.body);
-  //     if (data['results'].isNotEmpty) {
-  //       String fetchedAddress = data['results'][0]['formatted_address'];
-  //       // Store the fetched address in the cache
-  //       _addressCache[chargerId] = fetchedAddress;
-  //       return fetchedAddress;
-  //     } else {
-  //       return "Unknown Location";
-  //     }
-  //   } else {
-  //     throw Exception('Failed to fetch place name');
-  //   }
-  // }
-
-Widget _buildShimmerCard(BuildContext context) {
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
-
-  return Shimmer.fromColors(
-    baseColor: Colors.grey[800]!,
-    highlightColor: Colors.grey[700]!,
-    child: Container(
-      width: screenWidth * 0.7, // Reduced width to make it smaller
-      height: screenHeight * 0.12, // Reduced height to make it smaller
-      margin: EdgeInsets.only(
-        left: screenWidth * 0.05, // Move the shimmer card slightly to the right
-        right: screenWidth * 0.02,
-        top: screenHeight * 0.01,
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[700]!,
+      child: Container(
+        width: screenWidth * 0.7, // Reduced width to make it smaller
+        height: screenHeight * 0.12, // Reduced height to make it smaller
+        margin: EdgeInsets.only(
+          left:
+              screenWidth * 0.05, // Move the shimmer card slightly to the right
+          right: screenWidth * 0.02,
+          top: screenHeight * 0.01,
+        ),
+        color: const Color(0xFF0E0E0E), // Background color of the shimmer
       ),
-      color: const Color(0xFF0E0E0E), // Background color of the shimmer
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _buildChargerCard(
     BuildContext context,
@@ -1773,8 +1746,8 @@ Widget _buildShimmerCard(BuildContext context) {
                   child: Row(
                     children: List.generate(
                         3,
-                        (index) =>
-                            _buildShimmerCard(context)), // Display 3 shimmer cards
+                        (index) => _buildShimmerCard(
+                            context)), // Display 3 shimmer cards
                   ),
                 ),
               )

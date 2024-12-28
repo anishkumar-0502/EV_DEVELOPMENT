@@ -1,13 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
-import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-import '../../../utilities/User_Model/ImageProvider.dart'; // Ensure you have this import
-
 
 class EditUserModal extends StatefulWidget {
   final String username;
@@ -33,8 +28,8 @@ class _EditUserModalState extends State<EditUserModal> {
   final TextEditingController _newPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  bool _isOldPasswordObscured = true;  // For current password visibility
-  bool _isNewPasswordObscured = true;  // For new password visibility
+  bool _isOldPasswordObscured = true; // For current password visibility
+  bool _isNewPasswordObscured = true; // For new password visibility
 
   @override
   void initState() {
@@ -86,15 +81,15 @@ class _EditUserModalState extends State<EditUserModal> {
 
   bool get isFormValid {
     final phoneValid = _validatePhoneNumber(_phoneController.text) == null;
-    final oldPasswordValid = _validateOldPassword(_oldPasswordController.text) == null;
-    final newPasswordValid = _validateNewPassword(_newPasswordController.text) == null;
+    final oldPasswordValid =
+        _validateOldPassword(_oldPasswordController.text) == null;
+    final newPasswordValid =
+        _validateNewPassword(_newPasswordController.text) == null;
     return phoneValid && oldPasswordValid && newPasswordValid;
   }
 
   Future<void> fetchUserDetails() async {
     int? userId = widget.userId;
-
-    print('Fetching user details for user ID: $userId');
 
     try {
       var response = await http.post(
@@ -109,7 +104,6 @@ class _EditUserModalState extends State<EditUserModal> {
           _phoneController.text = data['data']['phone_no'] is int
               ? data['data']['phone_no'].toString()
               : data['data']['phone_no'].toString();
-          print(data['data']['password']);
         });
       } else {
         throw Exception('Error fetching user details');
@@ -135,7 +129,8 @@ class _EditUserModalState extends State<EditUserModal> {
 
     // Check if old and new passwords are the same
     if (oldPassword == newPassword && newPassword != null) {
-      _showAlertBanner('Current password and new password should not be the same');
+      _showAlertBanner(
+          'Current password and new password should not be the same');
       return;
     }
 
@@ -152,7 +147,6 @@ class _EditUserModalState extends State<EditUserModal> {
         }),
       );
       final responseData = jsonDecode(response.body);
-      print("responseData: $responseData");
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -164,14 +158,18 @@ class _EditUserModalState extends State<EditUserModal> {
           ),
         );
         Navigator.pop(context, 'refresh');
-      } else if (response.statusCode == 401 || response.statusCode == 400 || response.statusCode == 500) {
+      } else if (response.statusCode == 401 ||
+          response.statusCode == 400 ||
+          response.statusCode == 500) {
         final responseData = jsonDecode(response.body);
-        final errorMessage = responseData['error_message'] ?? "Failed to update! No changes are made";
+        final errorMessage = responseData['error_message'] ??
+            "Failed to update! No changes are made";
         _showAlertBanner(errorMessage);
-      } else if (response.statusCode == 404 ){
-        final errorMessage = responseData['error_message'] ?? "Failed to update! No changes are made";
+      } else if (response.statusCode == 404) {
+        final errorMessage = responseData['error_message'] ??
+            "Failed to update! No changes are made";
         _showAlertBanner(errorMessage);
-      }else {
+      } else {
         final errorMessage = " No Changes !! Check your credentials";
         _showAlertBanner(errorMessage);
       }
@@ -190,19 +188,8 @@ class _EditUserModalState extends State<EditUserModal> {
     );
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      final userImageProvider = Provider.of<UserImageProvider>(context, listen: false);
-      userImageProvider.setImage(File(pickedFile.path));
-      setState(() {});
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final userImageProvider = Provider.of<UserImageProvider>(context);
-
     return Scaffold(
       body: Column(
         children: [
@@ -258,37 +245,10 @@ class _EditUserModalState extends State<EditUserModal> {
                         Stack(
                           children: [
                             GestureDetector(
-                              onTap: _pickImage,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.green,
-                                    width: 3.0,
-                                  ),
-                                ),
-                                child: CircleAvatar(
+                              child: const CircleAvatar(
                                   radius: 50,
-                                  backgroundImage: userImageProvider.userImage != null
-                                      ? FileImage(userImageProvider.userImage!)
-                                      : null,
-                                  child: userImageProvider.userImage == null
-                                      ? const Icon(Icons.camera_alt, color: Colors.white, size: 50)
-                                      : null,
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: GestureDetector(
-                                onTap: _pickImage,
-                                child: const CircleAvatar(
-                                  radius: 15,
-                                  backgroundColor: Colors.lightGreen,
-                                  child: Icon(Icons.edit, color: Colors.black, size: 15),
-                                ),
-                              ),
+                                  child: Icon(Icons.person_add_outlined,
+                                      color: Colors.white, size: 50)),
                             ),
                           ],
                         ),
@@ -297,9 +257,12 @@ class _EditUserModalState extends State<EditUserModal> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              SizedBox(height: 20,),
+                              const SizedBox(
+                                height: 20,
+                              ),
                               Text(
-                                _usernameController.text, // Display the current username
+                                _usernameController
+                                    .text, // Display the current username
                                 style: const TextStyle(
                                   fontSize: 20,
                                   color: Colors.white,
@@ -324,8 +287,6 @@ class _EditUserModalState extends State<EditUserModal> {
                       key: _formKey,
                       child: Column(
                         children: [
-
-
                           const SizedBox(height: 10),
                           TextFormField(
                             controller: _oldPasswordController,
@@ -340,12 +301,15 @@ class _EditUserModalState extends State<EditUserModal> {
                               hintStyle: const TextStyle(color: Colors.grey),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _isOldPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                                  _isOldPasswordObscured
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
                                   color: Colors.grey,
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _isOldPasswordObscured = !_isOldPasswordObscured;
+                                    _isOldPasswordObscured =
+                                        !_isOldPasswordObscured;
                                   });
                                 },
                               ),
@@ -359,9 +323,6 @@ class _EditUserModalState extends State<EditUserModal> {
                             ],
                             validator: _validateOldPassword,
                           ),
-
-
-
                           const SizedBox(height: 10),
                           TextFormField(
                             controller: _newPasswordController,
@@ -372,20 +333,25 @@ class _EditUserModalState extends State<EditUserModal> {
                                 borderRadius: BorderRadius.circular(15),
                                 borderSide: BorderSide.none,
                               ),
-                              hintText: "New Password (Only if you want to update)",
+                              hintText:
+                                  "New Password (Only if you want to update)",
                               hintStyle: const TextStyle(color: Colors.grey),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _isNewPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                                  _isNewPasswordObscured
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
                                   color: Colors.grey,
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _isNewPasswordObscured = !_isNewPasswordObscured;
+                                    _isNewPasswordObscured =
+                                        !_isNewPasswordObscured;
                                   });
                                 },
                               ),
-                              errorText: _validateNewPassword(_newPasswordController.text),
+                              errorText: _validateNewPassword(
+                                  _newPasswordController.text),
                             ),
                             obscureText: _isNewPasswordObscured,
                             style: const TextStyle(color: Colors.white),
@@ -396,8 +362,6 @@ class _EditUserModalState extends State<EditUserModal> {
                             ],
                             validator: _validateNewPassword,
                           ),
-
-
                           const SizedBox(height: 10),
                           IntlPhoneField(
                             controller: _phoneController,
@@ -415,11 +379,10 @@ class _EditUserModalState extends State<EditUserModal> {
                             style: const TextStyle(color: Colors.white),
                             keyboardType: TextInputType.number,
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly, // Only allow digits
+                              FilteringTextInputFormatter
+                                  .digitsOnly, // Only allow digits
                             ],
                           ),
-
-
                           const SizedBox(height: 20),
                           CustomGradientButton(
                             buttonText: 'Save Changes',
@@ -440,7 +403,6 @@ class _EditUserModalState extends State<EditUserModal> {
   }
 }
 
-
 class CustomGradientButton extends StatelessWidget {
   final String buttonText;
   final bool isEnabled;
@@ -460,7 +422,7 @@ class CustomGradientButton extends StatelessWidget {
       height: 50,
       decoration: BoxDecoration(
         gradient: isEnabled
-            ? LinearGradient(colors: [Colors.green, Colors.lightGreen])
+            ? const LinearGradient(colors: [Colors.green, Colors.lightGreen])
             : LinearGradient(colors: [Colors.grey, Colors.grey[400]!]),
         borderRadius: BorderRadius.circular(8),
       ),
@@ -481,7 +443,6 @@ class CustomGradientButton extends StatelessWidget {
     );
   }
 }
-
 
 class CustomGradientDivider extends StatelessWidget {
   @override
@@ -525,8 +486,3 @@ class GradientPainter extends CustomPainter {
     return false;
   }
 }
-
-
-
-
-

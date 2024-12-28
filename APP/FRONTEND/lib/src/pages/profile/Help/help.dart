@@ -56,7 +56,8 @@ class _HelpPageState extends State<HelpPage> {
                       children: [
                         // Contact Us Section
                         Container(
-                          margin: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
+                          margin: EdgeInsets.symmetric(
+                              vertical: screenHeight * 0.02),
                           padding: EdgeInsets.all(screenWidth * 0.05),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade800,
@@ -89,7 +90,8 @@ class _HelpPageState extends State<HelpPage> {
                         SizedBox(height: screenHeight * 0.02),
                         // Contact Information Section
                         Container(
-                          margin: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
+                          margin: EdgeInsets.symmetric(
+                              vertical: screenHeight * 0.02),
                           padding: EdgeInsets.all(screenWidth * 0.05),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade800,
@@ -108,7 +110,7 @@ class _HelpPageState extends State<HelpPage> {
                                   ),
                                   SizedBox(width: screenWidth * 0.03),
                                   Text(
-                                    'Email ID: evpower@gmail.com',
+                                    'Mail ID: info@outdidunified.com',
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.045,
                                       color: Colors.white,
@@ -127,7 +129,7 @@ class _HelpPageState extends State<HelpPage> {
                                   ),
                                   SizedBox(width: screenWidth * 0.03),
                                   Text(
-                                    'WhatsApp: 1234567',
+                                    'WhatsApp: +91 99720 71514',
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.045,
                                       color: Colors.white,

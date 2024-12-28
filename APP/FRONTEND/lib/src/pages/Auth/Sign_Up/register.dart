@@ -65,7 +65,6 @@ class _RegisterPageState extends State<RegisterPage> {
 //   );
 // }
 
-
 // void _dismissNoConnectionPage() {
 //   if (Navigator.canPop(context)) {
 //     Navigator.pop(context); // Pop the InternetErrorPage if it is active
@@ -103,7 +102,6 @@ class _RegisterPageState extends State<RegisterPage> {
     return emailRegex.hasMatch(value);
   }
 
-
   bool _validateUsername(String value) {
     final usernameRegex = RegExp(r'^[a-zA-Z0-9]+$');
     return usernameRegex.hasMatch(value);
@@ -116,10 +114,9 @@ class _RegisterPageState extends State<RegisterPage> {
     final String phone = _phoneController.text;
     final String password = _passwordController.text;
 
-     setState(() {
+    setState(() {
       isSearching = true;
     });
-
 
     try {
       var response = await http.post(
@@ -133,7 +130,7 @@ class _RegisterPageState extends State<RegisterPage> {
         }),
       );
 
-       await Future.delayed(const Duration(seconds: 3));
+      await Future.delayed(const Duration(seconds: 3));
 
       if (response.statusCode == 200) {
         _showAlertBannerSuccess("User successfully registered");
@@ -151,8 +148,8 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     } catch (e) {
       setState(() {
-          isSearching = false;
-        });
+        isSearching = false;
+      });
       print('register $e');
       _showAlertBanner('Something went wrong, try again later');
     }
@@ -161,7 +158,7 @@ class _RegisterPageState extends State<RegisterPage> {
   void _showAlertBanner(String message) {
     setState(() {
       _alertMessage = message;
-       isSearching = false;
+      isSearching = false;
     });
     Future.delayed(const Duration(seconds: 3), () {
       setState(() {
@@ -173,97 +170,105 @@ class _RegisterPageState extends State<RegisterPage> {
   void _showAlertBannerSuccess(String message) async {
     setState(() {
       successMsg = message;
-       isSearching = false;
+      isSearching = false;
     });
-   
+
     Future.delayed(const Duration(seconds: 3), () {
       setState(() {
         successMsg = null;
       });
     });
   }
+
   @override
-Widget build(BuildContext context) {
-  return LoadingOverlay(
-    showAlertLoading: isSearching, 
-    child: Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+  Widget build(BuildContext context) {
+    return LoadingOverlay(
+      showAlertLoading: isSearching,
+      child: Scaffold(
         backgroundColor: Colors.black,
-        elevation: 0,
-        toolbarHeight: 0,
-      ),
-      body: SingleChildScrollView(  // Allows scrolling
-        child: ConstrainedBox( // Ensures the content takes minimum space
-          constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
-          child: Center(  // Center the content initially
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center, // Center content within Column
-                  children: [
-                    if (_alertMessage != null) 
-                      AlertBanner(message: _alertMessage!), // Conditional rendering
-                    if (successMsg != null) 
-                      SuccessBanner(message: successMsg!), // Conditional rendering
-                    const Text(
-                      'Create your Account',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          elevation: 0,
+          toolbarHeight: 0,
+        ),
+        body: SingleChildScrollView(
+          // Allows scrolling
+          child: ConstrainedBox(
+            // Ensures the content takes minimum space
+            constraints:
+                BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+            child: Center(
+              // Center the content initially
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment
+                        .center, // Center content within Column
+                    children: [
+                      if (_alertMessage != null)
+                        AlertBanner(
+                            message: _alertMessage!), // Conditional rendering
+                      if (successMsg != null)
+                        SuccessBanner(
+                            message: successMsg!), // Conditional rendering
+                      const Text(
+                        'Create your Account',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      "Fill in the details below to get started.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    _buildUsernameField(),
-                    const SizedBox(height: 20),
-                    _buildEmailField(),
-                    const SizedBox(height: 20),
-                    _buildPasswordField(),
-                    const SizedBox(height: 20),
-                    _buildPhoneField(),
-                    const SizedBox(height: 20),
-                    _buildSubmitButton(),
-                    const SizedBox(height: 20),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginPage()),
-                          );
-                        },
-                        child: Text(
-                          'Already a user? Sign In ?',
-                          style: TextStyle(fontSize: 15, color: Colors.green[700]),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Fill in the details below to get started.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 20),
+                      _buildUsernameField(),
+                      const SizedBox(height: 20),
+                      _buildEmailField(),
+                      const SizedBox(height: 20),
+                      _buildPasswordField(),
+                      const SizedBox(height: 20),
+                      _buildPhoneField(),
+                      const SizedBox(height: 20),
+                      _buildSubmitButton(),
+                      const SizedBox(height: 20),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const LoginPage()),
+                            );
+                          },
+                          child: Text(
+                            'Already a user? Sign In ?',
+                            style: TextStyle(
+                                fontSize: 15, color: Colors.green[700]),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
-
-
+    );
+  }
 
   Widget _buildUsernameField() {
     return TextFormField(
@@ -283,7 +288,9 @@ Widget build(BuildContext context) {
       validator: (value) {
         if (!_isUsernameInteracted) return null;
         if (value == null || value.isEmpty) return 'Enter your username';
-        if (!_validateUsername(value)) return 'Username must be alphabets & numbers only';
+        if (!_validateUsername(value)) {
+          return 'Username must be alphabets, numbers only & \nSpace not alowed';
+        }
         return null;
       },
       onChanged: (value) => _validateAndUpdate(),
@@ -312,7 +319,8 @@ Widget build(BuildContext context) {
       cursorColor: const Color(0xFF1ED760),
       keyboardType: TextInputType.emailAddress,
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9@.]')), // Allows only lowercase letters, numbers, @, and .
+        FilteringTextInputFormatter.allow(RegExp(
+            r'[a-z0-9@.]')), // Allows only lowercase letters, numbers, @, and .
       ],
       validator: (value) {
         if (!_isEmailInteracted) return null;
@@ -333,7 +341,6 @@ Widget build(BuildContext context) {
     );
   }
 
-
   Widget _buildPhoneField() {
     return IntlPhoneField(
       controller: _phoneController,
@@ -351,7 +358,8 @@ Widget build(BuildContext context) {
       cursorColor: const Color(0xFF1ED760),
       initialCountryCode: 'IN',
       validator: (value) {
-        if (value == null || value.number.isEmpty) return 'Enter your phone number';
+        if (value == null || value.number.isEmpty)
+          return 'Enter your phone number';
         return null;
       },
       inputFormatters: <TextInputFormatter>[
@@ -389,7 +397,10 @@ Widget build(BuildContext context) {
       style: const TextStyle(color: Colors.white),
       cursorColor: const Color(0xFF1ED760),
       keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(4)
+      ],
       validator: (value) {
         if (!_isPasswordInteracted) return null;
         if (value == null || value.isEmpty) return 'Enter your password';
@@ -405,51 +416,52 @@ Widget build(BuildContext context) {
     );
   }
 
-
   Widget _buildSubmitButton() {
-  return ElevatedButton(
-  onPressed: _isButtonEnabled
-      ? () {
-          // Close the keyboard when the button is pressed
-          FocusScope.of(context).unfocus();
+    return ElevatedButton(
+      onPressed: _isButtonEnabled
+          ? () {
+              // Close the keyboard when the button is pressed
+              FocusScope.of(context).unfocus();
 
-          // Call the register function
-          _handleRegister();
-        }
-      : null,
-  style: ElevatedButton.styleFrom(
-    backgroundColor: _isButtonEnabled
-        ? const Color(0xFF1C8B39)
-        : Colors.transparent, // Dark green when enabled
-    minimumSize: const Size(double.infinity, 50), // Set the width to be full width
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8),
-    ),
-    side: BorderSide(
-      color: _isButtonEnabled ? Colors.transparent : Colors.transparent, // No border color when disabled
-    ),
-    elevation: 0,
-  ).copyWith(
-    backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-      (Set<MaterialState> states) {
-        if (states.contains(MaterialState.disabled)) {
-          return Colors.green.withOpacity(0.2); // Light green gradient
-        }
-        return const Color(0xFF1C8B40); // Dark green color
-      },
-    ),
-  ),
-  child: _isLoading
-      ? const CircularProgressIndicator(color: Colors.white)
-      : const Text(
-          'Continue',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+              // Call the register function
+              _handleRegister();
+            }
+          : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _isButtonEnabled
+            ? const Color(0xFF1C8B39)
+            : Colors.transparent, // Dark green when enabled
+        minimumSize:
+            const Size(double.infinity, 50), // Set the width to be full width
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
         ),
-);
-
+        side: BorderSide(
+          color: _isButtonEnabled
+              ? Colors.transparent
+              : Colors.transparent, // No border color when disabled
+        ),
+        elevation: 0,
+      ).copyWith(
+        backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.disabled)) {
+              return Colors.green.withOpacity(0.2); // Light green gradient
+            }
+            return const Color(0xFF1C8B40); // Dark green color
+          },
+        ),
+      ),
+      child: _isLoading
+          ? const CircularProgressIndicator(color: Colors.white)
+          : const Text(
+              'Continue',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+    );
   }
 }
 
@@ -528,7 +540,6 @@ class GradientPainter extends CustomPainter {
     return false;
   }
 }
-
 
 class LoadingOverlay extends StatelessWidget {
   final bool showAlertLoading;

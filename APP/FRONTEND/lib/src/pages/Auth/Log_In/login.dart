@@ -13,7 +13,6 @@ import '../Sign_Up/register.dart';
 import '../../../utilities/Alert/alert_banner.dart';
 import '../Forgot_password/forgot_password.dart';
 
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -32,7 +31,6 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
   bool isSearching = false;
 
-
   String? storedUser;
   String? _alertMessage;
 
@@ -43,7 +41,6 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.addListener(_updateButtonState);
     _retrieveUserData();
   }
-
 
   @override
   void dispose() {
@@ -85,6 +82,7 @@ class _LoginPageState extends State<LoginPage> {
     final form = _formKey.currentState;
     return form?.validate() ?? false;
   }
+
   Future<void> _login() async {
     if (isSearching) return;
     String email = _emailController.text;
@@ -116,7 +114,6 @@ class _LoginPageState extends State<LoginPage> {
 
         Provider.of<UserData>(context, listen: false)
             .updateUserData(username, userId, email);
-
 
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
@@ -171,7 +168,8 @@ class _LoginPageState extends State<LoginPage> {
           ),
           content: Text(
             message,
-            style: const TextStyle(color: Colors.white70), // Adjusted text color for contrast
+            style: const TextStyle(
+                color: Colors.white70), // Adjusted text color for contrast
           ),
           actions: <Widget>[
             TextButton(
@@ -186,7 +184,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-
   void _updateButtonState() {
     setState(() {});
   }
@@ -197,226 +194,232 @@ class _LoginPageState extends State<LoginPage> {
       showAlertLoading: isSearching, // Pass the isLoading state
       child: storedUser != null
           ? HomePage(
-        username: storedUser!,
-        email: '',
-      )
+              username: storedUser!,
+              email: '',
+            )
           : Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: Colors.black,
-          elevation: 0,
-          toolbarHeight: 0,
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  const SizedBox(height: 50), // Margin at the top
-                  const Text(
-                    'Welcome Back! Sign In to dive in?',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Enter your email and password to continue.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color.fromARGB(200, 58, 58, 60),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide.none,
-                      ),
-                      hintText: 'Email',
-                      hintStyle: const TextStyle(color: Colors.grey),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                    keyboardType: TextInputType.emailAddress,
-                    cursorColor: const Color(0xFF1ED760),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9@.]')), // Allows only lowercase letters, numbers, @, and .
-                    ],
-
-                    validator: (value) {
-                      if (!_isEmailInteracted) return null;
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter email';
-                      }
-                      if (!_validateEmail(value)) {
-                        return 'Enter a valid email address ending with .com';
-                      }
-                      return null;
-                    },
-                    onTap: () {
-                      setState(() {
-                        _isEmailInteracted = true;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: !_isPasswordVisible,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color.fromARGB(200, 58, 58, 60),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide.none,
-                      ),
-                      hintText: 'Password',
-                      hintStyle: const TextStyle(color: Colors.grey),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
-                        },
-                      ),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(4),
-                    ],
-                    cursorColor: const Color(0xFF1ED760),
-                    validator: (value) {
-                      if (!_isPasswordInteracted) return null;
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter password';
-                      }
-                      if (value.length != 4) {
-                        return 'Password must be exactly 4 digits';
-                      }
-                      return null;
-                    },
-                    onTap: () {
-                      setState(() {
-                        _isPasswordInteracted = true;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-ElevatedButton(
-  onPressed: _isFormValid() ? () {
-    // Close the keyboard
-    FocusScope.of(context).unfocus();
-
-    // Proceed with login
-    _login();
-  } : null,
-  style: ElevatedButton.styleFrom(
-    backgroundColor: _isFormValid()
-        ? const Color(0xFF1C8B39)
-        : Colors.transparent, // Dark green when enabled
-    minimumSize: const Size(double.infinity, 50), // Full width button
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8),
-    ),
-    elevation: 0,
-  ).copyWith(
-    backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-          (Set<MaterialState> states) {
-        if (states.contains(MaterialState.disabled)) {
-          return Colors.green.withOpacity(0.2); // Light green gradient
-        }
-        return const Color(0xFF1C8B40); // Dark green color
-      },
-    ),
-  ),
-  child: Text(
-    'Continue',
-    style: TextStyle(
-      fontSize: 18,
-      fontWeight: FontWeight.bold,
-      color: _isFormValid()
-          ? Colors.white
-          : Colors.green[700], // Text color
-    ),
-  ),
-),
-
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ForgotPasswordPage(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Forgot password?',
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>  const RegisterPage(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          "New User? Sign Up",
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20), // Extra margin at the bottom
-                ],
+              backgroundColor: Colors.black,
+              appBar: AppBar(
+                backgroundColor: Colors.black,
+                elevation: 0,
+                toolbarHeight: 0,
               ),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Form(
+                    key: _formKey,
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        const SizedBox(height: 50), // Margin at the top
+                        const Text(
+                          'Welcome Back! Sign In to dive in?',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          "Enter your email and password to continue.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color.fromARGB(200, 58, 58, 60),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide.none,
+                            ),
+                            hintText: 'Email',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                          ),
+                          style: const TextStyle(color: Colors.white),
+                          keyboardType: TextInputType.emailAddress,
+                          cursorColor: const Color(0xFF1ED760),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(
+                                r'[a-z0-9@.]')), // Allows only lowercase letters, numbers, @, and .
+                          ],
+                          validator: (value) {
+                            if (!_isEmailInteracted) return null;
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter email';
+                            }
+                            if (!_validateEmail(value)) {
+                              return 'Enter a valid email address ending with .com';
+                            }
+                            return null;
+                          },
+                          onTap: () {
+                            setState(() {
+                              _isEmailInteracted = true;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: !_isPasswordVisible,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color.fromARGB(200, 58, 58, 60),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide.none,
+                            ),
+                            hintText: 'Password',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                            ),
+                          ),
+                          style: const TextStyle(color: Colors.white),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(4),
+                          ],
+                          cursorColor: const Color(0xFF1ED760),
+                          validator: (value) {
+                            if (!_isPasswordInteracted) return null;
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter password';
+                            }
+                            if (value.length != 4) {
+                              return 'Password must be exactly 4 digits';
+                            }
+                            return null;
+                          },
+                          onTap: () {
+                            setState(() {
+                              _isPasswordInteracted = true;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: _isFormValid()
+                              ? () {
+                                  // Close the keyboard
+                                  FocusScope.of(context).unfocus();
+
+                                  // Proceed with login
+                                  _login();
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _isFormValid()
+                                ? const Color(0xFF1C8B39)
+                                : Colors.transparent, // Dark green when enabled
+                            minimumSize: const Size(
+                                double.infinity, 50), // Full width button
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ).copyWith(
+                            backgroundColor:
+                                MaterialStateProperty.resolveWith<Color?>(
+                              (Set<MaterialState> states) {
+                                if (states.contains(MaterialState.disabled)) {
+                                  return Colors.green
+                                      .withOpacity(0.2); // Light green gradient
+                                }
+                                return const Color(
+                                    0xFF1C8B40); // Dark green color
+                              },
+                            ),
+                          ),
+                          child: Text(
+                            'Continue',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: _isFormValid()
+                                  ? Colors.white
+                                  : Colors.green[700], // Text color
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ForgotPasswordPage(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Forgot password?',
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const RegisterPage(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                "New User? Sign Up",
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(
+                            height: 20), // Extra margin at the bottom
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              bottomNavigationBar: _alertMessage != null
+                  ? AlertBanner(
+                      message: _alertMessage!,
+                    )
+                  : null,
             ),
-          ),
-        ),
-        bottomNavigationBar: _alertMessage != null
-            ? AlertBanner(
-          message: _alertMessage!,
-        )
-            : null,
-      ),
     );
   }
-
 }
-
 
 class CustomGradientDivider extends StatelessWidget {
   @override
@@ -460,7 +463,6 @@ class GradientPainter extends CustomPainter {
     return false;
   }
 }
-
 
 class LoadingOverlay extends StatelessWidget {
   final bool showAlertLoading;

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:ev_app/src/service/walletnotification.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart'; // Tile caching
@@ -18,6 +19,8 @@ void main() async {
   // Ensure Flutter bindings are initialized before calling any asynchronous methods
   WidgetsFlutterBinding.ensureInitialized();
 
+  NotificationService notificationService = NotificationService();
+  await notificationService.initNotifications();
   // Set the system UI overlay styles
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

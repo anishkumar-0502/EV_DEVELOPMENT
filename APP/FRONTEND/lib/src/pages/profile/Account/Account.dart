@@ -9,14 +9,13 @@ import '../../../utilities/User_Model/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
-
 class AccountPage extends StatefulWidget {
   final String username;
   final int? userId;
   final String? email;
 
-
-  const AccountPage({super.key, required this.username, this.userId,this.email});
+  const AccountPage(
+      {super.key, required this.username, this.userId, this.email});
 
   @override
   State<AccountPage> createState() => _AccountPageState();
@@ -33,7 +32,8 @@ class _AccountPageState extends State<AccountPage> {
       enableDrag: false,
       builder: (BuildContext context) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.7, // Set height to 70% of the screen
+          height: MediaQuery.of(context).size.height *
+              0.7, // Set height to 70% of the screen
           child: Padding(
             padding: MediaQuery.of(context).viewInsets,
             child: TransactionHistoryPage(
@@ -53,12 +53,13 @@ class _AccountPageState extends State<AccountPage> {
       enableDrag: false,
       builder: (BuildContext context) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.8, // Set height to 70% of the screen
+          height: MediaQuery.of(context).size.height *
+              0.8, // Set height to 70% of the screen
           child: Padding(
             padding: MediaQuery.of(context).viewInsets,
             child: Rfidpage(
               username: widget.username,
-              email:widget.email,// Pass the username correctly
+              email: widget.email, // Pass the username correctly
             ),
           ),
         );
@@ -94,20 +95,22 @@ class _AccountPageState extends State<AccountPage> {
             ],
           ),
           content: const Text(
-              "Once deleted, you won't be able to recover your account. Confirm to delete?",
-            style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
+            "Once deleted, you won't be able to recover your account. Confirm to delete?",
+            style: TextStyle(
+                color: Colors.white70), // Adjusted text color for contrast
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: const Text("Cancel", style: TextStyle(color: Colors.white)),
+              child:
+                  const Text("Cancel", style: TextStyle(color: Colors.white)),
             ),
             TextButton(
               onPressed: () {
                 deleteAccount();
-                Navigator.of(context).pop();// Call the deleteAccount function
+                Navigator.of(context).pop(); // Call the deleteAccount function
               },
               child: const Text("Delete", style: TextStyle(color: Colors.red)),
             ),
@@ -128,15 +131,13 @@ class _AccountPageState extends State<AccountPage> {
       MaterialPageRoute(
         builder: (context) => const LoginPage(),
       ),
-          (route) => false,
+      (route) => false,
     );
   }
 
   void deleteAccount() async {
-
     String? username = widget.username;
     int? userId = widget.userId;
-
 
     if (userId == null) {
       _showAlertBanner('User ID is required');
@@ -178,7 +179,8 @@ class _AccountPageState extends State<AccountPage> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.check_circle, color: Colors.green, size: 25),
+                      const Icon(Icons.check_circle,
+                          color: Colors.green, size: 25),
                       const SizedBox(width: 10),
                       const Text(
                         "Account Deleted",
@@ -192,9 +194,9 @@ class _AccountPageState extends State<AccountPage> {
               ),
               content: const Text(
                 "Your account has been successfully deleted.",
-                style: TextStyle(color: Colors.white70), // Adjusted text color for contrast
+                style: TextStyle(
+                    color: Colors.white70), // Adjusted text color for contrast
               ),
-
             );
           },
         );
@@ -203,10 +205,12 @@ class _AccountPageState extends State<AccountPage> {
         Future.delayed(Duration(seconds: 2), () {
           _logout();
         });
-
-      } else if (response.statusCode == 401 || response.statusCode == 400 || response.statusCode == 500) {
+      } else if (response.statusCode == 401 ||
+          response.statusCode == 400 ||
+          response.statusCode == 500) {
         final responseData = jsonDecode(response.body);
-        final errorMessage = responseData['error_message'] ?? "Failed to delete account!";
+        final errorMessage =
+            responseData['error_message'] ?? "Failed to delete account!";
         if (mounted) _showAlertBanner(errorMessage);
       } else {
         final errorMessage = "Unexpected error occurred. Please try again.";
@@ -222,7 +226,6 @@ class _AccountPageState extends State<AccountPage> {
       });
     }
   }
-
 
   void _showAlertBanner(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -271,13 +274,13 @@ class _AccountPageState extends State<AccountPage> {
                       const Spacer(),
                     ],
                   ),
-
                 ),
                 CustomGradientDivider(),
                 GestureDetector(
                   onTap: _showTransactionModal, // Use function reference
                   child: Container(
-                    margin: const EdgeInsets.only(top: 20.0, left: 15, right: 15, bottom: 10),
+                    margin: const EdgeInsets.only(
+                        top: 20.0, left: 15, right: 15, bottom: 10),
                     padding: const EdgeInsets.all(17),
                     decoration: BoxDecoration(
                       color: const Color(0xFF3E3E3E).withOpacity(0.8),
@@ -302,7 +305,8 @@ class _AccountPageState extends State<AccountPage> {
                 GestureDetector(
                   onTap: _showrfidmodel, // Use function reference
                   child: Container(
-                    margin: const EdgeInsets.only(left: 15, right: 15, bottom: 10),
+                    margin:
+                        const EdgeInsets.only(left: 15, right: 15, bottom: 10),
                     padding: const EdgeInsets.all(17),
                     decoration: BoxDecoration(
                       color: const Color(0xFF3E3E3E).withOpacity(0.8),
@@ -312,7 +316,8 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.account_circle_outlined, color: Colors.white70),
+                        Icon(Icons.account_circle_outlined,
+                            color: Colors.white70),
                         SizedBox(width: 20),
                         Text(
                           'Manage RFID',
@@ -327,7 +332,8 @@ class _AccountPageState extends State<AccountPage> {
                 GestureDetector(
                   onTap: _showDeleteAccount, // Use function reference
                   child: Container(
-                    margin: const EdgeInsets.only( left: 15, right: 15, bottom: 10),
+                    margin:
+                        const EdgeInsets.only(left: 15, right: 15, bottom: 10),
                     padding: const EdgeInsets.all(17),
                     decoration: BoxDecoration(
                       color: const Color(0xFF3E3E3E).withOpacity(0.8),
@@ -344,7 +350,6 @@ class _AccountPageState extends State<AccountPage> {
                           style: TextStyle(color: Colors.red, fontSize: 17),
                         ),
                         Spacer(),
-
                       ],
                     ),
                   ),
@@ -358,13 +363,12 @@ class _AccountPageState extends State<AccountPage> {
   }
 }
 
-
-
 class Rfidpage extends StatefulWidget {
   final String username;
   final String? email;
 
-  const Rfidpage({Key? key, required this.username, this.email}) : super(key: key);
+  const Rfidpage({Key? key, required this.username, this.email})
+      : super(key: key);
 
   @override
   _RfidpageState createState() => _RfidpageState();
@@ -427,17 +431,17 @@ class _RfidpageState extends State<Rfidpage> {
 
   // Function to format the date with AM/PM
   String formatDate(String? dateString) {
-  if (dateString == null) return 'N/A';
-  
-  // Parse the input date string
-  DateTime dateTime = DateTime.parse(dateString);
-  
-  // Convert to IST by adding 5 hours and 30 minutes
-  DateTime istDateTime = dateTime.add(const Duration(hours: 5, minutes: 30));
+    if (dateString == null) return 'N/A';
 
-  // Format the date in the desired format: dd/MM/yyyy, hh:mm:ss a
-  return DateFormat('dd/MM/yyyy, hh:mm:ss a').format(istDateTime);
-}
+    // Parse the input date string
+    DateTime dateTime = DateTime.parse(dateString);
+
+    // Convert to IST by adding 5 hours and 30 minutes
+    DateTime istDateTime = dateTime.add(const Duration(hours: 5, minutes: 30));
+
+    // Format the date in the desired format: dd/MM/yyyy, hh:mm:ss a
+    return DateFormat('dd/MM/yyyy, hh:mm:ss a').format(istDateTime);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -482,9 +486,11 @@ class _RfidpageState extends State<Rfidpage> {
 
                 child: Center(
                   child: AspectRatio(
-                    aspectRatio: 1, // Maintain square aspect ratio (512x512 image)
+                    aspectRatio:
+                        1, // Maintain square aspect ratio (512x512 image)
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10), // Optional rounded corners
+                      borderRadius:
+                          BorderRadius.circular(10), // Optional rounded corners
                       child: Image.asset(
                         'assets/Image/rfidcard.png', // Use the correct path to your asset
                         fit: BoxFit.contain, // Dynamically scale the image
@@ -493,7 +499,7 @@ class _RfidpageState extends State<Rfidpage> {
                   ),
                 ),
               ),
-           // Space between image and other content
+              // Space between image and other content
 
               // Show shimmer effect while fetching data
               if (isLoading)
@@ -502,8 +508,10 @@ class _RfidpageState extends State<Rfidpage> {
                 Center(
                   child: Container(
                     width: screenWidth * 0.8, // Responsive width
-                    padding: EdgeInsets.all(screenWidth * 0.04), // Responsive padding
-                    margin: EdgeInsets.only(bottom: screenHeight * 0.02), // Responsive margin
+                    padding: EdgeInsets.all(
+                        screenWidth * 0.04), // Responsive padding
+                    margin: EdgeInsets.only(
+                        bottom: screenHeight * 0.02), // Responsive margin
                     decoration: BoxDecoration(
                       color: const Color(0xFF3E3E3E).withOpacity(0.8),
                       borderRadius: const BorderRadius.all(
@@ -523,110 +531,133 @@ class _RfidpageState extends State<Rfidpage> {
                   ),
                 )
               else ...[
-                  Center(
-                    child: Container(
-                      padding: EdgeInsets.all(screenWidth * 0.04), // Responsive padding
-                      margin: EdgeInsets.only(bottom: screenHeight * 0.02), // Responsive margin
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3E3E3E).withOpacity(0.8),
-                        borderRadius: const BorderRadius.all(
-                          Radius.circular(10),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Text(
-                              '📋 RFID Information',
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.045, // Responsive font size
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: screenHeight * 0.02), // Responsive space
-                          CustomGradientDivider(),
-                          SizedBox(height: screenHeight * 0.02), // Responsive space
-                          Padding(
-                            padding: EdgeInsets.only(
-                                left: screenWidth * 0.04, top: screenHeight * 0.02, bottom: screenHeight * 0.01),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      'RFID Name: ',
-                                      style: TextStyle(
-                                        fontSize: screenWidth * 0.045, // Responsive font size
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(width: screenWidth * 0.02),
-                                    Text(
-                                      '$tagId',
-                                      style: TextStyle(fontSize: screenWidth * 0.045), // Responsive font size
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: screenHeight * 0.015),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Expiry Date: ',
-                                      style: TextStyle(
-                                        fontSize: screenWidth * 0.045, // Responsive font size
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(width: screenWidth * 0.02),
-                                    Text(
-                                      '${formatDate(tagIdExpiryDate)}',
-                                      style: TextStyle(fontSize: screenWidth * 0.045), // Responsive font size
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: screenHeight * 0.015),
-                                RichText(
-                                  text: TextSpan(
-                                    style: TextStyle(
-                                      fontSize: screenWidth * 0.045, // Responsive font size
-                                      color: Colors.white,
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                        text: 'Status: ',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: status == true ? 'Active' : 'Inactive',
-                                        style: TextStyle(
-                                          color: status == true ? Colors.green : Colors.red, // Status color
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                Center(
+                  child: Container(
+                    padding: EdgeInsets.all(
+                        screenWidth * 0.04), // Responsive padding
+                    margin: EdgeInsets.only(
+                        bottom: screenHeight * 0.02), // Responsive margin
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3E3E3E).withOpacity(0.8),
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(10),
                       ),
                     ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            '📋 RFID Information',
+                            style: TextStyle(
+                              fontSize:
+                                  screenWidth * 0.045, // Responsive font size
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                            height: screenHeight * 0.02), // Responsive space
+                        CustomGradientDivider(),
+                        SizedBox(
+                            height: screenHeight * 0.02), // Responsive space
+                        Padding(
+                          padding: EdgeInsets.only(
+                              left: screenWidth * 0.04,
+                              top: screenHeight * 0.02,
+                              bottom: screenHeight * 0.01),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'RFID Name: ',
+                                    style: TextStyle(
+                                      fontSize: screenWidth *
+                                          0.045, // Responsive font size
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  Text(
+                                    '$tagId',
+                                    style: TextStyle(
+                                        fontSize: screenWidth *
+                                            0.045), // Responsive font size
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: screenHeight * 0.015),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Expiry Date: ',
+                                    style: TextStyle(
+                                      fontSize: screenWidth *
+                                          0.045, // Responsive font size
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  Text(
+                                    '${formatDate(tagIdExpiryDate)}',
+                                    style: TextStyle(
+                                        fontSize: screenWidth *
+                                            0.045), // Responsive font size
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: screenHeight * 0.015),
+                              RichText(
+                                text: TextSpan(
+                                  style: TextStyle(
+                                    fontSize: screenWidth *
+                                        0.045, // Responsive font size
+                                    color: Colors.white,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: 'Status: ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: status == true
+                                          ? 'Active'
+                                          : 'Inactive',
+                                      style: TextStyle(
+                                        color: status == true
+                                            ? Colors.green
+                                            : Colors.red, // Status color
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
+              ],
 
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start, // Align the text and icon
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // Align the text and icon
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(right: screenWidth * 0.02), // Responsive space between icon and text
-                    child: Icon(Icons.lightbulb_outline, color: Colors.yellow, size: screenWidth * 0.05),
+                    padding: EdgeInsets.only(
+                        right: screenWidth *
+                            0.02), // Responsive space between icon and text
+                    child: Icon(Icons.lightbulb_outline,
+                        color: Colors.yellow, size: screenWidth * 0.05),
                   ),
-                  Expanded( // Ensure the text wraps correctly
+                  Expanded(
+                    // Ensure the text wraps correctly
                     child: Text(
                       'Minimum wallet balance should be maintained to access RFID card',
                       style: TextStyle(
@@ -642,33 +673,31 @@ class _RfidpageState extends State<Rfidpage> {
           ),
         ),
       ),
-
     );
   }
 
-
 // Shimmer loading card widget
-Widget _buildShimmerCard(BuildContext context) {
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
+  Widget _buildShimmerCard(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-  return Shimmer.fromColors(
-    baseColor: Colors.grey[800]!,
-    highlightColor: Colors.grey[700]!,
-    child: Container(
-      width: screenWidth * 0.9, // Reduced width to make it smaller
-      height: screenHeight * 0.9, // Reduced height to make it smaller
-      margin: EdgeInsets.only(
-        left: screenWidth * 0.05, // Move the shimmer card slightly to the right
-        right: screenWidth * 0.02,
-        top: screenHeight * 0.01,
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[700]!,
+      child: Container(
+        width: screenWidth * 0.9, // Reduced width to make it smaller
+        height: screenHeight * 0.9, // Reduced height to make it smaller
+        margin: EdgeInsets.only(
+          left:
+              screenWidth * 0.05, // Move the shimmer card slightly to the right
+          right: screenWidth * 0.02,
+          top: screenHeight * 0.01,
+        ),
+        color: const Color(0xFF0E0E0E), // Background color of the shimmer
       ),
-      color: const Color(0xFF0E0E0E), // Background color of the shimmer
-    ),
-  );
+    );
+  }
 }
-}
-
 
 class CustomGradientDivider extends StatelessWidget {
   @override
@@ -814,6 +843,3 @@ class __AnimatedChargingIconState extends State<_AnimatedChargingIcon>
     );
   }
 }
-
-
-

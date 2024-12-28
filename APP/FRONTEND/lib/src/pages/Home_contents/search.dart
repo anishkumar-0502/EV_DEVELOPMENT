@@ -47,186 +47,188 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     super.initState();
     _loadRecentLocations();
   }
-void showErrorDialog(BuildContext context, String message) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    isDismissible: false,
-    enableDrag: false,
-    backgroundColor: Colors.black,
-    builder: (BuildContext context) {
-      return Padding(
-        padding: MediaQuery.of(context).viewInsets,
-        child: ErrorDetails(
-          errorData: message,
-          username: widget.username,
-          email: widget.email,
-          userId: widget.userId,
-        ),
-      );
-    },
-  );
-}
 
-Future<void> updateConnectorUser(String searchChargerID, int connectorId, int connectorType) async {
-
-  try {
-    final response = await http.post(
-      Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'searchChargerID': searchChargerID,
-        'Username': widget.username,
-        'user_id': widget.userId,
-        'connector_id': connectorId,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      // Navigate to Charging page on success
-      Navigator.pop(context);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => Charging(
-            searchChargerID: searchChargerID,
+  void showErrorDialog(BuildContext context, String message) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.black,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: MediaQuery.of(context).viewInsets,
+          child: ErrorDetails(
+            errorData: message,
             username: widget.username,
-            userId: widget.userId,
-            connector_id: connectorId,
-            connector_type: connectorType,
             email: widget.email,
+            userId: widget.userId,
           ),
-        ),
-      );
-    } else {
-      final errorData = json.decode(response.body);
-      showErrorDialog(context, errorData['message']);
-    }
-  } catch (error) {
-    showErrorDialog(context, 'Something went wrong, try again later');
-
-  }
-}
-
-Future<Map<String, dynamic>?> handleSearchRequest(String searchChargerID) async {
-  if (_isLoadingBolt) return null; // Prevent multiple requests at once
-
-  if (searchChargerID.isEmpty) {
-    showErrorDialog(context, 'Please enter a charger ID.');
-    return {'error': true, 'message': 'Charger ID is empty'};
-  }
-
-  setState(() {
-    _isLoadingBolt = true; // Start loading when search begins
-  });
-
-  try {
-    final response = await http.post(
-      Uri.parse('http://122.166.210.142:4444/searchCharger'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'searchChargerID': searchChargerID,
-        'Username': widget.username,
-        'user_id': widget.userId,
-      }),
+        );
+      },
     );
+  }
 
-    // Add artificial delay to simulate loading if needed
-    await Future.delayed(const Duration(seconds: 2));
-      // Check if charger ID is valid
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final chargerDatas = data['socketGunConfig'];
-            print("_searchChargerId data $chargerDatas");
-
-        setState(() {
-          _isLoadingBolt = false;
-          _isDialogShown = false; // Reset dialog shown status
-
-        });
-      await Future.delayed(const Duration(seconds: 1));
-                  Navigator.pop(context);
-
-      // Show connector selection modal
-      await showModalBottomSheet(
-        
-        context: context,
-        isScrollControlled: true,
-        isDismissible: false,
-        enableDrag: false,
-        backgroundColor: Colors.black,
-        builder: (BuildContext context) {
-          return Padding(
-            padding: MediaQuery.of(context).viewInsets,
-            child: ConnectorSelectionDialog(
-              chargerData: data['socketGunConfig'] ?? {},
-              onConnectorSelected: (connectorId, connectorType) {
-
-                updateConnectorUser(searchChargerID, connectorId, connectorType);
-              },
-              username: widget.username,
-              email: widget.email,
-              userId: widget.userId,
-            ),
-          );
-        },
+  Future<void> updateConnectorUser(
+      String searchChargerID, int connectorId, int connectorType) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'searchChargerID': searchChargerID,
+          'Username': widget.username,
+          'user_id': widget.userId,
+          'connector_id': connectorId,
+        }),
       );
-      return data; // Return successful data
-    } else {
-          setState(() {
-          _isLoadingBolt = false;
-          _isDialogShown = false; // Reset dialog shown status
-    });
-                      Navigator.pop(context);
 
-      final errorData = json.decode(response.body);
-      showErrorDialog(context, errorData['message']);
-      return {'error': true, 'message': errorData['message']};
+      if (response.statusCode == 200) {
+        // Navigate to Charging page on success
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Charging(
+              searchChargerID: searchChargerID,
+              username: widget.username,
+              userId: widget.userId,
+              connector_id: connectorId,
+              connector_type: connectorType,
+              email: widget.email,
+            ),
+          ),
+        );
+      } else {
+        final errorData = json.decode(response.body);
+        showErrorDialog(context, errorData['message']);
+      }
+    } catch (error) {
+      showErrorDialog(context, 'Something went wrong, try again later');
     }
-  } catch (error) {
+  }
+
+  Future<Map<String, dynamic>?> handleSearchRequest(
+      String searchChargerID) async {
+    if (_isLoadingBolt) return null; // Prevent multiple requests at once
+
+    if (searchChargerID.isEmpty) {
+      showErrorDialog(context, 'Please enter a charger ID.');
+      return {'error': true, 'message': 'Charger ID is empty'};
+    }
+
+    setState(() {
+      _isLoadingBolt = true; // Start loading when search begins
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://122.166.210.142:4444/searchCharger'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'searchChargerID': searchChargerID,
+          'Username': widget.username,
+          'user_id': widget.userId,
+        }),
+      );
+
+      // Add artificial delay to simulate loading if needed
+      await Future.delayed(const Duration(seconds: 2));
+      // Check if charger ID is valid
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final chargerDatas = data['socketGunConfig'];
+        print("_searchChargerId data $chargerDatas");
+
         setState(() {
           _isLoadingBolt = false;
           _isDialogShown = false; // Reset dialog shown status
-    });
-                      Navigator.pop(context);
+        });
+        await Future.delayed(const Duration(seconds: 1));
+        Navigator.pop(context);
 
-    showErrorDialog(context, 'Something went wrong, try again later');
-    return {'error': true, 'message': 'Something went wrong, try again later'};
-  } finally {
-    // setState(() {
-    //       _isLoadingBolt = false;
-    //       _isDialogShown = false; // Reset dialog shown status
-    // });
+        // Show connector selection modal
+        await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          isDismissible: false,
+          enableDrag: false,
+          backgroundColor: Colors.black,
+          builder: (BuildContext context) {
+            return Padding(
+              padding: MediaQuery.of(context).viewInsets,
+              child: ConnectorSelectionDialog(
+                chargerData: data['socketGunConfig'] ?? {},
+                onConnectorSelected: (connectorId, connectorType) {
+                  updateConnectorUser(
+                      searchChargerID, connectorId, connectorType);
+                },
+                username: widget.username,
+                email: widget.email,
+                userId: widget.userId,
+              ),
+            );
+          },
+        );
+        return data; // Return successful data
+      } else {
+        setState(() {
+          _isLoadingBolt = false;
+          _isDialogShown = false; // Reset dialog shown status
+        });
+        Navigator.pop(context);
+
+        final errorData = json.decode(response.body);
+        showErrorDialog(context, errorData['message']);
+        return {'error': true, 'message': errorData['message']};
+      }
+    } catch (error) {
+      setState(() {
+        _isLoadingBolt = false;
+        _isDialogShown = false; // Reset dialog shown status
+      });
+      Navigator.pop(context);
+
+      showErrorDialog(context, 'Something went wrong, try again later');
+      return {
+        'error': true,
+        'message': 'Something went wrong, try again later'
+      };
+    } finally {
+      // setState(() {
+      //       _isLoadingBolt = false;
+      //       _isDialogShown = false; // Reset dialog shown status
+      // });
+    }
   }
-}
 
-void _searchChargerId(String chargerId) async {
-  if (chargerId.isEmpty) {
-    // Handle empty charger ID input
-    showErrorDialog(context, 'Please enter a charger ID.');
-    return;
+  void _searchChargerId(String chargerId) async {
+    if (chargerId.isEmpty) {
+      // Handle empty charger ID input
+      showErrorDialog(context, 'Please enter a charger ID.');
+      return;
+    }
+
+    final result = await handleSearchRequest(chargerId);
+
+    print("_searchChargerId result $result");
+
+    if (result != null && result.containsKey('error') && !result['error']) {
+      // If search is successful, prepare location data
+      final location = {
+        'name': result['chargerName']?.toString() ??
+            'Unknown Charger', // Ensure value is a String
+        'address': result['chargerAddress']?.toString() ??
+            '', // Ensure value is a String
+      };
+
+      // Call the onLocationSelected method to locate the charger on the map
+      _onLocationSelected(location);
+    } else {
+      // Handle error cases
+      print('Error in search: ${result?['message']}');
+    }
   }
-
-  final result = await handleSearchRequest(chargerId);
-
-  print("_searchChargerId result $result");
-
-  if (result != null && result.containsKey('error') && !result['error']) {
-    // If search is successful, prepare location data
-    final location = {
-      'name': result['chargerName']?.toString() ?? 'Unknown Charger', // Ensure value is a String
-      'address': result['chargerAddress']?.toString() ?? '', // Ensure value is a String
-    };
-
-    // Call the onLocationSelected method to locate the charger on the map
-    _onLocationSelected(location);
-  } else {
-    // Handle error cases
-    print('Error in search: ${result?['message']}');
-  }
-}
-
-
 
   void _oncurrentLocationSelected(Map<String, dynamic> location) {
     // Convert latitude and longitude to strings to ensure consistency
@@ -287,170 +289,169 @@ void _searchChargerId(String chargerId) async {
     );
   }
 
+  Future<void> _loadRecentLocations() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
 
-Future<void> _loadRecentLocations() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Retrieve stored locations
+    List<String>? storedLocations = prefs.getStringList('recentLocations');
 
-  // Retrieve stored locations
-  List<String>? storedLocations = prefs.getStringList('recentLocations');
-
-  if (storedLocations != null) {
-    // Convert stored locations back to a list of maps
-    recentLocations = storedLocations.map((loc) {
-      List<String> parts = loc.split('|');
-      return {
-        'name': parts[0],
-        'address': parts[1],
-        'latitude': parts[2],
-        'longitude': parts[3],
-      };
-    }).toList();
-  }
-
-  setState(() {}); // Update the UI
-}
-Future<void> _saveRecentLocation(Map<String, dynamic> location) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  print("location: $location");
-
-  // Ensure all values in location are Strings
-  final locationAsStringMap = {
-    'name': location['name'].toString(),
-    'address': location['address'].toString(),
-    'latitude': location['latitude'].toString(),
-    'longitude': location['longitude'].toString(),
-  };
-
-  // Check if the location already exists in recentLocations
-  if (!recentLocations.any((loc) =>
-      loc['name'] == locationAsStringMap['name'] &&
-      loc['address'] == locationAsStringMap['address'])) {
-    // Add to the top of the list
-    recentLocations.insert(0, locationAsStringMap);
-
-    // Limit the list to 7 items
-    if (recentLocations.length > 7) {
-      recentLocations = recentLocations.sublist(0, 7); // Keep only the first 7
+    if (storedLocations != null) {
+      // Convert stored locations back to a list of maps
+      recentLocations = storedLocations.map((loc) {
+        List<String> parts = loc.split('|');
+        return {
+          'name': parts[0],
+          'address': parts[1],
+          'latitude': parts[2],
+          'longitude': parts[3],
+        };
+      }).toList();
     }
 
-    // Convert the recentLocations list to a List<String> for storage, including latitude and longitude
+    setState(() {}); // Update the UI
+  }
+
+  Future<void> _saveRecentLocation(Map<String, dynamic> location) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    print("location: $location");
+
+    // Ensure all values in location are Strings
+    final locationAsStringMap = {
+      'name': location['name'].toString(),
+      'address': location['address'].toString(),
+      'latitude': location['latitude'].toString(),
+      'longitude': location['longitude'].toString(),
+    };
+
+    // Check if the location already exists in recentLocations
+    if (!recentLocations.any((loc) =>
+        loc['name'] == locationAsStringMap['name'] &&
+        loc['address'] == locationAsStringMap['address'])) {
+      // Add to the top of the list
+      recentLocations.insert(0, locationAsStringMap);
+
+      // Limit the list to 7 items
+      if (recentLocations.length > 7) {
+        recentLocations =
+            recentLocations.sublist(0, 7); // Keep only the first 7
+      }
+
+      // Convert the recentLocations list to a List<String> for storage, including latitude and longitude
+      List<String> storedLocations = recentLocations.map((loc) {
+        return '${loc['name']}|${loc['address']}|${loc['latitude']}|${loc['longitude']}';
+      }).toList();
+
+      // Save the recent locations list to SharedPreferences
+      await prefs.setStringList('recentLocations', storedLocations);
+
+      // Update the UI
+      setState(() {});
+    }
+  }
+
+  Future<void> _clearRecentLocations() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Clear from SharedPreferences
+    await prefs.remove('recentLocations');
+
+    // Clear the local list and update UI
+    setState(() {
+      recentLocations.clear();
+    });
+  }
+
+  Future<void> _deleteRecentLocation(int index) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Remove the location from the local list
+    recentLocations.removeAt(index);
+
+    // Update the stored locations in SharedPreferences
     List<String> storedLocations = recentLocations.map((loc) {
       return '${loc['name']}|${loc['address']}|${loc['latitude']}|${loc['longitude']}';
     }).toList();
 
-    // Save the recent locations list to SharedPreferences
+    // Save the updated list to SharedPreferences
     await prefs.setStringList('recentLocations', storedLocations);
 
     // Update the UI
     setState(() {});
   }
-}
 
+  Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
+    const String apiKey =
+        'AIzaSyDdBinCjuyocru7Lgi6YT3FZ1P6_xi0tco'; // Replace with your actual API key
+    final String apiUrl =
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=$apiKey';
 
-Future<void> _clearRecentLocations() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
 
-  // Clear from SharedPreferences
-  await prefs.remove('recentLocations');
+      if (response.statusCode == 200) {
+        // Decode the JSON response
+        Map<String, dynamic> data = json.decode(response.body);
+        print("query data: $data");
 
-  // Clear the local list and update UI
-  setState(() {
-    recentLocations.clear();
-  });
-}
+        // Extract the predictions
+        List<dynamic> predictions = data['predictions'] ?? [];
 
-Future<void> _deleteRecentLocation(int index) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
+        // Create a list to store locations with additional details
+        List<Map<String, dynamic>> locations = [];
 
-  // Remove the location from the local list
-  recentLocations.removeAt(index);
+        // Fetch details for each prediction
+        for (var item in predictions) {
+          String placeId = item['place_id'];
+          String name = item['description'];
+          print("query placeId: $placeId, name: $name");
 
-  // Update the stored locations in SharedPreferences
-  List<String> storedLocations = recentLocations.map((loc) {
-    return '${loc['name']}|${loc['address']}|${loc['latitude']}|${loc['longitude']}';
-  }).toList();
+          // Fetch Place Details
+          final detailsResponse = await http.get(Uri.parse(
+              'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey'));
 
-  // Save the updated list to SharedPreferences
-  await prefs.setStringList('recentLocations', storedLocations);
+          if (detailsResponse.statusCode == 200) {
+            Map<String, dynamic> detailsData =
+                json.decode(detailsResponse.body);
+            var locationData = detailsData['result']['geometry']['location'];
 
-  // Update the UI
-  setState(() {});
-}
+            // Extract latitude and longitude
+            double latitude = locationData['lat'];
+            double longitude = locationData['lng'];
+            print("query locationData: $locationData");
 
+            // Extract address (fallback to name if address is unavailable)
+            String address = item['structured_formatting']['secondary_text'] ??
+                name; // Corrected key name
 
-Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
-  const String apiKey =
-      'AIzaSyDdBinCjuyocru7Lgi6YT3FZ1P6_xi0tco'; // Replace with your actual API key
-  final String apiUrl =
-      'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=$apiKey';
+            // Add location data to the list
+            locations.add({
+              'name': name,
+              'address': address,
+              'latitude': latitude,
+              'longitude': longitude,
+            });
 
-  try {
-    final response = await http.get(Uri.parse(apiUrl));
-
-    if (response.statusCode == 200) {
-      // Decode the JSON response
-      Map<String, dynamic> data = json.decode(response.body);
-      print("query data: $data");
-
-      // Extract the predictions
-      List<dynamic> predictions = data['predictions'] ?? [];
-
-      // Create a list to store locations with additional details
-      List<Map<String, dynamic>> locations = [];
-
-      // Fetch details for each prediction
-      for (var item in predictions) {
-        String placeId = item['place_id'];
-        String name = item['description'];
-        print("query placeId: $placeId, name: $name");
-
-        // Fetch Place Details
-        final detailsResponse = await http.get(Uri.parse(
-            'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey'));
-
-        if (detailsResponse.statusCode == 200) {
-          Map<String, dynamic> detailsData =
-              json.decode(detailsResponse.body);
-          var locationData = detailsData['result']['geometry']['location'];
-
-          // Extract latitude and longitude
-          double latitude = locationData['lat'];
-          double longitude = locationData['lng'];
-          print("query locationData: $locationData");
-
-          // Extract address (fallback to name if address is unavailable)
-          String address = item['structured_formatting']['secondary_text'] ??
-              name; // Corrected key name
-
-          // Add location data to the list
-          locations.add({
-            'name': name,
-            'address': address,
-            'latitude': latitude,
-            'longitude': longitude,
-          });
-
-          print("query locations: $locations");
-        } else {
-          print(
-              'Failed to load place details for $placeId, status code: ${detailsResponse.statusCode}');
+            print("query locations: $locations");
+          } else {
+            print(
+                'Failed to load place details for $placeId, status code: ${detailsResponse.statusCode}');
+          }
         }
-      }
 
-      // Filter to only include locations in India
-      return locations
-          .where((location) =>
-              location['address']!.toLowerCase().contains('india'))
-          .toList();
-    } else {
-      throw Exception(
-          'Failed to load locations, status code: ${response.statusCode}');
+        // Filter to only include locations in India
+        return locations
+            .where((location) =>
+                location['address']!.toLowerCase().contains('india'))
+            .toList();
+      } else {
+        throw Exception(
+            'Failed to load locations, status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching locations: $e');
+      return []; // Return an empty list in case of an error
     }
-  } catch (e) {
-    print('Error fetching locations: $e');
-    return []; // Return an empty list in case of an error
   }
-}
 
   void _filterLocations(String query) async {
     // Clear previous filtered locations when query is empty
@@ -488,7 +489,7 @@ Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
           'longitude': location['longitude'] as double,
         };
       }).toList();
-                  print("query locations filteredLocations: $filteredLocations");
+      print("query locations filteredLocations: $filteredLocations");
 
       // Set loading to false after fetching locations
       _isLoading = false;
@@ -567,7 +568,6 @@ Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
     );
   }
 
-
   Future<void> _showPermissionDeniedDialog() async {
     return showDialog(
       context: context,
@@ -636,7 +636,6 @@ Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
     );
   }
 
-
   Future<void> _showPermanentlyDeniedDialog() async {
     return showDialog(
       context: context,
@@ -704,38 +703,37 @@ Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
       },
     );
   }
-  
+
   Future<void> _getCurrentLocation() async {
     try {
-     // Ensure location services are enabled and permission is granted before fetching location
+      // Ensure location services are enabled and permission is granted before fetching location
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         await _showLocationServicesDialog();
         return;
       }
 
-   
-    PermissionStatus permission;
+      PermissionStatus permission;
 
-    if (Platform.isIOS) {
-      // iOS-specific permission check
-      permission = await Permission.location.status;
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        await _showPermissionDeniedDialog();
-        return;
+      if (Platform.isIOS) {
+        // iOS-specific permission check
+        permission = await Permission.location.status;
+        if (permission == LocationPermission.denied ||
+            permission == LocationPermission.deniedForever) {
+          await _showPermissionDeniedDialog();
+          return;
+        }
+      } else if (Platform.isAndroid) {
+        // Android-specific permission check
+        permission = await Permission.location.status;
+        if (permission.isDenied) {
+          await _showPermissionDeniedDialog();
+          return;
+        } else if (permission.isPermanentlyDenied) {
+          await _showPermanentlyDeniedDialog();
+          return;
+        }
       }
-    } else if (Platform.isAndroid) {
-      // Android-specific permission check
-      permission = await Permission.location.status;
-      if (permission.isDenied) {
-        await _showPermissionDeniedDialog();
-        return;
-      } else if (permission.isPermanentlyDenied) {
-        await _showPermanentlyDeniedDialog();
-        return;
-      }
-    }
       // Fetch the current location if permission is granted
       LatLng? currentLocation =
           await LocationService.instance.getCurrentLocation();
@@ -743,8 +741,7 @@ Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
 
       if (currentLocation != null) {
         // Update the current position
-        setState(() {
-        });
+        setState(() {});
 
         // Call the _onLocationSelected function with the current location data
         _oncurrentLocationSelected({
@@ -825,29 +822,29 @@ Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
                       color: Colors.white70,
                       size: 23,
                     ),
-                      onPressed: () {
-                        // Dismiss the keyboard
+                    onPressed: () {
+                      // Dismiss the keyboard
 
-                        // Delay for 100 milliseconds before executing further logic
-                        Future.delayed(const Duration(milliseconds: 1000), () {
-                          if (_chargerIdController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Please enter a Charger ID.'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            setState(() {
-                              _isLoadingBolt = false;
-                              _isDialogShown = false; // Reset dialog shown status
-                            });
-                          } else { 
-                            FocusScope.of(context).requestFocus(FocusNode()); // Ensure nothing has focus
-                            handleSearchRequest(_chargerIdController.text);
-                          }
-                        });
-                      },
-
+                      // Delay for 100 milliseconds before executing further logic
+                      Future.delayed(const Duration(milliseconds: 1000), () {
+                        if (_chargerIdController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please enter a Charger ID.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          setState(() {
+                            _isLoadingBolt = false;
+                            _isDialogShown = false; // Reset dialog shown status
+                          });
+                        } else {
+                          FocusScope.of(context).requestFocus(
+                              FocusNode()); // Ensure nothing has focus
+                          handleSearchRequest(_chargerIdController.text);
+                        }
+                      });
+                    },
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15),
@@ -872,7 +869,8 @@ Future<List<Map<String, dynamic>>> fetchLocations(String query) async {
                         _isDialogShown = false; // Reset dialog shown status
                       });
                     } else {
-                      FocusScope.of(context).requestFocus(FocusNode()); // Ensure nothing has focus
+                      FocusScope.of(context).requestFocus(
+                          FocusNode()); // Ensure nothing has focus
                       handleSearchRequest(value);
                     }
                   });
@@ -1276,7 +1274,7 @@ class ErrorDetails extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
-                  // Use Navigator.push to add the new page without disrupting other content  
+                  // Use Navigator.push to add the new page without disrupting other content
                   Navigator.pop(context);
                   // Close the QR code scanner page and return to the Home Page
                 },
@@ -1345,7 +1343,7 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
     }
     return 'Unknown';
   }
-  
+
   @override
   Widget build(BuildContext context) {
     // Get the screen size using MediaQuery
@@ -1390,79 +1388,84 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
           const SizedBox(height: 20),
 
           // Connector Grid
-  GridView.builder(
-  shrinkWrap: true, // Prevents unnecessary space
-  physics: const NeverScrollableScrollPhysics(),
-  itemCount: widget.chargerData.keys
-      .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
-      .length,
-  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-    crossAxisCount: 2,
-    mainAxisSpacing: 10,
-    crossAxisSpacing: 10,
-    childAspectRatio: 3,
-  ),
-  itemBuilder: (BuildContext context, int index) {
-    // Fetch the available connector keys dynamically
-    List<String> connectorKeys = widget.chargerData.keys
-        .where((key) => key.startsWith('connector_') && key.endsWith('_type'))
-        .toList();
+          GridView.builder(
+            shrinkWrap: true, // Prevents unnecessary space
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: widget.chargerData.keys
+                .where((key) =>
+                    key.startsWith('connector_') && key.endsWith('_type'))
+                .length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 3,
+            ),
+            itemBuilder: (BuildContext context, int index) {
+              // Fetch the available connector keys dynamically
+              List<String> connectorKeys = widget.chargerData.keys
+                  .where((key) =>
+                      key.startsWith('connector_') && key.endsWith('_type'))
+                  .toList();
 
-    String connectorKey = connectorKeys[index]; // Use the key directly
-    int connectorId = index + 1; // Still keep the numbering for display purposes
-    int? connectorType = widget.chargerData[connectorKey];
+              String connectorKey =
+                  connectorKeys[index]; // Use the key directly
+              int connectorId =
+                  index + 1; // Still keep the numbering for display purposes
+              int? connectorType = widget.chargerData[connectorKey];
 
-    if (connectorType == null) {
-      return const SizedBox.shrink(); // Skip if there's no valid connector
-    }
+              if (connectorType == null) {
+                return const SizedBox
+                    .shrink(); // Skip if there's no valid connector
+              }
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedConnector = connectorId;
-          selectedConnectorType = connectorType;
-        });
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: selectedConnector == connectorId
-              ? Colors.green
-              : Colors.grey[800],
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                connectorType == 1 ? Icons.power : Icons.ev_station,
-                color: connectorType == 1 ? Colors.green : Colors.red,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _getConnectorTypeName(connectorType),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: isSmallScreen ? 14 : 16,
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedConnector = connectorId;
+                    selectedConnectorType = connectorType;
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: selectedConnector == connectorId
+                        ? Colors.green
+                        : Colors.grey[800],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          connectorType == 1 ? Icons.power : Icons.ev_station,
+                          color: connectorType == 1 ? Colors.green : Colors.red,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _getConnectorTypeName(connectorType),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isSmallScreen ? 14 : 16,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          ' - [ $connectorId ]',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isSmallScreen ? 14 : 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                ' - [ $connectorId ]',
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                  fontSize: isSmallScreen ? 14 : 16,
-                ),
-              ),
-            ],
+              );
+            },
           ),
-        ),
-      ),
-    );
-  },
-),
 
           const SizedBox(height: 10), // Adjust this spacing as needed
 
@@ -1510,6 +1513,3 @@ class _ConnectorSelectionDialogState extends State<ConnectorSelectionDialog> {
     );
   }
 }
-
-
-

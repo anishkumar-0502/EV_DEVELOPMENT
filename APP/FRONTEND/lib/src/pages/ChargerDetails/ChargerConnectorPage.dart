@@ -133,7 +133,8 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
+        Uri.parse(
+            'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': widget.userId}),
       );
@@ -162,7 +163,7 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
 
           if (!chargerIds.contains(chargerId)) {
             chargerIds.add(chargerId);
-      
+
             String lastUsedTime = 'Not yet received';
             if (charger['status'] != null &&
                 charger['status'] is List &&
@@ -282,130 +283,134 @@ class _ChargerConnectorPageState extends State<ChargerConnectorPage> {
       // Otherwise, assume it's already in the desired format and return it
       return timestamp; // Or 'Invalid date' if you want to handle improperly formatted strings
     }
-  }@override
-Widget build(BuildContext context) {
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
-  final String location = widget.address;
-  final LatLng position = widget.position;
+  }
 
-  return Scaffold(
-    body: Stack(
-      children: [
-        // Background Image (fixed)
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            height: screenHeight * 0.3, // Scalable height for image
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Colors.black,
-            ),
-            child: Image.asset(
-              'assets/Image/Connecter_bg.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        
-        // Main Content
-        Positioned(
-          top: screenHeight * 0.3, // Position the main content below the image
-          left: 0,
-          right: 0,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.address,
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.04,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Text(
-                        "Open Now",
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.04,
-                          color: Colors.green,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        "24 Hours",
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.04,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                      const Spacer(),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  _buildNavigationBar(screenWidth),
-                  const SizedBox(height: 10),
-                  CustomGradientDivider(),
-                  _buildContent(screenWidth),
-                ],
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final String location = widget.address;
+    final LatLng position = widget.position;
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Background Image (fixed)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: screenHeight * 0.3, // Scalable height for image
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.black,
+              ),
+              child: Image.asset(
+                'assets/Image/Connecter_bg.png',
+                fit: BoxFit.cover,
               ),
             ),
           ),
-        ),
-        
-        // Share button
-        Positioned(
-          top: 30,
-          right: 10,
-          child: IconButton(
-            icon: const Icon(Icons.share, color: Colors.black),
-            onPressed: () {
-              double latitude = position.latitude;
-              double longitude = position.longitude;
 
-              String message =
-                  "Explore the ion Hive for seamless EV charging experience!\n\n"
-                  "Location: $location\n\n"
-                  "Charge your EV now!\n"
-                  "Check the location on the map: https://www.google.com/maps/search/?api=1&query=$latitude,$longitude";
-
-              Share.share(message);
-            },
-          ),
-        ),
-        
-        // Back button
-        Positioned(
-          top: 30,
-          left: 10,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ),
-        
-        // Conditionally render the loading overlay if `isSearching` is true
-        if (isSearching)
-          Container(
-            color: Colors.black.withOpacity(0.5), // Semi-transparent background
-            child: Center(
-              child: _AnimatedChargingIcon(), // Loading indicator
+          // Main Content
+          Positioned(
+            top:
+                screenHeight * 0.3, // Position the main content below the image
+            left: 0,
+            right: 0,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.address,
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Text(
+                          "Open Now",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.04,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          "24 Hours",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.04,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const Spacer(),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _buildNavigationBar(screenWidth),
+                    const SizedBox(height: 10),
+                    CustomGradientDivider(),
+                    _buildContent(screenWidth),
+                  ],
+                ),
+              ),
             ),
           ),
-      ],
-    ),
-  );
-}
+
+          // Share button
+          Positioned(
+            top: 30,
+            right: 10,
+            child: IconButton(
+              icon: const Icon(Icons.share, color: Colors.black),
+              onPressed: () {
+                double latitude = position.latitude;
+                double longitude = position.longitude;
+
+                String message =
+                    "Explore the ion Hive for seamless EV charging experience!\n\n"
+                    "Location: $location\n\n"
+                    "Charge your EV now!\n"
+                    "Check the location on the map: https://www.google.com/maps/search/?api=1&query=$latitude,$longitude";
+
+                Share.share(message);
+              },
+            ),
+          ),
+
+          // Back button
+          Positioned(
+            top: 30,
+            left: 10,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ),
+
+          // Conditionally render the loading overlay if `isSearching` is true
+          if (isSearching)
+            Container(
+              color:
+                  Colors.black.withOpacity(0.5), // Semi-transparent background
+              child: Center(
+                child: _AnimatedChargingIcon(), // Loading indicator
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildContent(double screenWidth) {
     // Calculate the available height
@@ -566,7 +571,10 @@ Widget build(BuildContext context) {
       // Dismiss the loading animation
       if (mounted) Navigator.of(context).pop();
 
-      return {'error': true, 'message': 'Something went wrong, try again later'};
+      return {
+        'error': true,
+        'message': 'Something went wrong, try again later'
+      };
     } finally {
       if (mounted) {
         setState(() {
@@ -726,78 +734,84 @@ Widget build(BuildContext context) {
                     ),
                     const SizedBox(height: 5),
                     // Row 2: Socket/Gun, AC/DC, and Status
-                  Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  crossAxisAlignment: CrossAxisAlignment.end, // Aligns items vertically
-  children: [
-    Expanded(
-      flex: 1,
-      child: Text(
-        '${charger['gun_socket_display'] ?? 'Unknown'} | ${charger['charger_type'] ?? 'AC/DC'}',
-        style: TextStyle(
-          fontSize: screenWidth * 0.04,
-          color: Colors.grey[400],
-        ),
-      ),
-    ),
-    if (charger['status'] != null && charger['status'].contains(','))
-Expanded(
-  flex: 1,
-  child: Align(
-    alignment: Alignment.centerRight,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.end, // Align text to the right
-      children: charger['status']
-          .split(',')
-          .asMap() // Use asMap() to include index if needed for specific labels
-          .entries
-          .map<Widget>(
-            (entry) {
-              final status = entry.value.trim();
-              final index = entry.key;
-              final label = index % 2 == 0 ? "S" : "G"; // Alternate label logic
-              return RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: '$label : ', // Label text
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        color: Colors.grey, // Grey color for label
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.end, // Aligns items vertically
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            '${charger['gun_socket_display'] ?? 'Unknown'} | ${charger['charger_type'] ?? 'AC/DC'}',
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.04,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ),
+                        if (charger['status'] != null &&
+                            charger['status'].contains(','))
+                          Expanded(
+                            flex: 1,
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment
+                                    .end, // Align text to the right
+                                children: charger['status']
+                                    .split(',')
+                                    .asMap() // Use asMap() to include index if needed for specific labels
+                                    .entries
+                                    .map<Widget>(
+                                  (entry) {
+                                    final status = entry.value.trim();
+                                    final index = entry.key;
+                                    final label = index % 2 == 0
+                                        ? "S"
+                                        : "G"; // Alternate label logic
+                                    return RichText(
+                                      text: TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: '$label : ', // Label text
+                                            style: TextStyle(
+                                              fontSize: screenWidth * 0.04,
+                                              color: Colors
+                                                  .grey, // Grey color for label
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: status, // Status text
+                                            style: TextStyle(
+                                              fontSize: screenWidth * 0.04,
+                                              color: getStatusColor(
+                                                  status), // Dynamic color for status
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ).toList(),
+                              ),
+                            ),
+                          )
+                        else
+                          Expanded(
+                            flex: 1,
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                getStatusText(charger['status']),
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.04,
+                                  color: getStatusColor(charger['status']),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    TextSpan(
-                      text: status, // Status text
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        color: getStatusColor(status), // Dynamic color for status
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          )
-          .toList(),
-    ),
-  ),
-)
-    else
-      Expanded(
-        flex: 1,
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: Text(
-            getStatusText(charger['status']),
-            style: TextStyle(
-              fontSize: screenWidth * 0.04,
-              color: getStatusColor(charger['status']),
-            ),
-          ),
-        ),
-      ),
-  ],
-),
 
                     const SizedBox(height: 5),
                     // Row 3: Price per unit and Charger Model
@@ -866,26 +880,28 @@ Expanded(
       ),
     );
   }
-// Shimmer loading card widget
-Widget _buildShimmerCard(BuildContext context) {
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
 
-  return Shimmer.fromColors(
-    baseColor: Colors.grey[800]!,
-    highlightColor: Colors.grey[700]!,
-    child: Container(
-      width: screenWidth * 0.9, // Reduced width to make it smaller
-      height: screenHeight * 0.12, // Reduced height to make it smaller
-      margin: EdgeInsets.only(
-        left: screenWidth * 0.05, // Move the shimmer card slightly to the right
-        right: screenWidth * 0.02,
-        top: screenHeight * 0.01,
+// Shimmer loading card widget
+  Widget _buildShimmerCard(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[700]!,
+      child: Container(
+        width: screenWidth * 0.9, // Reduced width to make it smaller
+        height: screenHeight * 0.12, // Reduced height to make it smaller
+        margin: EdgeInsets.only(
+          left:
+              screenWidth * 0.05, // Move the shimmer card slightly to the right
+          right: screenWidth * 0.02,
+          top: screenHeight * 0.01,
+        ),
+        color: const Color(0xFF0E0E0E), // Background color of the shimmer
       ),
-      color: const Color(0xFF0E0E0E), // Background color of the shimmer
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildNavigationBar(double screenWidth) {
     return Row(

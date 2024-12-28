@@ -23,7 +23,8 @@ class _StopChargerState extends State<StopCharger> {
   String? UserTimeVal;
   String? UserUnitVal;
   String? UserPriceVal;
-  final List<TextEditingController> _controllers = List.generate(3, (_) => TextEditingController());
+  final List<TextEditingController> _controllers =
+      List.generate(3, (_) => TextEditingController());
 
   @override
   void initState() {
@@ -86,7 +87,8 @@ class _StopChargerState extends State<StopCharger> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/charging/UpdateAutoStopSettings'),
+        Uri.parse(
+            'http://122.166.210.142:4444/charging/UpdateAutoStopSettings'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -96,10 +98,12 @@ class _StopChargerState extends State<StopCharger> {
       print('Update Response: ${response.body}');
 
       if (response.statusCode == 200) {
-        _showAlertBanner('AutoStop settings updated successfully.', backgroundColor: Colors.green);
+        _showAlertBanner('AutoStop settings updated successfully.',
+            backgroundColor: Colors.green);
         Navigator.pop(context);
       } else {
-        _showAlertBanner('No Changes! ,Error updating settings, please check the credentials.');
+        _showAlertBanner(
+            'No Changes! ,Error updating settings, please check the credentials.');
       }
     } catch (error) {
       print('Error:\n$error');
@@ -116,220 +120,248 @@ class _StopChargerState extends State<StopCharger> {
       ),
     );
   }
-@override
-Widget build(BuildContext context) {
-  // Get screen dimensions
-  final screenWidth = MediaQuery.of(context).size.width;
 
-  // Adjust based on screen size
-  final isSmallScreen = screenWidth < 400;
+  @override
+  Widget build(BuildContext context) {
+    // Get screen dimensions
+    final screenWidth = MediaQuery.of(context).size.width;
 
-  return Scaffold(
-    body: Column(
-      children: [
-        Container(
-          color: Colors.black,
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0), // Adjust padding for small screens
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    // Adjust based on screen size
+    final isSmallScreen = screenWidth < 400;
+
+    return Scaffold(
+      body: Column(
+        children: [
+          Container(
+            color: Colors.black,
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(isSmallScreen
+                      ? 8.0
+                      : 16.0), // Adjust padding for small screens
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen
+                                ? 4.0
+                                : 8.0), // Adjust horizontal padding
+                        child: Text(
+                          'Settings',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: isSmallScreen
+                                ? 20
+                                : 25, // Adjust font size for small screens
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        icon: const Icon(Icons.close, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                CustomGradientDivider(),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(isSmallScreen
+                    ? 8.0
+                    : 16.0), // Adjust padding for small screens
+                child: Column(
                   children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 4.0 : 8.0), // Adjust horizontal padding
+                    const SizedBox(height: 10),
+                    const Center(
                       child: Text(
-                        'Settings',
+                        'Auto Stop Based on:',
                         style: TextStyle(
+                          fontSize: 23,
                           fontWeight: FontWeight.bold,
-                          fontSize: isSmallScreen ? 20 : 25, // Adjust font size for small screens
                           color: Colors.white,
                         ),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
+                    const SizedBox(height: 10),
+                    settingContainer(
+                      lightTime,
+                      'Time',
+                      _controllers[0],
+                      UserTimeVal,
+                      (value) {
+                        setState(() {
+                          UserTimeVal = value;
+                        });
                       },
-                      icon: const Icon(Icons.close, color: Colors.white),
+                      (newValue) {
+                        setState(() {
+                          lightTime = newValue;
+                        });
+                      },
                     ),
+                    const SizedBox(height: 10),
+                    settingContainer(
+                      lightUnit,
+                      'Unit',
+                      _controllers[1],
+                      UserUnitVal,
+                      (value) {
+                        setState(() {
+                          UserUnitVal = value;
+                        });
+                      },
+                      (newValue) {
+                        setState(() {
+                          lightUnit = newValue;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    settingContainer(
+                      lightPrice,
+                      'Price',
+                      _controllers[2],
+                      UserPriceVal,
+                      (value) {
+                        setState(() {
+                          UserPriceVal = value;
+                        });
+                      },
+                      (newValue) {
+                        setState(() {
+                          lightPrice = newValue;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    CustomGradientButton(
+                      buttonText: 'Save Changes',
+                      onPressed: handleUpdate,
+                    ),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
-              CustomGradientDivider(),
-            ],
-          ),
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0), // Adjust padding for small screens
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  const Center(
-                    child: Text(
-                      'Auto Stop Based on:',
-                      style: TextStyle(
-                        fontSize: 23,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  settingContainer(
-                    lightTime,
-                    'Time',
-                    _controllers[0],
-                    UserTimeVal,
-                        (value) {
-                      setState(() {
-                        UserTimeVal = value;
-                      });
-                    },
-                        (newValue) {
-                      setState(() {
-                        lightTime = newValue;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  settingContainer(
-                    lightUnit,
-                    'Unit',
-                    _controllers[1],
-                    UserUnitVal,
-                        (value) {
-                      setState(() {
-                        UserUnitVal = value;
-                      });
-                    },
-                        (newValue) {
-                      setState(() {
-                        lightUnit = newValue;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  settingContainer(
-                    lightPrice,
-                    'Price',
-                    _controllers[2],
-                    UserPriceVal,
-                        (value) {
-                      setState(() {
-                        UserPriceVal = value;
-                      });
-                    },
-                        (newValue) {
-                      setState(() {
-                        lightPrice = newValue;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  CustomGradientButton(
-                    buttonText: 'Save Changes',
-                    onPressed: handleUpdate,
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-
- Container settingContainer(bool lightValue, String label, TextEditingController controller, String? value, ValueChanged<String> onChanged, ValueChanged<bool> onSwitchChanged) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    final isSmallScreen = screenWidth < 400;
-
-  return Container(
-    padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0), // Adjust padding for small screens
-    decoration: BoxDecoration(
-      color: const Color(0xFF1E1E1E),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Padding(
-      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12.0 : 16.0), // Adjust horizontal padding
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Switch(
-            value: lightValue,
-            onChanged: onSwitchChanged,
-            activeTrackColor: Colors.green,
-            activeColor: Colors.white,
-            inactiveTrackColor: const Color.fromARGB(255, 39, 39, 39),
-            inactiveThumbColor: Colors.white,
-          ),
-          Text(
-            '$label      ',
-            style: TextStyle(
-              fontSize: isSmallScreen ? 20 : 25, // Adjust font size for small screens
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(
-            width: isSmallScreen ? 50 : 60, // Adjust input field width for small screens
-            child: TextField(
-              controller: controller,
-              textAlign: TextAlign.center,
-              keyboardType: label == 'Unit'
-                  ? TextInputType.numberWithOptions(decimal: true)
-                  : TextInputType.number,
-              inputFormatters: <TextInputFormatter>[
-                if (label == 'Time') ...[
-                  FilteringTextInputFormatter.digitsOnly, // Only digits allowed
-                  LengthLimitingTextInputFormatter(5), // Max length for Time
-                ],
-                if (label == 'Unit')
-                  FilteringTextInputFormatter.allow(
-                      RegExp(r'^\d{0,4}(\.\d{0,2})?$')), // Decimal with up to 4 digits before and 2 digits after the decimal
-                if (label == 'Price')
-                  FilteringTextInputFormatter.allow(
-                      RegExp(r'^\d{0,4}(\.\d{0,2})?$')), // Decimal with up to 4 digits before and 2 digits after the decimal
-              ],
-              onChanged: (val) {
-                onChanged(val);
-                if (label == 'Price' && int.tryParse(val) != null && int.parse(val) > 10000) {
-                  controller.text = '10000';
-                  controller.selection = TextSelection.fromPosition(TextPosition(offset: controller.text.length));
-                }
-              },
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.green),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.green),
-                ),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.green),
-                ),
-              ),
-            ),
-          ),
-          Text(
-            label == 'Price' ? 'INR' : (label == 'Time' ? "min's" : 'unit'),
-            style: TextStyle(
-              fontSize: isSmallScreen ? 15 : 17, // Adjust font size for small screens
-              color: Colors.white,
             ),
           ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Container settingContainer(
+      bool lightValue,
+      String label,
+      TextEditingController controller,
+      String? value,
+      ValueChanged<String> onChanged,
+      ValueChanged<bool> onSwitchChanged) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    final isSmallScreen = screenWidth < 400;
+
+    return Container(
+      padding: EdgeInsets.all(
+          isSmallScreen ? 12.0 : 16.0), // Adjust padding for small screens
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+            horizontal:
+                isSmallScreen ? 12.0 : 16.0), // Adjust horizontal padding
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Switch(
+              value: lightValue,
+              onChanged: onSwitchChanged,
+              activeTrackColor: Colors.green,
+              activeColor: Colors.white,
+              inactiveTrackColor: const Color.fromARGB(255, 39, 39, 39),
+              inactiveThumbColor: Colors.white,
+            ),
+            Text(
+              '$label      ',
+              style: TextStyle(
+                fontSize: isSmallScreen
+                    ? 20
+                    : 25, // Adjust font size for small screens
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(
+              width: isSmallScreen
+                  ? 50
+                  : 60, // Adjust input field width for small screens
+              child: TextField(
+                controller: controller,
+                textAlign: TextAlign.center,
+                keyboardType: label == 'Unit'
+                    ? TextInputType.numberWithOptions(decimal: true)
+                    : TextInputType.number,
+                inputFormatters: <TextInputFormatter>[
+                  if (label == 'Time') ...[
+                    FilteringTextInputFormatter
+                        .digitsOnly, // Only digits allowed
+                    LengthLimitingTextInputFormatter(5), // Max length for Time
+                  ],
+                  if (label == 'Unit')
+                    FilteringTextInputFormatter.allow(RegExp(
+                        r'^\d{0,4}(\.\d{0,2})?$')), // Decimal with up to 4 digits before and 2 digits after the decimal
+                  if (label == 'Price')
+                    FilteringTextInputFormatter.allow(RegExp(
+                        r'^\d{0,4}(\.\d{0,2})?$')), // Decimal with up to 4 digits before and 2 digits after the decimal
+                ],
+                onChanged: (val) {
+                  onChanged(val);
+                  if (label == 'Price' &&
+                      int.tryParse(val) != null &&
+                      int.parse(val) > 10000) {
+                    controller.text = '10000';
+                    controller.selection = TextSelection.fromPosition(
+                        TextPosition(offset: controller.text.length));
+                  }
+                },
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.green),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.green),
+                  ),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.green),
+                  ),
+                ),
+              ),
+            ),
+            Text(
+              label == 'Price' ? 'INR' : (label == 'Time' ? "min's" : 'unit'),
+              style: TextStyle(
+                fontSize: isSmallScreen
+                    ? 15
+                    : 17, // Adjust font size for small screens
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class CustomGradientDivider extends StatelessWidget {
@@ -398,7 +430,7 @@ class CustomGradientButton extends StatelessWidget {
       ).copyWith(
         elevation: MaterialStateProperty.all(0),
         backgroundColor: MaterialStateProperty.resolveWith(
-              (states) => Colors.transparent,
+          (states) => Colors.transparent,
         ),
       ),
       onPressed: onPressed,
@@ -416,7 +448,8 @@ class CustomGradientButton extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             buttonText,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ),
       ),

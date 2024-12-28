@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 
-
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({Key? key}) : super(key: key);
 
@@ -34,12 +33,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         isSearching = true;
       });
 
-
       final String email = _emailController.text;
 
       try {
         final response = await http.post(
-          Uri.parse('http://122.166.210.142:4444/profile/initiateForgetPassword'),
+          Uri.parse(
+              'http://122.166.210.142:4444/profile/initiateForgetPassword'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode({'email_id': email}),
         );
@@ -88,7 +87,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     onPressed: () {
                       Navigator.of(context).pop(); // Close the dialog
                     },
-                    child: const Text("OK", style: TextStyle(color: Colors.blue)),
+                    child:
+                        const Text("OK", style: TextStyle(color: Colors.blue)),
                   ),
                 ],
               );
@@ -148,7 +148,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     }
   }
 
-
   void showOtpModal(String email) {
     showModalBottomSheet(
       context: context,
@@ -157,7 +156,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       builder: (BuildContext context) {
         return Container(
           height: MediaQuery.of(context).size.height * 0.8,
-          color: Colors.black, // Ensure the inner container also has a black background
+          color: Colors
+              .black, // Ensure the inner container also has a black background
           child: Padding(
             padding: MediaQuery.of(context).viewInsets,
             child: OTPInputWidget(
@@ -173,7 +173,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       },
     );
   }
-
 
   bool _validateEmail(String email) {
     final emailRegExp = RegExp(r'^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$');
@@ -252,7 +251,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: _validateEmail(_emailController.text) ? _sendResetLink : null,
+                    onPressed: _validateEmail(_emailController.text)
+                        ? _sendResetLink
+                        : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _validateEmail(_emailController.text)
                           ? const Color(0xFF1C8B39)
@@ -263,8 +264,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ),
                       elevation: 0,
                     ).copyWith(
-                      backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                            (Set<MaterialState> states) {
+                      backgroundColor:
+                          MaterialStateProperty.resolveWith<Color?>(
+                        (Set<MaterialState> states) {
                           if (states.contains(MaterialState.disabled)) {
                             return Colors.green.withOpacity(0.2);
                           }
@@ -319,9 +321,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 }
 
-
-
-
 class OTPInputWidget extends StatefulWidget {
   final Function(String) onSubmit;
   final String email;
@@ -335,7 +334,7 @@ class OTPInputWidget extends StatefulWidget {
 
 class _OTPInputWidgetState extends State<OTPInputWidget> {
   final List<TextEditingController> _controllers =
-  List.generate(6, (_) => TextEditingController());
+      List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isInteracted = false;
@@ -519,19 +518,20 @@ class _OTPInputWidgetState extends State<OTPInputWidget> {
               const SizedBox(height: 10),
               CustomGradientDivider(),
               const SizedBox(height: 20),
-              
-              Expanded(child: SingleChildScrollView(
-                child: Column(children: [
-                  _buildInstructions(),
-                  const SizedBox(height: 20),
-                  _buildOTPFields(),
-                  const SizedBox(height: 20),
-                  _buildSubmitButton(),
-                  const SizedBox(height: 20),
-                  _buildResendOTPLink(),
-                ],),
+              Expanded(
+                  child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _buildInstructions(),
+                    const SizedBox(height: 20),
+                    _buildOTPFields(),
+                    const SizedBox(height: 20),
+                    _buildSubmitButton(),
+                    const SizedBox(height: 20),
+                    _buildResendOTPLink(),
+                  ],
+                ),
               ))
-
             ],
           ),
         ),
@@ -632,8 +632,8 @@ class _OTPInputWidgetState extends State<OTPInputWidget> {
     return ElevatedButton(
       onPressed: _isFormValid() ? _submitOTP : null,
       style: ElevatedButton.styleFrom(
-        backgroundColor: _isFormValid() ? const Color(0xFF1C8B39) : Colors
-            .transparent,
+        backgroundColor:
+            _isFormValid() ? const Color(0xFF1C8B39) : Colors.transparent,
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -641,7 +641,7 @@ class _OTPInputWidgetState extends State<OTPInputWidget> {
         elevation: 0,
       ).copyWith(
         backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-              (Set<MaterialState> states) {
+          (Set<MaterialState> states) {
             if (states.contains(MaterialState.disabled)) {
               return Colors.green.withOpacity(0.2);
             }
@@ -667,9 +667,7 @@ class _OTPInputWidgetState extends State<OTPInputWidget> {
         GestureDetector(
           onTap: _canResendOTP ? _sendResetLink : null,
           child: Text(
-            _canResendOTP
-                ? 'Resend OTP'
-                : 'Resend OTP [${_remainingSeconds}s]',
+            _canResendOTP ? 'Resend OTP' : 'Resend OTP [${_remainingSeconds}s]',
             style: TextStyle(
               color: _canResendOTP ? Colors.green : Colors.grey,
               fontSize: 16,
@@ -682,13 +680,13 @@ class _OTPInputWidgetState extends State<OTPInputWidget> {
   }
 }
 
-
-
 class ResetPasswordWidget extends StatefulWidget {
   final String email;
   final VoidCallback onSubmit;
 
-  const ResetPasswordWidget({Key? key, required this.email, required this.onSubmit}) : super(key: key);
+  const ResetPasswordWidget(
+      {Key? key, required this.email, required this.onSubmit})
+      : super(key: key);
 
   @override
   _ResetPasswordWidgetState createState() => _ResetPasswordWidgetState();
@@ -697,8 +695,10 @@ class ResetPasswordWidget extends StatefulWidget {
 class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  final FocusNode _newPasswordFocusNode = FocusNode(); // FocusNode for the new password field
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  final FocusNode _newPasswordFocusNode =
+      FocusNode(); // FocusNode for the new password field
 
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -738,7 +738,10 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
       final response = await http.post(
         Uri.parse('http://122.166.210.142:4444/profile/resetPassword'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'email_id': email, 'NewPassword': newPassword}), // Send new password
+        body: json.encode({
+          'email_id': email,
+          'NewPassword': newPassword
+        }), // Send new password
       );
 
       final data = json.decode(response.body);
@@ -747,7 +750,8 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
       if (response.statusCode == 200) {
         // Show success dialog and navigate after 3 seconds
         _showSuccessDialog();
-        await Future.delayed(const Duration(seconds: 3)); // Show dialog for 3 seconds
+        await Future.delayed(
+            const Duration(seconds: 3)); // Show dialog for 3 seconds
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -859,7 +863,10 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
             children: [
               Text(
                 "Enter New Password",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
               ),
               IconButton(
                 icon: Icon(Icons.close, color: Colors.white),
@@ -879,47 +886,64 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text("Unlock a New You!!",style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 23,
-                          fontWeight: FontWeight.bold,
-                        ),),
-                        SizedBox(height: 10,),
+                        Text(
+                          "Unlock a New You!!",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 23,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
                         Text(
                           'Reset Password for ${widget.email}',
-                          style: const TextStyle(color: Colors.white, fontSize: 15),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 15),
                         ),
                         const SizedBox(height: 20),
                         // New password field
                         TextFormField(
                           controller: _newPasswordController,
-                          focusNode: _newPasswordFocusNode, // Attach FocusNode to the new password field
+                          focusNode:
+                              _newPasswordFocusNode, // Attach FocusNode to the new password field
                           obscureText: !_isPasswordVisible,
-                          keyboardType: TextInputType.number, // Allow only numbers
+                          keyboardType:
+                              TextInputType.number, // Allow only numbers
                           maxLength: 4,
                           inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly, // Restrict to digits only
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Restrict to digits only
                           ],
                           decoration: InputDecoration(
                             labelText: 'New Password',
                             labelStyle: const TextStyle(color: Colors.white70),
                             filled: true,
-                            fillColor: Colors.grey[900], // Green background for the text box
+                            fillColor: Colors
+                                .grey[900], // Green background for the text box
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: Colors.green), // Default border color
+                              borderSide: const BorderSide(
+                                  color: Colors.green), // Default border color
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: Colors.green, width: 2.0), // Green border when focused
+                              borderSide: const BorderSide(
+                                  color: Colors.green,
+                                  width: 2.0), // Green border when focused
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: Colors.green), // Green border when enabled
+                              borderSide: const BorderSide(
+                                  color: Colors
+                                      .green), // Green border when enabled
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                _isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
                                 color: Colors.white70,
                               ),
                               onPressed: () {
@@ -931,7 +955,8 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
                             counterText: '', // Remove character counter
                           ),
                           cursorColor: Colors.green, // Green cursor color
-                          style: const TextStyle(color: Colors.white), // Text color remains white
+                          style: const TextStyle(
+                              color: Colors.white), // Text color remains white
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter a new password';
@@ -945,34 +970,45 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
                         TextFormField(
                           controller: _confirmPasswordController,
                           obscureText: !_isConfirmPasswordVisible,
-                          keyboardType: TextInputType.number, // Allow only numbers
+                          keyboardType:
+                              TextInputType.number, // Allow only numbers
                           maxLength: 4,
                           inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly, // Restrict to digits only
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Restrict to digits only
                           ],
                           decoration: InputDecoration(
                             labelText: 'Confirm Password',
                             labelStyle: const TextStyle(color: Colors.white70),
                             filled: true,
                             fillColor: Colors.grey[900],
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: Colors.green), ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Colors.green),
+                            ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: Colors.green, width: 2.0), // Green border when focused
+                              borderSide: const BorderSide(
+                                  color: Colors.green,
+                                  width: 2.0), // Green border when focused
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: Colors.green), // Green border when enabled
+                              borderSide: const BorderSide(
+                                  color: Colors
+                                      .green), // Green border when enabled
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                _isConfirmPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
                                 color: Colors.white70,
                               ),
                               onPressed: () {
                                 setState(() {
-                                  _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                                  _isConfirmPasswordVisible =
+                                      !_isConfirmPasswordVisible;
                                 });
                               },
                             ),
@@ -995,10 +1031,13 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
                         ElevatedButton(
                           onPressed: _isFormValid
                               ? () {
-                            if (_formKey.currentState!.validate()) {
-                              newPassword(widget.email, _newPasswordController.text); // Call newPassword function
-                            }
-                          }
+                                  if (_formKey.currentState!.validate()) {
+                                    newPassword(
+                                        widget.email,
+                                        _newPasswordController
+                                            .text); // Call newPassword function
+                                  }
+                                }
                               : null,
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 50),
@@ -1007,12 +1046,15 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
                             ),
                             elevation: 0,
                           ).copyWith(
-                            backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                                  (Set<MaterialState> states) {
+                            backgroundColor:
+                                MaterialStateProperty.resolveWith<Color?>(
+                              (Set<MaterialState> states) {
                                 if (!states.contains(MaterialState.disabled)) {
-                                  return Colors.blue; // Enabled background color
+                                  return Colors
+                                      .blue; // Enabled background color
                                 }
-                                return Colors.grey[700]; // Disabled background color
+                                return Colors
+                                    .grey[700]; // Disabled background color
                               },
                             ),
                           ),
@@ -1033,8 +1075,6 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
     );
   }
 }
-
-
 
 class CustomGradientDivider extends StatelessWidget {
   @override
@@ -1078,7 +1118,6 @@ class GradientPainter extends CustomPainter {
     return false;
   }
 }
-
 
 class LoadingOverlay extends StatelessWidget {
   final bool showAlertLoading;
