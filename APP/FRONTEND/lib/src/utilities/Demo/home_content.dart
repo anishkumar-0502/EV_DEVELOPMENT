@@ -803,7 +803,7 @@
 
 //     try {
 //       final response = await http.post(
-//         Uri.parse('http://122.166.210.142:4444/searchCharger'),
+//         Uri.parse('http://192.168.1.32:4444/searchCharger'),
 //         headers: {'Content-Type': 'application/json'},
 //         body: json.encode({
 //           'searchChargerID': searchChargerID,
@@ -871,7 +871,7 @@
 
 //     try {
 //       final response = await http.post(
-//         Uri.parse('http://122.166.210.142:4444/updateConnectorUser'),
+//         Uri.parse('http://192.168.1.32:4444/updateConnectorUser'),
 //         headers: {'Content-Type': 'application/json'},
 //         body: json.encode({
 //           'searchChargerID': searchChargerID,
@@ -934,7 +934,7 @@
 
 //     try {
 //       final response = await http.post(
-//         Uri.parse('http://122.166.210.142:4444/getRecentSessionDetails'),
+//         Uri.parse('http://192.168.1.32:4444/getRecentSessionDetails'),
 //         headers: {'Content-Type': 'application/json'},
 //         body: json.encode({
 //           'user_id': widget.userId,
@@ -981,7 +981,7 @@
 //     try {
 //       final response = await http.post(
 //         Uri.parse(
-//             'http://122.166.210.142:4444/getAllChargersWithStatusAndPrice'),
+//             'http://192.168.1.32:4444/getAllChargersWithStatusAndPrice'),
 //         headers: {'Content-Type': 'application/json'},
 //         body: json.encode({'user_id': widget.userId}),
 //       );

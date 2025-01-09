@@ -44,8 +44,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
     try {
       var response = await http.post(
-        Uri.parse(
-            'http://122.166.210.142:4444/session/getChargingSessionDetails'),
+        Uri.parse('http://192.168.1.32:4444/session/getChargingSessionDetails'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username}),
       );

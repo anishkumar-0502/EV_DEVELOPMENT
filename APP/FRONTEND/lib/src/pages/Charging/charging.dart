@@ -155,21 +155,6 @@ class _ChargingPageState extends State<Charging>
     });
   }
 
-  Widget _buildLoadingIndicator() {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: Colors.black.withOpacity(0.7), // Transparent black background
-      child: const Center(
-        child: Icon(
-          Icons.bolt, // Use a charging icon like 'bolt' or 'electric_car'
-          color: Colors.yellow, // Set the icon color
-          size: 300, // Adjust the size as needed
-        ),
-      ),
-    );
-  }
-
   void handleCloseAlert() async {
     bool checkFault = false; // Example value, set it based on your logic
     if (!checkFault) {
@@ -264,7 +249,7 @@ class _ChargingPageState extends State<Charging>
   Future<void> endChargingSession(String chargerID, int? connectorId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/charging/endChargingSession'),
+        Uri.parse('http://192.168.1.32:4444/charging/endChargingSession'),
         headers: {'Content-Type': 'application/json'},
         body:
             jsonEncode({'charger_id': chargerID, 'connector_id': connectorId}),
@@ -293,7 +278,7 @@ class _ChargingPageState extends State<Charging>
       await Future.delayed(const Duration(seconds: 4));
 
       var url = Uri.parse(
-          'http://122.166.210.142:4444/charging/getUpdatedCharingDetails');
+          'http://192.168.1.32:4444/charging/getUpdatedCharingDetails');
       var body = {
         'chargerID': chargerID,
         'user': username,
@@ -540,7 +525,7 @@ class _ChargingPageState extends State<Charging>
   Future<void> fetchLastStatus(String chargerID, int? connectorId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/charging/FetchLaststatus'),
+        Uri.parse('http://192.168.1.32:4444/charging/FetchLaststatus'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'id': chargerID,
@@ -760,7 +745,7 @@ class _ChargingPageState extends State<Charging>
             toggleBatteryScreen();
             await updateSessionPriceToUser(widget.connector_id);
           } else if (chargerStatus == 'Faulted' ||
-              chargerStatus == 'SuspendedEV') {
+              chargerStatus == 'SuspendedEV' && charging) {
             setIsStarted(false);
             setState(() async {
               charging = false;
@@ -909,8 +894,8 @@ class _ChargingPageState extends State<Charging>
 
   void initializeWebSocket() {
     channel = WebSocketChannel.connect(
-      // Uri.parse('ws://122.166.210.142::8566'),
-      Uri.parse('ws://122.166.210.142:7002'),
+      // Uri.parse('ws://192.168.1.32::8566'),
+      Uri.parse('ws://192.168.1.32:7002'),
       // Uri.parse('ws://192.168.1.7:7050'),
     );
 
@@ -1030,7 +1015,7 @@ class _ChargingPageState extends State<Charging>
       });
 
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/charging/start'),
+        Uri.parse('http://192.168.1.32:4444/charging/start'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -1082,7 +1067,7 @@ class _ChargingPageState extends State<Charging>
       });
 
       final response = await http.post(
-        Uri.parse('http://122.166.210.142:4444/charging/stop'),
+        Uri.parse('http://192.168.1.32:4444/charging/stop'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
