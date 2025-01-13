@@ -249,7 +249,7 @@ class _ChargingPageState extends State<Charging>
   Future<void> endChargingSession(String chargerID, int? connectorId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/charging/endChargingSession'),
+        Uri.parse('http://122.166.210.142:4444/charging/endChargingSession'),
         headers: {'Content-Type': 'application/json'},
         body:
             jsonEncode({'charger_id': chargerID, 'connector_id': connectorId}),
@@ -278,7 +278,7 @@ class _ChargingPageState extends State<Charging>
       await Future.delayed(const Duration(seconds: 4));
 
       var url = Uri.parse(
-          'http://192.168.1.32:4444/charging/getUpdatedCharingDetails');
+          'http://122.166.210.142:4444/charging/getUpdatedCharingDetails');
       var body = {
         'chargerID': chargerID,
         'user': username,
@@ -525,7 +525,7 @@ class _ChargingPageState extends State<Charging>
   Future<void> fetchLastStatus(String chargerID, int? connectorId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/charging/FetchLaststatus'),
+        Uri.parse('http://122.166.210.142:4444/charging/FetchLaststatus'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'id': chargerID,
@@ -894,8 +894,8 @@ class _ChargingPageState extends State<Charging>
 
   void initializeWebSocket() {
     channel = WebSocketChannel.connect(
-      // Uri.parse('ws://192.168.1.32::8566'),
-      Uri.parse('ws://192.168.1.32:7002'),
+      // Uri.parse('ws://122.166.210.142::8566'),
+      Uri.parse('ws://122.166.210.142:7002'),
       // Uri.parse('ws://192.168.1.7:7050'),
     );
 
@@ -1015,7 +1015,7 @@ class _ChargingPageState extends State<Charging>
       });
 
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/charging/start'),
+        Uri.parse('http://122.166.210.142:4444/charging/start'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -1067,7 +1067,7 @@ class _ChargingPageState extends State<Charging>
       });
 
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/charging/stop'),
+        Uri.parse('http://122.166.210.142:4444/charging/stop'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

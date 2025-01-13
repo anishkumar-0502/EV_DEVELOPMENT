@@ -37,7 +37,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
       try {
         final response = await http.post(
-          Uri.parse('http://192.168.1.32:4444/profile/initiateForgetPassword'),
+          Uri.parse(
+              'http://122.166.210.142:4444/profile/initiateForgetPassword'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode({'email_id': email}),
         );
@@ -377,7 +378,7 @@ class _OTPInputWidgetState extends State<OTPInputWidget> {
     print('heloooooo');
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/profile/authenticateOTP'),
+        Uri.parse('http://122.166.210.142:4444/profile/authenticateOTP'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email_id': email, 'otp': otp}),
       );
@@ -465,7 +466,7 @@ class _OTPInputWidgetState extends State<OTPInputWidget> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/profile/initiateForgetPassword'),
+        Uri.parse('http://122.166.210.142:4444/profile/initiateForgetPassword'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email_id': widget.email}),
       );
@@ -735,7 +736,7 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
       });
 
       final response = await http.post(
-        Uri.parse('http://192.168.1.32:4444/profile/resetPassword'),
+        Uri.parse('http://122.166.210.142:4444/profile/resetPassword'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email_id': email,

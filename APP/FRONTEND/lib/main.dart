@@ -14,7 +14,6 @@ import 'src/utilities/User_Model/user.dart';
 import 'src/utilities/User_Model/ImageProvider.dart';
 import 'src/pages/wallet/wallet.dart';
 
-
 void main() async {
   // Ensure Flutter bindings are initialized before calling any asynchronous methods
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,7 +55,8 @@ class _SessionHandlerState extends State<SessionHandler> {
   @override
   void initState() {
     super.initState();
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(_updateConnectionStatus);
+    _connectivitySubscription =
+        Connectivity().onConnectivityChanged.listen(_updateConnectionStatus);
     _retrieveUserData();
   }
 
@@ -68,36 +68,36 @@ class _SessionHandlerState extends State<SessionHandler> {
     String? storedEmail = prefs.getString('email');
 
     if (storedUser != null && storedUserId != null && storedEmail != null) {
-      Provider.of<UserData>(context, listen: false).updateUserData(storedUser, storedUserId, storedEmail);
+      Provider.of<UserData>(context, listen: false)
+          .updateUserData(storedUser, storedUserId, storedEmail);
     }
   }
 
-
   void _updateConnectionStatus(ConnectivityResult result) {
-  // Check for internet connection
-  if (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi) {
-    _dismissNoConnectionPage(); // Dismiss the error page if internet is restored
-  } else if (result == ConnectivityResult.none) {
-    _showNoConnectionPage(context); // Show the no internet error page
+    // Check for internet connection
+    if (result == ConnectivityResult.mobile ||
+        result == ConnectivityResult.wifi) {
+      _dismissNoConnectionPage(); // Dismiss the error page if internet is restored
+    } else if (result == ConnectivityResult.none) {
+      _showNoConnectionPage(context); // Show the no internet error page
+    }
   }
-}
-void _showNoConnectionPage(BuildContext context) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const InternetErrorPage(),
-    ),
-  );
-}
 
-
-
-void _dismissNoConnectionPage() {
-  if (Navigator.canPop(context)) {
-    Navigator.pop(context); // Pop the InternetErrorPage if it is active
+  void _showNoConnectionPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const InternetErrorPage(),
+      ),
+    );
   }
-}
-  
+
+  void _dismissNoConnectionPage() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context); // Pop the InternetErrorPage if it is active
+    }
+  }
+
   @override
   void dispose() {
     _connectivitySubscription.cancel();
@@ -109,11 +109,13 @@ void _dismissNoConnectionPage() {
     final userData = Provider.of<UserData>(context);
 
     return userData.username != null
-        ? HomePage(username: userData.username ?? '', userId: userData.userId ?? 0, email: userData.email ?? '')
+        ? HomePage(
+            username: userData.username ?? '',
+            userId: userData.userId ?? 0,
+            email: userData.email ?? '')
         : const LoginPage();
   }
 }
-
 
 // App Container to manage initialization error and app state
 class MyApp extends StatelessWidget {
@@ -139,14 +141,13 @@ class MyApp extends StatelessWidget {
       ),
     );
 
-if (initialisationError case final err?) {
-  return MaterialApp(
-    title: 'FMTC Demo (Initialisation Error)',
-    theme: customTheme,
-    home: InitialisationError(error: err), // Provide a default message
-  );
-}
-
+    if (initialisationError case final err?) {
+      return MaterialApp(
+        title: 'FMTC Demo (Initialisation Error)',
+        theme: customTheme,
+        home: InitialisationError(error: err), // Provide a default message
+      );
+    }
 
     // Return main app with multiple providers
     return MultiProvider(
@@ -155,9 +156,12 @@ if (initialisationError case final err?) {
         ChangeNotifierProvider(create: (_) => UserImageProvider()),
         ChangeNotifierProvider(create: (_) => GeneralProvider()),
         ChangeNotifierProvider(create: (_) => MapProvider(), lazy: true),
-        ChangeNotifierProvider(create: (_) => RegionSelectionProvider(), lazy: true),
-        ChangeNotifierProvider(create: (_) => ConfigureDownloadProvider(), lazy: true),
-        ChangeNotifierProvider(create: (_) => DownloadingProvider(), lazy: true),
+        ChangeNotifierProvider(
+            create: (_) => RegionSelectionProvider(), lazy: true),
+        ChangeNotifierProvider(
+            create: (_) => ConfigureDownloadProvider(), lazy: true),
+        ChangeNotifierProvider(
+            create: (_) => DownloadingProvider(), lazy: true),
       ],
       child: MaterialApp(
         title: 'ion Hive',
@@ -168,17 +172,19 @@ if (initialisationError case final err?) {
           '/': (context) => const SessionHandler(),
           '/home': (context) => const SessionHandler(loggedIn: true),
           '/wallet': (context) {
-            final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
-            return WalletPage(username: args['username'], userId: args['userId'], email: args['email_id'],);
+            final args = ModalRoute.of(context)?.settings.arguments
+                as Map<String, dynamic>;
+            return WalletPage(
+              username: args['username'],
+              userId: args['userId'],
+              email: args['email_id'],
+            );
           },
-  
         },
       ),
     );
   }
 }
-
-
 
 class GeneralProvider with ChangeNotifier {
   bool _isLoading = false;
@@ -190,7 +196,6 @@ class GeneralProvider with ChangeNotifier {
     notifyListeners();
   }
 }
-
 
 class MapProvider with ChangeNotifier {
   double _zoomLevel = 12.0;
@@ -254,7 +259,6 @@ class ConfigureDownloadProvider with ChangeNotifier {
   }
 }
 
-
 class RegionSelectionProvider with ChangeNotifier {
   String _selectedRegion = "Default Region";
 
@@ -265,7 +269,6 @@ class RegionSelectionProvider with ChangeNotifier {
     notifyListeners();
   }
 }
-
 
 class InitialisationError extends StatelessWidget {
   final Object error;
@@ -309,7 +312,6 @@ class InitialisationError extends StatelessWidget {
     );
   }
 }
-
 
 class InternetErrorPage extends StatelessWidget {
   const InternetErrorPage({super.key});
@@ -361,7 +363,8 @@ class InternetErrorPage extends StatelessWidget {
                   "It seems you are offline. Please check your internet connection and try again.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: screenWidth * 0.045, // Adjust font size dynamically
+                    fontSize:
+                        screenWidth * 0.045, // Adjust font size dynamically
                     color: Colors.white70,
                   ),
                 ),
@@ -371,7 +374,8 @@ class InternetErrorPage extends StatelessWidget {
               ElevatedButton(
                 onPressed: () async {
                   // Check the internet connection status
-                  var connectivityResult = await Connectivity().checkConnectivity();
+                  var connectivityResult =
+                      await Connectivity().checkConnectivity();
 
                   if (connectivityResult == ConnectivityResult.mobile ||
                       connectivityResult == ConnectivityResult.wifi) {
@@ -395,7 +399,8 @@ class InternetErrorPage extends StatelessWidget {
                 child: Text(
                   "Try Again",
                   style: TextStyle(
-                    fontSize: screenWidth * 0.045, // Adjust font size dynamically
+                    fontSize:
+                        screenWidth * 0.045, // Adjust font size dynamically
                     color: Colors.white,
                   ),
                 ),
@@ -410,7 +415,8 @@ class InternetErrorPage extends StatelessWidget {
                 child: Text(
                   "Back to App",
                   style: TextStyle(
-                    fontSize: screenWidth * 0.045, // Adjust font size dynamically
+                    fontSize:
+                        screenWidth * 0.045, // Adjust font size dynamically
                     color: Colors.green,
                   ),
                 ),
@@ -421,17 +427,17 @@ class InternetErrorPage extends StatelessWidget {
       ),
     );
   }
-void _showRetryMessage(BuildContext context) {
-  // Dismiss any existing snack bars before showing a new one
-  ScaffoldMessenger.of(context).clearSnackBars();
-  
-  // Show the new retry message
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('No internet connection. Please try again later.'),
-      duration: Duration(seconds: 2),
-    ),
-  );
-}
 
+  void _showRetryMessage(BuildContext context) {
+    // Dismiss any existing snack bars before showing a new one
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    // Show the new retry message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No internet connection. Please try again later.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
 }

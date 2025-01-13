@@ -1,3 +1,4 @@
+import 'package:ev_app/src/pages/profile/Bluetooth/bluetooth_page.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
@@ -277,6 +278,19 @@ class _ProfilePageState extends State<ProfilePage> {
                         );
                       },
                       index: 2,
+                    ),
+                    _buildListTile(
+                      title: 'Bluetooth Connection',
+                      icon: Icons.bluetooth,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MainScreen(),
+                          ),
+                        );
+                      },
+                      index: 3,
                     ),
                     const SizedBox(height: 30),
                     CustomGradientDivider(),
