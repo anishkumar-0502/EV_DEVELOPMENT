@@ -33,7 +33,8 @@ class MainScreenState extends State<MainScreen>
 
   Map<String, BluetoothConnection?> _connections = {};
   bool _skipScan = false;
-  late Color _containerColor;
+  Map<String, Color> _deviceColors =
+      {}; // Map to store colors for each device address
 
   @override
   bool get wantKeepAlive => true;
@@ -43,7 +44,6 @@ class MainScreenState extends State<MainScreen>
     super.initState();
     requestPermissions();
     initPlatformState();
-    _containerColor = Colors.grey; // Default to grey when not connected
 
     // startAutomaticScan();
     // retrieveDeviceInfo();
@@ -141,7 +141,6 @@ class MainScreenState extends State<MainScreen>
     print("Scan completed.");
   }
 
-  void ContainerColor() {}
   Future<void> requestPermissions() async {
     Location location = Location();
 
@@ -272,7 +271,8 @@ class MainScreenState extends State<MainScreen>
             connectedDevice = device;
             connectedDeviceAddress = address;
             isDeviceConnected = true;
-            _containerColor = Colors.green;
+            _deviceColors[address] =
+                Colors.green; // Set color to green for connected device
           });
 
           // Store the connected device address in SharedPreferences
@@ -475,11 +475,8 @@ class MainScreenState extends State<MainScreen>
                     leading: Container(
                       width: 5.0,
                       height: 40.0,
-                      color: _connections[result.value.address]?.isConnected ==
-                              true
-                          // color: connectedDevice?.address.isNotEmpty == true
-                          ? _containerColor
-                          : Colors.grey,
+                      color: _deviceColors[result.value.address] ??
+                          Colors.grey, // Dynamically assign color
                     ),
                     onTap: () async {
                       final deviceAddress = result.value.address;
@@ -503,7 +500,6 @@ class MainScreenState extends State<MainScreen>
                               result.key; // Update connecting index
                           isDeviceConnected = true; // Update connection status
                           connectedDeviceAddress = deviceAddress;
-                          _containerColor = Colors.green;
                           // Store device address
                         });
 
